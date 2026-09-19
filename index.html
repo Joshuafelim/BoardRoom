@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boardroom Wars: Tycoon Edition</title>
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --panel-bg: #151b2b;
+            --panel-border: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --neon-pink: #ec4899;
+            --neon-green: #10b981;
+            --neon-blue: #0ea5e9;
+            --neon-purple: #8b5cf6;
+            --neon-red: #ef4444;
+            --font-main: 'Inter', system-ui, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        h1, h2, h3 { text-transform: uppercase; letter-spacing: 1px; }
+        .text-green { color: var(--neon-green); text-shadow: 0 0 5px rgba(16, 185, 129, 0.5); }
+        .text-red { color: var(--neon-red); text-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
+        .text-blue { color: var(--neon-blue); }
+        .text-pink { color: var(--neon-pink); }
+        .text-purple { color: var(--neon-purple); }
+        
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .justify-between { justify-content: space-between; }
+        .align-center { align-items: center; }
+        .grid { display: grid; }
+        
+        .hidden { display: none !important; }
+
+        #game-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(21, 27, 43, 0.9);
+            border-bottom: 1px solid var(--neon-purple);
+            padding: 15px 30px;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+            z-index: 10;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .war-room {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .control-group {
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--neon-blue);
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .val-display { font-family: var(--font-mono); color: var(--text-main); font-weight: bold; }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--neon-blue);
+            cursor: pointer;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            font-family: var(--font-main);
+            text-shadow: 0 0 5px rgba(14, 165, 233, 0.5);
+        }
+
+        .btn:hover { background: var(--neon-blue); color: var(--bg-dark); box-shadow: 0 0 15px var(--neon-blue); }
+        .btn:disabled { border-color: #333; color: #555; cursor: not-allowed; text-shadow: none; box-shadow: none; background: transparent; }
+        
+        .btn-action { border-color: var(--neon-purple); color: var(--neon-purple); text-shadow: 0 0 5px rgba(139, 92, 246, 0.5); }
+        .btn-action:hover:not(:disabled) { background: var(--neon-purple); color: white; box-shadow: 0 0 15px var(--neon-purple); }
+
+        .btn-giant {
+            background: var(--neon-green);
+            color: var(--bg-dark);
+            font-size: 1.2rem;
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+            animation: pulse 2s infinite;
+        }
+        .btn-giant:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 1); }
+
+        .the-books {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .book-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .book-panel h2 {
+            border-bottom: 2px solid #334155;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .acc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            font-family: var(--font-mono);
+        }
+        .acc-row.total {
+            border-bottom: none;
+            border-top: 2px solid #475569;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 5px;
+            padding-top: 10px;
+        }
+        .acc-row.sub-total {
+            border-bottom: 1px solid #475569;
+            margin-bottom: 5px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(11, 15, 25, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .start-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin-top: 20px;
+        }
+
+        .archetype-card {
+            background: var(--panel-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .archetype-card:hover {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+            transform: translateY(-5px);
+        }
+        .archetype-card h3 { color: var(--neon-pink); margin: 10px 0; }
+        .archetype-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;}
+        .archetype-card .emoji { font-size: 3rem; }
+
+        .modal-box {
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
+        }
+
+        .modal-box h2 { color: var(--neon-blue); margin-bottom: 15px; }
+        .modal-box p { margin-bottom: 20px; line-height: 1.5; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-family: var(--font-mono);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.9); }
+            100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+                background: white; color: black;
+                padding: 40px; font-family: serif;
+            }
+            .acc-row { border-bottom: 1px solid #ccc; color: black; }
+            .acc-row.total { border-top: 2px solid black; color: black; }
+            .text-green, .text-red, .text-blue { color: black !important; text-shadow: none; }
+            h1, h2 { color: black; border-bottom: 2px solid black; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content { grid-template-columns: 1fr; overflow-y: auto; }
+            .start-grid { grid-template-columns: 1fr; max-height: 80vh; overflow-y: auto; }
+            .war-room { overflow: visible; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="overlay">
+        <div class="flex-col align-center">
+            <h1 style="font-size: 3rem; text-shadow: 0 0 20px var(--neon-pink); color: var(--text-main); margin-bottom: 10px;">BOARDROOM WARS</h1>
+            <h2 class="text-blue">TYCOON EDITION</h2>
+            <div class="start-grid" id="archetype-grid">
+                <!-- Injected via JS -->
+            </div>
+            <div style="margin-top: 30px; display: flex; gap: 15px;">
+                <button class="btn btn-action" onclick="showLoadModal()">Load Save Code</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-container" class="hidden">
+        <header class="flex justify-between align-center">
+            <div>
+                <h2 id="header-company-name" class="text-pink">Company Name</h2>
+                <div style="font-size: 0.8rem; color: var(--text-muted);" id="header-archetype">Archetype</div>
+            </div>
+            <div class="header-stats">
+                <div>🗓️ QTR: <span id="ui-quarter" class="text-blue">1</span>/16</div>
+                <div>📈 STOCK: $<span id="ui-stock" class="text-green">10.00</span></div>
+                <div id="cash-flow-warning" class="text-red hidden">⚠️ CASH FLOW RISK</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="showSaveModal()">Save</button>
+                <button class="btn" onclick="exportReport()">Print Audit</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="war-room">
+                <h3 class="text-blue flex justify-between">
+                    <span>⚔️ The War Room</span>
+                    <span style="font-size: 0.8rem; font-family: var(--font-mono);">PREVIEW</span>
+                </h3>
+
+                <div class="control-group">
+                    <label>Set Product Price ($) <span id="val-price" class="val-display">$0</span></label>
+                    <input type="range" id="slider-price" min="1" max="100" value="10" oninput="updatePreview()">
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">Optimal: $<span id="opt-price-min">0</span> - $<span id="opt-price-max">0</span></div>
+                </div>
+
+                <div class="control-group">
+                    <label>Production Volume <span id="val-volume" class="val-display">0 units</span></label>
+                    <input type="range" id="slider-volume" min="0" max="1000" value="0" oninput="updatePreview()">
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">Factory Cap: <span id="factory-cap">0</span> | Base Cost: $<span id="base-cost-display">0</span>/unit</div>
+                </div>
+
+                <div class="control-group">
+                    <label>Marketing Budget <span id="val-marketing" class="val-display">$0</span></label>
+                    <input type="range" id="slider-marketing" min="0" max="10000" step="1000" value="0" oninput="updatePreview()">
+                </div>
+
+                <div class="control-group">
+                    <label>Admin / R&D Budget <span id="val-admin" class="val-display">$0</span></label>
+                    <input type="range" id="slider-admin" min="0" max="10000" step="1000" value="0" oninput="updatePreview()">
+                </div>
+
+                <div class="flex-col" style="gap: 10px;">
+                    <button class="btn btn-action" id="btn-factory" onclick="buildFactory()">Build Factory/Server ($50k)</button>
+                    <button class="btn btn-action" onclick="takeLoan()">Secure Bank Loan ($50k)</button>
+                </div>
+
+                <button class="btn btn-giant" id="btn-next-quarter" onclick="nextQuarter()">EXECUTE QUARTER</button>
+                <div id="funds-warning" class="text-red hidden" style="text-align: center; font-weight: bold; font-size: 0.9rem;">❌ INSUFFICIENT FUNDS FOR PRODUCTION/EXPENSES</div>
+            </div>
+
+            <div class="the-books">
+                <div class="book-panel" style="border-color: var(--neon-pink);">
+                    <h2><span>The Profit Engine</span> <span>(Income Statement)</span></h2>
+                    
+                    <div class="acc-row"><span>Revenue (Sales: <span id="stat-sold">0</span>)</span> <span id="stmt-rev">$0</span></div>
+                    <div class="acc-row"><span>Cost of Sales</span> <span id="stmt-cogs" class="text-red">$0</span></div>
+                    <div class="acc-row sub-total"><span>Gross Profit</span> <span id="stmt-gp">$0</span></div>
+                    
+                    <div class="acc-row" style="margin-top: 10px;"><span>Spoilage (Unsold: <span id="stat-unsold">0</span>)</span> <span id="stmt-spoilage" class="text-red">$0</span></div>
+                    <div class="acc-row"><span>Marketing Exp.</span> <span id="stmt-mkt" class="text-red">$0</span></div>
+                    <div class="acc-row"><span>Admin & R&D Exp.</span> <span id="stmt-admin" class="text-red">$0</span></div>
+                    <div class="acc-row"><span>Interest Exp. (10%)</span> <span id="stmt-interest" class="text-red">$0</span></div>
+                    <div class="acc-row sub-total"><span>Net Profit Before Tax</span> <span id="stmt-npbt">$0</span></div>
+                    
+                    <div class="acc-row"><span>Corporate Tax (20%)</span> <span id="stmt-tax" class="text-red">$0</span></div>
+                    <div class="acc-row total"><span class="text-pink">NET PROFIT / (LOSS)</span> <span id="stmt-np" class="text-green">$0</span></div>
+                </div>
+
+                <div class="book-panel" style="border-color: var(--neon-green);">
+                    <h2><span>The Vault</span> <span>(Balance Sheet)</span></h2>
+                    
+                    <div style="font-weight: bold; color: var(--neon-blue); margin-bottom: 5px;">ASSETS</div>
+                    <div class="acc-row"><span>Cash at Bank</span> <span id="bs-cash">$0</span></div>
+                    <div class="acc-row"><span>Non-Current Assets (Factories: <span id="stat-factories">0</span>)</span> <span id="bs-factory">$0</span></div>
+                    <div class="acc-row total" style="margin-bottom: 15px;"><span>TOTAL ASSETS</span> <span id="bs-total-assets">$0</span></div>
+                    
+                    <div style="font-weight: bold; color: var(--neon-blue); margin-bottom: 5px;">LIABILITIES</div>
+                    <div class="acc-row"><span>Bank Loans</span> <span id="bs-loans">$0</span></div>
+                    
+                    <div style="font-weight: bold; color: var(--neon-blue); margin-top: 15px; margin-bottom: 5px;">EQUITY</div>
+                    <div class="acc-row"><span>Share Capital</span> <span id="bs-capital">$0</span></div>
+                    <div class="acc-row"><span>Retained Earnings</span> <span id="bs-re">$0</span></div>
+                    
+                    <div class="acc-row total"><span>TOTAL LIAB. & EQUITY</span> <span id="bs-total-le">$0</span></div>
+                    <div id="accounting-check" style="text-align: right; font-size: 0.7rem; margin-top: 5px; color: var(--neon-green);">✓ Balanced</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="event-modal" class="overlay hidden">
+        <div class="modal-box">
+            <h2 id="event-title">Quarterly Report</h2>
+            <div style="font-size: 3rem; margin: 10px 0;" id="event-emoji">📰</div>
+            <p id="event-desc">Event details here.</p>
+            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 0.9rem;" id="event-impact">
+                Impact data
+            </div>
+            <button class="btn btn-action" onclick="closeEventModal()">Acknowledge</button>
+        </div>
+    </div>
+
+    <div id="save-modal" class="overlay hidden">
+        <div class="modal-box">
+            <h2>System Save/Load</h2>
+            <p>Copy your save code below or paste one to load a game.</p>
+            <input type="text" id="save-code-input" placeholder="Paste save code here...">
+            <div class="flex justify-between" style="gap: 10px;">
+                <button class="btn" onclick="generateSave()">Generate Save</button>
+                <button class="btn btn-action" onclick="loadSave()">Load Save</button>
+                <button class="btn" style="border-color: var(--neon-red); color: var(--neon-red);" onclick="closeSaveModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area" class="hidden">
+        <h1 style="text-align: center;">AUDIT REPORT - <span id="print-company"></span></h1>
+        <p style="text-align: center;">End of Quarter <span id="print-quarter"></span></p>
+        <hr>
+        <div id="print-sci" style="margin-bottom: 40px; margin-top: 20px;"></div>
+        <hr>
+        <div id="print-bs" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        const archetypes = {
+            fashion: { id: 'fashion', name: "Fast Fashion", icon: "👕", desc: "The Volume Play. Razor-thin margins, massive volume.", baseCost: 10, minPrice: 25, maxPrice: 40, baseDemand: 100000, startCash: 250000, factoryCap: 50000, factoryPrice: 50000, mktSens: 1.2, adminSens: 0.8 },
+            tech: { id: 'tech', name: "Premium Tech", icon: "📱", desc: "The Margin Play. Needs huge R&D to maintain hype.", baseCost: 300, minPrice: 800, maxPrice: 1200, baseDemand: 5000, startCash: 1000000, factoryCap: 5000, factoryPrice: 100000, mktSens: 1.0, adminSens: 2.5 },
+            sneakers: { id: 'sneakers', name: "Viral Sneakers", icon: "👟", desc: "The Hype Play. Driven entirely by marketing spend.", baseCost: 30, minPrice: 150, maxPrice: 250, baseDemand: 15000, startCash: 200000, factoryCap: 10000, factoryPrice: 50000, mktSens: 2.8, adminSens: 0.5 },
+            ev: { id: 'ev', name: "EV Manufacturer", icon: "🚗", desc: "Capital Heavyweight. Take huge loans to build factories.", baseCost: 25000, minPrice: 40000, maxPrice: 50000, baseDemand: 200, startCash: 5000000, factoryCap: 100, factoryPrice: 1000000, mktSens: 1.0, adminSens: 1.5 },
+            indie: { id: 'indie', name: "Indie Studio", icon: "🎮", desc: "The Digital Asset. No physical manufacturing needed.", baseCost: 0, minPrice: 20, maxPrice: 60, baseDemand: 15000, startCash: 150000, factoryCap: 999999, factoryPrice: 50000, mktSens: 1.5, adminSens: 2.0 },
+            makeup: { id: 'makeup', name: "Celeb Cosmetics", icon: "💄", desc: "The Brand Machine. Cheap to make, expensive to buy.", baseCost: 5, minPrice: 50, maxPrice: 80, baseDemand: 30000, startCash: 300000, factoryCap: 50000, factoryPrice: 50000, mktSens: 2.2, adminSens: 0.5 }
+        };
+
+        const chaosEvents = [
+            { title: "Viral Dance", emoji: "🕺", desc: "CEO caught doing a cringe TikTok dance. Sales spike!", impact: "Demand +30%", type: 'demand', val: 1.3 },
+            { title: "Canal Blocked", emoji: "🚢", desc: "A massive cargo ship is stuck. Supply lines ruined.", impact: "Base Costs +30%", type: 'cost', val: 1.3 },
+            { title: "Rival Diss Track", emoji: "🎤", desc: "A competitor dropped a fire diss track about your brand.", impact: "Marketing Effectiveness halved", type: 'mkt', val: 0.5 },
+            { title: "Tech Breakthrough", emoji: "🔬", desc: "Your R&D team found a cheaper way to produce goods.", impact: "Base Costs -20%", type: 'cost', val: 0.8 },
+            { title: "Celeb Endorsement", emoji: "⭐", desc: "A major celebrity was seen using your product organically.", impact: "Demand +50%", type: 'demand', val: 1.5 },
+            { title: "Scandal", emoji: "📉", desc: "PR disaster strikes!", impact: "Demand -40%", type: 'demand', val: 0.6 },
+            { title: "Economic Boom", emoji: "📈", desc: "People have more disposable income.", impact: "Demand +20%", type: 'demand', val: 1.2 },
+            { title: "Quiet Quarter", emoji: "☕", desc: "Nothing much happened. Steady as she goes.", impact: "No modifiers", type: 'none', val: 1.0 }
+        ];
+
+        let state = {
+            archId: null,
+            companyName: "",
+            quarter: 1,
+            cash: 0,
+            factoriesValue: 0,
+            factoryCount: 0,
+            loans: 0,
+            shareCapital: 0,
+            retainedEarnings: 0,
+            stockPrice: 10.00,
+            
+            // Current inputs
+            price: 0, volume: 0, mkt: 0, admin: 0,
+            
+            // Modifiers for NEXT quarter
+            modDemand: 1.0, modCost: 1.0, modMkt: 1.0
+        };
+
+        const formatCurr = (num) => '$' + num.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+        const getEl = (id) => document.getElementById(id);
+
+        function initStartScreen() {
+            const grid = getEl('archetype-grid');
+            grid.innerHTML = '';
+            for (const key in archetypes) {
+                const a = archetypes[key];
+                grid.innerHTML += `
+                    <div class="archetype-card" onclick="startGame('${key}')">
+                        <div class="emoji">${a.icon}</div>
+                        <h3>${a.name}</h3>
+                        <p>${a.desc}</p>
+                        <div style="font-size:0.75rem; color:#94a3b8;">
+                            Cost: $${a.baseCost} | Optimal: $${a.minPrice}-$${a.maxPrice}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function startGame(archId, isLoaded = false) {
+            if (!isLoaded) {
+                let cName = prompt("Enter your Company Name:", "MegaCorp");
+                if (!cName) cName = "MegaCorp";
+                
+                const arch = archetypes[archId];
+                state = {
+                    archId: archId,
+                    companyName: cName,
+                    quarter: 1,
+                    cash: arch.startCash,
+                    factoriesValue: 0,
+                    factoryCount: 0,
+                    loans: 0,
+                    shareCapital: arch.startCash,
+                    retainedEarnings: 0,
+                    stockPrice: 10.00,
+                    price: arch.minPrice,
+                    volume: 0,
+                    mkt: 0,
+                    admin: 0,
+                    modDemand: 1.0, modCost: 1.0, modMkt: 1.0
+                };
+            }
+
+            getEl('start-screen').classList.add('hidden');
+            getEl('game-container').classList.remove('hidden');
+            setupDashboard();
+            updatePreview();
+        }
+
+        function setupDashboard() {
+            const arch = archetypes[state.archId];
+            getEl('header-company-name').innerText = state.companyName;
+            getEl('header-archetype').innerText = `${arch.icon} ${arch.name}`;
+            
+            getEl('opt-price-min').innerText = arch.minPrice;
+            getEl('opt-price-max').innerText = arch.maxPrice;
+            
+            // Configure Sliders based on archetype
+            const pSlider = getEl('slider-price');
+            pSlider.min = Math.floor(arch.baseCost * 0.8);
+            pSlider.max = arch.maxPrice * 2.5;
+            pSlider.value = state.price;
+
+            const vSlider = getEl('slider-volume');
+            updateVolumeSliderMax();
+            vSlider.value = state.volume;
+
+            getEl('slider-marketing').max = state.cash + state.loans > 0 ? (state.cash + 100000) : 50000;
+            getEl('slider-admin').max = state.cash + state.loans > 0 ? (state.cash + 100000) : 50000;
+            getEl('slider-marketing').value = state.mkt;
+            getEl('slider-admin').value = state.admin;
+
+            getEl('btn-factory').innerText = arch.id === 'indie' ? "Buy Server Farm ($50k)" : `Build Factory (${formatCurr(arch.factoryPrice)})`;
+            if (arch.id === 'indie') getEl('btn-factory').disabled = true; // Indie doesn't need factories for capacity, handled differently. Let's disable for simplicity or allow server buying. Let's disable.
+        }
+
+        function updateVolumeSliderMax() {
+            const arch = archetypes[state.archId];
+            const vSlider = getEl('slider-volume');
+            let cap = arch.id === 'indie' ? Infinity : (state.factoryCount === 0 && arch.factoryCap < Infinity ? arch.factoryCap : (state.factoryCount * arch.factoryCap) + (state.factoryCount===0 ? arch.factoryCap : 0)); // Everyone gets 1 initial "factory" worth of capacity free to start.
+            
+            if (state.factoryCount === 0) cap = arch.factoryCap; // Base capacity
+            else cap = arch.factoryCap * (state.factoryCount + 1);
+
+            vSlider.max = cap === Infinity ? 1000000 : cap;
+            getEl('factory-cap').innerText = cap === Infinity ? "Unlimited" : cap;
+        }
+
+        function buildFactory() {
+            const arch = archetypes[state.archId];
+            if (state.cash >= arch.factoryPrice) {
+                state.cash -= arch.factoryPrice;
+                state.factoriesValue += arch.factoryPrice;
+                state.factoryCount++;
+                updateVolumeSliderMax();
+                updatePreview();
+            } else {
+                alert("Not enough cash! Secure a bank loan.");
+            }
+        }
+
+        function takeLoan() {
+            state.cash += 50000;
+            state.loans += 50000;
+            updatePreview();
+        }
+
+        function calculateFinancials() {
+            const arch = archetypes[state.archId];
+            
+            // Read UI state
+            state.price = parseInt(getEl('slider-price').value) || 0;
+            state.volume = parseInt(getEl('slider-volume').value) || 0;
+            state.mkt = parseInt(getEl('slider-marketing').value) || 0;
+            state.admin = parseInt(getEl('slider-admin').value) || 0;
+
+            // Update Labels
+            getEl('val-price').innerText = formatCurr(state.price);
+            getEl('val-volume').innerText = state.volume + " units";
+            getEl('val-marketing').innerText = formatCurr(state.mkt);
+            getEl('val-admin').innerText = formatCurr(state.admin);
+
+            let currentBaseCost = arch.baseCost * state.modCost;
+            getEl('base-cost-display').innerText = currentBaseCost.toFixed(2);
+
+            // Demand Calculation
+            let priceTarget = (arch.minPrice + arch.maxPrice) / 2;
+            let priceFactor = 1;
+            if (state.price > arch.maxPrice) {
+                priceFactor = Math.max(0.01, 1 - ((state.price - arch.maxPrice) / arch.maxPrice) * 1.5);
+            } else if (state.price < arch.minPrice) {
+                priceFactor = 1 + ((arch.minPrice - state.price) / arch.minPrice);
+            }
+
+            let mktFactor = 1 + (Math.log10(1 + (state.mkt / 500)) * arch.mktSens * state.modMkt);
+            let adminFactor = 1 + (Math.log10(1 + (state.admin / 500)) * arch.adminSens);
+
+            let demand = Math.floor(arch.baseDemand * priceFactor * mktFactor * adminFactor * state.modDemand);
+            if (state.price === 0) demand = 0; // Fix edge case
+            
+            let unitsSold = Math.min(demand, state.volume);
+            let unitsUnsold = state.volume - unitsSold;
+
+            // Income Statement Lines
+            let revenue = unitsSold * state.price;
+            let cogs = unitsSold * currentBaseCost;
+            let grossProfit = revenue - cogs;
+            
+            let spoilage = unitsUnsold * currentBaseCost; // The cost of unsold goods
+            let interest = Math.floor(state.loans * 0.10); // 10% interest per quarter
+            
+            let npbt = grossProfit - spoilage - state.mkt - state.admin - interest;
+            let tax = npbt > 0 ? Math.floor(npbt * 0.20) : 0;
+            let netProfit = npbt - tax;
+
+            // Required Cash Check
+            let cashRequired = cogs + spoilage + state.mkt + state.admin + interest + tax; // actually tax is taken from profit, so required cash is expenses
+            let cashAvailable = state.cash;
+            
+            let isBankruptWarning = (cashRequired > cashAvailable);
+
+            return {
+                unitsSold, unitsUnsold, demand,
+                revenue, cogs, grossProfit, spoilage, interest,
+                npbt, tax, netProfit, isBankruptWarning
+            };
+        }
+
+        function updatePreview() {
+            const fin = calculateFinancials();
+            
+            // Income Statement UI
+            getEl('stat-sold').innerText = fin.unitsSold;
+            getEl('stat-unsold').innerText = fin.unitsUnsold;
+            
+            getEl('stmt-rev').innerText = formatCurr(fin.revenue);
+            getEl('stmt-cogs').innerText = `(${formatCurr(fin.cogs)})`;
+            getEl('stmt-gp').innerText = formatCurr(fin.grossProfit);
+            
+            getEl('stmt-spoilage').innerText = `(${formatCurr(fin.spoilage)})`;
+            getEl('stmt-mkt').innerText = `(${formatCurr(state.mkt)})`;
+            getEl('stmt-admin').innerText = `(${formatCurr(state.admin)})`;
+            getEl('stmt-interest').innerText = `(${formatCurr(fin.interest)})`;
+            getEl('stmt-npbt').innerText = formatCurr(fin.npbt);
+            getEl('stmt-tax').innerText = `(${formatCurr(fin.tax)})`;
+            
+            const npEl = getEl('stmt-np');
+            npEl.innerText = formatCurr(fin.netProfit);
+            npEl.className = fin.netProfit >= 0 ? 'text-green' : 'text-red';
+
+            // Projected Balance Sheet UI
+            let projCash = state.cash + fin.netProfit;
+            let projRE = state.retainedEarnings + fin.netProfit;
+            
+            getEl('bs-cash').innerText = formatCurr(projCash);
+            getEl('stat-factories').innerText = state.factoryCount;
+            getEl('bs-factory').innerText = formatCurr(state.factoriesValue);
+            
+            let totalAssets = projCash + state.factoriesValue;
+            getEl('bs-total-assets').innerText = formatCurr(totalAssets);
+            
+            getEl('bs-loans').innerText = formatCurr(state.loans);
+            getEl('bs-capital').innerText = formatCurr(state.shareCapital);
+            getEl('bs-re').innerText = formatCurr(projRE);
+            
+            let totalLE = state.loans + state.shareCapital + projRE;
+            getEl('bs-total-le').innerText = formatCurr(totalLE);
+
+            // Validation checks
+            if (fin.isBankruptWarning && projCash < 0) {
+                getEl('funds-warning').classList.remove('hidden');
+                getEl('btn-next-quarter').disabled = true;
+                getEl('cash-flow-warning').classList.remove('hidden');
+            } else {
+                getEl('funds-warning').classList.add('hidden');
+                getEl('btn-next-quarter').disabled = false;
+                getEl('cash-flow-warning').classList.add('hidden');
+            }
+
+            // Top bar
+            getEl('ui-quarter').innerText = state.quarter;
+            getEl('ui-stock').innerText = state.stockPrice.toFixed(2);
+            if(state.stockPrice < 5) getEl('ui-stock').className = 'text-red';
+            else getEl('ui-stock').className = 'text-green';
+            
+            // Check Accounting Equation purely for educational validation
+            const isBalanced = Math.abs(totalAssets - totalLE) < 1; 
+            getEl('accounting-check').innerText = isBalanced ? "✓ Balanced" : "❌ Unbalanced!";
+            getEl('accounting-check').style.color = isBalanced ? "var(--neon-green)" : "var(--neon-red)";
+        }
+
+        function nextQuarter() {
+            const fin = calculateFinancials();
+            
+            // Apply Financials to State
+            state.cash += fin.netProfit;
+            state.retainedEarnings += fin.netProfit;
+            
+            // Update Stock Price (Simplified logic based on profit margin & equity growth)
+            let equity = state.shareCapital + state.retainedEarnings;
+            let equityRatio = equity / state.shareCapital;
+            let profitMargin = fin.revenue > 0 ? (fin.netProfit / fin.revenue) : 0;
+            
+            state.stockPrice = 10 * equityRatio * (1 + profitMargin);
+            if (state.stockPrice < 0.1) state.stockPrice = 0.1;
+
+            // End game check
+            if (state.cash < 0 && state.loans > state.factoriesValue) {
+                alert(`BANKRUPT! Your company ran out of cash in Quarter ${state.quarter}. Stock Price: $0.00`);
+                location.reload();
+                return;
+            }
+
+            if (state.quarter >= 16) {
+                alert(`GAME OVER! You survived 16 quarters. Final Stock Price: $${state.stockPrice.toFixed(2)}. Click Print Audit to see your final books!`);
+                getEl('btn-next-quarter').disabled = true;
+                updatePreview();
+                return;
+            }
+
+            // Advance Quarter
+            state.quarter++;
+            
+            // Trigger Random Event for next quarter
+            triggerEvent();
+        }
+
+        function triggerEvent() {
+            // Reset modifiers
+            state.modDemand = 1.0; state.modCost = 1.0; state.modMkt = 1.0;
+
+            const ev = chaosEvents[Math.floor(Math.random() * chaosEvents.length)];
+            
+            if (ev.type === 'demand') state.modDemand = ev.val;
+            if (ev.type === 'cost') state.modCost = ev.val;
+            if (ev.type === 'mkt') state.modMkt = ev.val;
+
+            getEl('event-title').innerText = "Quarterly Update (Q" + state.quarter + ")";
+            getEl('event-emoji').innerText = ev.emoji;
+            getEl('event-desc').innerText = ev.desc;
+            getEl('event-impact').innerText = ev.impact;
+            
+            getEl('event-modal').classList.remove('hidden');
+        }
+
+        function closeEventModal() {
+            getEl('event-modal').classList.add('hidden');
+            
+            // Reset Sliders to 0 to force user to plan again, except price
+            getEl('slider-volume').value = 0;
+            getEl('slider-marketing').value = 0;
+            getEl('slider-admin').value = 0;
+            
+            updateVolumeSliderMax(); // capacity might have changed
+            updatePreview();
+        }
+
+        function showSaveModal() {
+            getEl('save-code-input').value = "";
+            getEl('save-modal').classList.remove('hidden');
+        }
+        function closeSaveModal() {
+            getEl('save-modal').classList.add('hidden');
+        }
+
+        function generateSave() {
+            try {
+                const json = JSON.stringify(state);
+                const encoded = btoa(json);
+                getEl('save-code-input').value = encoded;
+                getEl('save-code-input').select();
+                document.execCommand('copy');
+                alert("Save code copied to clipboard!");
+            } catch (e) {
+                alert("Error generating save.");
+            }
+        }
+
+        function loadSave() {
+            const code = getEl('save-code-input').value;
+            if (!code) return;
+            try {
+                const decoded = atob(code);
+                const parsed = JSON.parse(decoded);
+                if (parsed && parsed.archId) {
+                    state = parsed;
+                    startGame(state.archId, true);
+                    closeSaveModal();
+                    alert("Game Loaded Successfully!");
+                }
+            } catch(e) {
+                alert("Invalid save code.");
+            }
+        }
+
+        function exportReport() {
+            // Populate Print Area
+            getEl('print-company').innerText = state.companyName;
+            getEl('print-quarter').innerText = state.quarter;
+            
+            const pSci = getEl('print-sci');
+            const pBs = getEl('print-bs');
+            
+            // Clone the books but clean them up
+            pSci.innerHTML = `<h2>STATEMENT OF COMPREHENSIVE INCOME</h2>` + document.querySelector('.book-panel:nth-child(1)').innerHTML;
+            pBs.innerHTML = `<h2>BALANCE SHEET</h2>` + document.querySelector('.book-panel:nth-child(2)').innerHTML;
+            
+            // Remove the header H2s from the cloned content since we added clean ones
+            const oldH2s = document.querySelectorAll('#print-area .book-panel h2');
+            oldH2s.forEach(el => el.style.display = 'none');
+
+            window.print();
+        }
+
+        // Initialize Start Screen on load
+        window.onload = initStartScreen;
+    </script>
+</body>
+</html>
