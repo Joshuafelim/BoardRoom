@@ -31,6 +31,8 @@
             background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
             user-select: none;
         }
 
@@ -50,7 +52,7 @@
         .hidden { display: none !important; }
 
         #game-container {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -76,7 +78,7 @@
             grid-template-columns: 350px 1fr;
             gap: 20px;
             padding: 20px;
-            overflow: hidden;
+            align-items: start;
         }
 
         .war-room {
@@ -87,7 +89,6 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            overflow-y: auto;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
 
@@ -149,7 +150,7 @@
 
         .the-books {
             display: grid;
-            grid-template-rows: 1fr 1fr;
+            grid-template-rows: auto auto;
             gap: 20px;
         }
 
@@ -191,7 +192,7 @@
 
         .overlay {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(11, 15, 25, 0.95);
             display: flex;
             flex-direction: column;
@@ -615,21 +616,39 @@
             let adminBonus = 1.0;
             
             if (adminRatio < 1) {
-                adminPenalty = Math.max(0.2, adminRatio); // Penalize demand heavily
+                adminPenalty = Math.max(0.1, adminRatio); // Very harsh penalty for underfunding
                 currentBaseCost = currentBaseCost / adminPenalty; // Base costs skyrocket due to inefficiency
             } else {
-                adminBonus = 1 + (Math.log10(adminRatio) * arch.adminSens * 0.5); // Bonus demand
+                adminBonus = 1 + (Math.log2(adminRatio) * arch.adminSens * 0.2); // Small bonus for overfunding
+                adminBonus = Math.min(adminBonus, 1.5); // Cap the efficiency bonus
             }
             getEl('base-cost-display').innerText = currentBaseCost.toFixed(2);
 
             // Realistic Elastic Demand Calculation
             let optimalMid = (arch.minPrice + arch.maxPrice) / 2;
-            let elasticity = Math.pow((optimalMid / (state.price || 1)), 1.5);
-            elasticity = Math.max(0.05, Math.min(elasticity, 5.0)); // Cap elasticity
+            let priceRatio = state.price / (optimalMid || 1);
+            
+            let elasticity;
+            if (priceRatio <= 1) {
+                // Cheaper than optimal -> increased demand, but diminishing returns
+                elasticity = Math.pow(priceRatio, -1.2);
+                elasticity = Math.min(elasticity, 3.0);
+            } else {
+                // More expensive than optimal -> demand drops off a cliff (exponentially)
+                elasticity = Math.pow(priceRatio, -3.5);
+            }
 
-            let mktFactor = 1 + ((state.mkt / (arch.baseDemand * optimalMid * 0.1 + 1)) * arch.mktSens * state.modMkt);
+            // Diminishing returns on Marketing
+            let baselineRev = arch.baseDemand * optimalMid;
+            let targetMkt = baselineRev * 0.05; // 5% of potential revenue is a normal budget
+            let mktRatio = state.mkt / (targetMkt || 1);
+            let mktFactor = 1 + (Math.log2(1 + mktRatio) * arch.mktSens * 0.5 * state.modMkt);
 
             let demand = Math.floor(arch.baseDemand * elasticity * mktFactor * adminBonus * state.modDemand * adminPenalty);
+            
+            // Hard cap demand so players can't sell infinite units
+            let maxMarketSize = arch.baseDemand * 6;
+            if (demand > maxMarketSize) demand = maxMarketSize;
             if (state.price === 0) demand = 0;
             
             // Inventory Math (Average Cost Method)
