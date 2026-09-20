@@ -104,8 +104,6 @@
             z-index: 10;
         }
 
-        .hidden-screen { display: none !important; }
-
         #hud {
             width: 100%; 
             min-height: 50px; 
@@ -133,7 +131,7 @@
             flex-grow: 1; 
             position: relative; 
             overflow: auto;
-            padding: 20px 10px 100px 10px;
+            padding: 20px 10px 110px 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -143,8 +141,8 @@
             position: fixed; 
             bottom: 20px; 
             left: 20px;
-            width: 140px; 
-            height: 180px; 
+            width: 130px; 
+            height: 170px; 
             background: #5c3a21;
             border: 2px solid #2b180a; 
             border-radius: 5px;
@@ -164,7 +162,7 @@
             font-weight: bold; 
             text-align: center; 
             white-space: pre-wrap; 
-            font-size: 0.85rem; 
+            font-size: 0.8rem; 
         }
 
         #rulebook-open {
@@ -178,7 +176,7 @@
             background: var(--paper-main);
             border-radius: 5px; 
             box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            z-index: 100; 
+            z-index: 250; 
             display: none; 
             padding: 25px;
             font-size: 0.9rem; 
@@ -235,12 +233,12 @@
         .paper {
             width: 100%;
             max-width: 440px; 
-            min-height: 580px; 
+            min-height: 560px; 
             background: var(--paper-main);
             box-shadow: 2px 2px 12px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.05);
             padding: 25px 18px; 
             position: relative; 
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
             margin: 0 auto;
             border-radius: 2px;
         }
@@ -267,7 +265,7 @@
         .doc-table tr.header td { font-weight: bold; padding-top: 10px; border-bottom: none; text-decoration: underline;}
         .indent td:first-child { padding-left: 12px; }
 
-        body.audit-mode .doc-table tr:hover {
+        body.audit-mode .doc-table tr:hover, body.audit-mode .doc-header:hover {
             background-color: rgba(164, 42, 42, 0.2);
             outline: 2px solid var(--ink-red);
             cursor: crosshair;
@@ -303,8 +301,7 @@
                 padding: 8px;
                 z-index: 60;
             }
-            .tool-label { display: none; }
-            #rulebook { bottom: 65px; left: 10px; width: 90px; height: 110px; }
+            #rulebook { bottom: 65px; left: 10px; width: 85px; height: 105px; }
             #rulebook::after { font-size: 0.65rem; }
             #desk-surface { padding-bottom: 120px; }
         }
@@ -343,24 +340,25 @@
             border: 5px solid; 
             padding: 8px 16px;
             opacity: 0; 
-            z-index: 10; 
+            z-index: 20; 
             pointer-events: none;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-family: 'Courier Prime', monospace; 
             text-transform: uppercase;
             text-align: center;
             white-space: nowrap;
+            display: none;
         }
-        .stamp-mark.visible { opacity: 0.85; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+        .stamp-mark.visible { opacity: 0.85; transform: translate(-50%, -50%) rotate(-15deg) scale(1); display: block; }
         .stamp-green { color: var(--ink-green); border-color: var(--ink-green); }
         .stamp-red { color: var(--ink-red); border-color: var(--ink-red); transform: translate(-50%, -50%) rotate(10deg) scale(2); }
-        .stamp-red.visible { transform: translate(-50%, -50%) rotate(10deg) scale(1); }
+        .stamp-red.visible { transform: translate(-50%, -50%) rotate(10deg) scale(1); display: block; }
 
         #memo-overlay, #dialog-overlay {
             position: fixed; 
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); 
-            z-index: 200;
+            background: rgba(0,0,0,0.8); 
+            z-index: 300;
             display: none; 
             justify-content: center; 
             align-items: center;
@@ -377,7 +375,7 @@
             box-shadow: 10px 10px 30px rgba(0,0,0,0.8);
             transform: translateY(-20px); 
             opacity: 0;
-            transition: all 0.3s ease-out; 
+            transition: all 0.25s ease-out; 
             font-size: 0.95rem;
             color: #1a1a1a;
             position: relative;
@@ -389,23 +387,24 @@
         .memo-status-CORRECT { color: var(--ink-green); font-size: 1.3rem; font-weight: bold; margin-bottom: 10px;}
         .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.3rem; font-weight: bold; margin-bottom: 10px;}
         .memo-reason { margin-bottom: 25px; line-height: 1.5; font-size: 0.9rem; }
-        .memo-btn { background: #2a2a2a; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; float: right; }
+        .memo-btn { background: #2a2a2a; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; float: right; border-radius: 4px; }
+        .memo-btn:hover { background: #444; }
 
-        /* Leaderboard Modal Styling */
-        .leaderboard-modal {
+        /* Leaderboard & Settlement Modal Styling */
+        .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 250;
+            background: rgba(0,0,0,0.85); z-index: 350;
             display: none; justify-content: center; align-items: center; padding: 15px;
         }
-        .leaderboard-content {
+        .modal-content {
             background: #1e221f; border: 2px solid #4d544e; border-radius: 8px;
             width: 100%; max-width: 550px; padding: 25px; color: #d4e0d5;
             box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            max-height: 90vh; overflow-y: auto;
         }
         .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
         .leaderboard-table th { border-bottom: 2px solid #4d544e; text-align: left; padding: 6px; color: #a8b5a9; }
         .leaderboard-table td { padding: 6px; border-bottom: 1px dashed #333; }
-        .badge-fraud { background: #a42a2a; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; }
         .anomaly-seal { position: absolute; top: 10px; right: 10px; border: 2px dashed #a42a2a; color: #a42a2a; font-size: 0.65rem; padding: 4px; transform: rotate(12deg); font-weight: bold; pointer-events: auto; cursor: pointer; }
 
         .mode-btn {
@@ -446,7 +445,7 @@
 <body>
 
     <div id="main-menu" class="active-screen">
-        <h1>AUDIT DESK</h1>
+        <h1 style="font-size: clamp(2rem, 5vw, 3rem); font-weight: bold; font-family: 'VT323', monospace;">AUDIT DESK</h1>
         <div style="font-size: clamp(1rem, 3vw, 1.4rem); margin-bottom: 20px; letter-spacing: 2px; color: #a8b5a9;">THE FINANCIAL INQUISITOR</div>
         <p style="max-width: 600px; margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem;">
             Welcome to the Ministry of Finance. Inspect corporate financial statements to ensure compliance, stability, and truth.<br><br>
@@ -477,14 +476,14 @@
         <div id="hud">
             <div class="hud-stat">📅 DAY <span id="hud-day" class="hud-value">1</span></div>
             <div class="hud-stat">🕒 <span id="hud-clock" class="hud-value">09:00</span></div>
-            <div class="hud-stat" style="color: #f39c12;">⏳ SHIFT: <span id="hud-timer" class="hud-value" style="color:#f39c12;">03:30</span></div>
+            <div class="hud-stat" style="color: #f39c12;">⏳ SHIFT: <span id="hud-timer" class="hud-value" style="color:#f39c12;">02:00</span></div>
             <div class="hud-stat">💵 WAGE: $<span id="hud-wage" class="hud-value">50</span></div>
             <div class="hud-stat">⚠️ PENALTIES: <span id="hud-penalties" class="hud-value">0/3</span></div>
             <button onclick="game.confirmReturnToMenu()" style="background:#2a2f2b; color:#a8b5a9; border:1px solid #4d544e; border-radius:4px; padding:4px 12px; cursor:pointer; font-family:inherit; font-size:0.9rem;">MAIN MENU</button>
         </div>
 
         <div id="desk-surface">
-            <!-- Mobile Document Switch Tabs (Visible on small screens in Senior Mode) -->
+            <!-- Mobile Document Switch Tabs -->
             <div id="doc-tab-bar" class="doc-tab-bar" style="display: none;">
                 <button id="tab-sci" class="doc-tab active" onclick="game.switchTab('sci')">INCOME STATEMENT (SCI)</button>
                 <button id="tab-bs" class="doc-tab" onclick="game.switchTab('bs')">BALANCE SHEET (BS)</button>
@@ -533,8 +532,8 @@
                 <button id="btn-cancel" class="action-btn" onclick="game.toggleAuditMode()">CANCEL</button>
             </div>
         </div>
+    </div>
 
-    <!-- Rulebook Modal -->
     <div id="rulebook-open">
         <div class="close-btn" onclick="game.toggleRulebook()">✖</div>
         <h2 style="font-family: 'VT323', monospace; font-size: 2rem;">MINISTRY DIRECTIVES</h2>
@@ -557,13 +556,13 @@
         <ul style="padding-left: 20px; list-style-type: disc;">
             <li><b>APPROVE:</b> Math is correct, company is profitable, solvent, and records match.</li>
             <li><b>DENY:</b> Math is genuine, but company is insolvent (Current Liabilities > Current Assets) or has sustained losses.</li>
-            <li><b>INSPECT (AUDIT):</b> Fraud detected! Look out for math errors, omitted required line items, inverted signs (e.g. adding costs), name mismatches across statements, or unauthorized offshore stamps. Tap the suspect row/header in Inspect mode!</li>
+            <li><b>INSPECT (AUDIT):</b> Fraud detected! Look out for math errors, omitted tax lines, inverted signs (e.g. adding costs), name mismatches across statements, or unauthorized offshore stamps. Tap the suspect row/header in Inspect mode!</li>
         </ul>
     </div>
 
     <!-- Leaderboard Modal -->
-    <div id="leaderboard-modal" class="leaderboard-modal">
-        <div class="leaderboard-content">
+    <div id="leaderboard-modal" class="modal-overlay">
+        <div class="modal-content">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #4d544e; padding-bottom:10px;">
                 <h2 style="font-family:'VT323', monospace; font-size: 2rem; margin:0;">MINISTRY AUDITOR HALL OF FAME</h2>
                 <span onclick="game.closeLeaderboard()" style="cursor:pointer; font-weight:bold; font-size:1.5rem;">✖</span>
@@ -574,21 +573,28 @@
                 <button id="lead-tab-senior" class="doc-tab" onclick="game.switchLeaderboardTab('senior')">SENIOR AUDITOR</button>
             </div>
 
-    <div id="settlement-overlay" class="leaderboard-modal" style="z-index: 220;">
-        <div class="leaderboard-content" style="max-width: 500px;">
+            <div id="leaderboard-list" style="max-height: 350px; overflow-y: auto;">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Shift Settlement Modal -->
+    <div id="settlement-overlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
             <h2 id="settlement-title" style="font-family:'VT323', monospace; font-size: 2rem; margin:0 0 10px 0; text-align:center; color:#f39c12;">SHIFT SETTLEMENT</h2>
             
             <div style="background: #121412; border: 1px solid #333; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.88rem; line-height: 1.8;">
-                <div style="display:flex; justify-between; align-items:center;"><span>Shift Performance Bonuses:</span> <span id="settle-bonuses" style="color:#296d35; font-weight:bold;">+$0</span></div>
-                <div style="display:flex; justify-between; align-items:center;"><span>Ministry Penalties:</span> <span id="settle-penalties" style="color:#ff5555; font-weight:bold;">-$0</span></div>
-                <div style="display:flex; justify-between; align-items:center; border-top: 1px solid #333; padding-top: 4px;"><span>Daily Living & Desk Tax:</span> <span style="color:#ff5555; font-weight:bold;">-$30</span></div>
-                <div style="display:flex; justify-between; align-items:center; border-top: 1px solid #4d544e; padding-top: 6px; font-weight:bold; font-size: 1rem;"><span>TOTAL AUDITOR WAGE:</span> <span id="settle-total" style="color:#f39c12;">$50</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;"><span>Shift Performance Bonuses:</span> <span id="settle-bonuses" style="color:#296d35; font-weight:bold;">+$0</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;"><span>Ministry Penalties:</span> <span id="settle-penalties" style="color:#ff5555; font-weight:bold;">-$0</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #333; padding-top: 4px;"><span>Daily Living & Desk Tax:</span> <span style="color:#ff5555; font-weight:bold;">-$30</span></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #4d544e; padding-top: 6px; font-weight:bold; font-size: 1rem;"><span>TOTAL AUDITOR WAGE:</span> <span id="settle-total" style="color:#f39c12;">$50</span></div>
             </div>
 
             <div style="font-size: 0.8rem; text-transform: uppercase; color: #a8b5a9; margin-bottom: 8px; font-weight: bold;">Ministry Desk Supply Store</div>
             
             <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
-                <div style="display:flex; justify-between; align-items:center; background:#2a2f2b; padding:10px; border-radius:6px; border:1px solid #4d544e;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#2a2f2b; padding:10px; border-radius:6px; border:1px solid #4d544e;">
                     <div>
                         <div style="font-weight:bold; font-size:0.85rem; color:#f1c40f;">☕ Ministry Espresso ($20)</div>
                         <div style="font-size:0.75rem; color:#888;">+25 Seconds extra timer on next shift</div>
@@ -596,7 +602,7 @@
                     <button id="buy-coffee-btn" onclick="game.buyItem('coffee')" style="background:#d35400; color:#fff; border:none; border-radius:4px; padding:6px 12px; font-weight:bold; cursor:pointer;">BUY</button>
                 </div>
 
-                <div style="display:flex; justify-between; align-items:center; background:#2a2f2b; padding:10px; border-radius:6px; border:1px solid #4d544e;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#2a2f2b; padding:10px; border-radius:6px; border:1px solid #4d544e;">
                     <div>
                         <div style="font-weight:bold; font-size:0.85rem; color:#1abc9c;">🔍 Math Inspector Lens ($30)</div>
                         <div style="font-size:0.75rem; color:#888;">Unlocks "CHECK MATH" tool to spot math errors</div>
@@ -604,7 +610,7 @@
                     <button id="buy-lens-btn" onclick="game.buyItem('lens')" style="background:#16a085; color:#fff; border:none; border-radius:4px; padding:6px 12px; font-weight:bold; cursor:pointer;">BUY</button>
                 </div>
 
-                <div style="display:flex; justify-between; align-items:center; background:#2a2f2b; padding:10px; border-radius:6px; border:1px solid #4d544e;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#2a2f2b; padding:10px; border-radius:6px; border:1px solid #4d544e;">
                     <div>
                         <div style="font-weight:bold; font-size:0.85rem; color:#2ecc71;">🛡️ Bureaucracy Shield ($35)</div>
                         <div style="font-size:0.75rem; color:#888;">Forgives 1 wrong verdict penalty tomorrow</div>
@@ -628,13 +634,14 @@
             
             <div id="memo-status" class="memo-status-CORRECT">CORRECT VERDICT</div>
             <div id="memo-reason" class="memo-reason">
-                You correctly identified the mathematical discrepancy in the Operating Profit. The company has been fined.
+                You correctly identified the financial state of the firm.
             </div>
             
             <button class="memo-btn" onclick="game.closeMemo()">ACKNOWLEDGE</button>
         </div>
     </div>
 
+    <!-- System Notice Dialog Overlay -->
     <div id="dialog-overlay">
         <div id="dialog-box">
             <div class="memo-header">
@@ -643,7 +650,9 @@
             </div>
             <div id="dialog-title" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">NOTICE</div>
             <div id="dialog-message" style="margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5;">Message content</div>
-            <button id="dialog-confirm-btn" class="memo-btn" onclick="game.closeDialog()">CONTINUE</button>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button id="dialog-confirm-btn" class="memo-btn" onclick="game.closeDialog()">CONTINUE</button>
+            </div>
         </div>
     </div>
 
@@ -652,7 +661,7 @@
             state: {
                 mode: 'junior',
                 day: 1,
-                shiftDurationSec: 120, // Reduced from 210s to 120s (2 minutes)
+                shiftDurationSec: 120,
                 secondsRemaining: 120,
                 extraTimeToday: 0,
                 extraTimeNextDay: 0,
@@ -667,7 +676,8 @@
                 leaderboardTab: 'junior',
                 playerName: 'Auditor 42',
                 hasLens: false,
-                activeShield: false
+                activeShield: false,
+                isProcessing: false
             },
             currentCompany: null,
             clockTimer: null,
@@ -700,6 +710,7 @@
                     memoOverlay: document.getElementById('memo-overlay'),
                     memoStatus: document.getElementById('memo-status'),
                     memoReason: document.getElementById('memo-reason'),
+                    memoDate: document.getElementById('memo-date'),
                     docTabBar: document.getElementById('doc-tab-bar'),
                     tabSci: document.getElementById('tab-sci'),
                     tabBs: document.getElementById('tab-bs'),
@@ -783,6 +794,7 @@
                 this.state.penalties = 0;
                 this.state.hasLens = false;
                 this.state.activeShield = false;
+                this.state.isProcessing = false;
                 
                 this.els.btnMathHint.style.display = 'none';
                 this.els.menu.style.display = 'none';
@@ -846,8 +858,8 @@
             },
 
             updateHUD() {
-                const m = Math.floor(this.state.secondsRemaining / 60);
-                const s = this.state.secondsRemaining % 60;
+                const m = Math.floor(Math.max(0, this.state.secondsRemaining) / 60);
+                const s = Math.max(0, this.state.secondsRemaining) % 60;
                 this.els.hudTimer.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
                 const totalShift = this.state.shiftDurationSec + (this.state.extraTimeToday || 0);
@@ -874,9 +886,7 @@
                     return;
                 }
 
-                // Automatically submit score to Ministry Leaderboard using saved player name
                 await this.saveHighScore(this.state.wage, this.state.day, this.state.mode);
-
                 this.openSettlementModal();
             },
 
@@ -886,7 +896,6 @@
                 document.getElementById('settle-bonuses').innerText = `+$${this.state.shiftBonus}`;
                 document.getElementById('settle-penalties').innerText = `-$${this.state.shiftPenaltyDeduction}`;
                 
-                // Deduct daily living & desk tax ($30)
                 const livingCost = 30;
                 this.state.wage = Math.max(0, this.state.wage - livingCost);
                 document.getElementById('settle-total').innerText = `$${this.state.wage}`;
@@ -940,7 +949,7 @@
             },
 
             useMathHint() {
-                if (!this.state.hasLens) return;
+                if (!this.state.hasLens || this.state.isProcessing) return;
                 const c = this.currentCompany;
                 const mathTargets = ['row-gp', 'row-ta', 'row-te'];
                 
@@ -978,20 +987,20 @@
                     category: category,
                     sci: sci,
                     bs: bs,
-                    fraudTarget: sci.fraudTarget || bs.fraudTarget,
-                    fraudExplanation: sci.fraudExplanation || bs.fraudExplanation,
-                    denyReason: sci.denyReason || bs.denyReason
+                    fraudTarget: sci.fraudTarget || bs.fraudTarget || null,
+                    fraudExplanation: sci.fraudExplanation || bs.fraudExplanation || null,
+                    denyReason: sci.denyReason || bs.denyReason || "Company shows severe financial instability and operational loss."
                 };
             },
 
             generateSCI(category) {
                 let rev = this.rnd(10000, 90000);
-                let cos = this.rnd(3000, rev * 0.7);
+                let cos = this.rnd(3000, Math.floor(rev * 0.7));
                 let gp = rev - cos;
-                let sell = this.rnd(500, gp * 0.3);
-                let admin = this.rnd(500, gp * 0.3);
+                let sell = this.rnd(500, Math.floor(gp * 0.3));
+                let admin = this.rnd(500, Math.floor(gp * 0.3));
                 let op = gp - sell - admin;
-                let fin = this.rnd(100, op > 0 ? op * 0.2 : 500);
+                let fin = this.rnd(100, op > 0 ? Math.floor(op * 0.2) : 500);
                 let pbt = op - fin;
                 let tax = pbt > 0 ? Math.floor(pbt * 0.2) : 0;
                 let np = pbt - tax;
@@ -1005,7 +1014,7 @@
                     data.pbt = data.op - fin;
                     data.tax = 0;
                     data.net_profit = data.pbt;
-                    data.denyReason = `Sustained Net Loss. Gross Profit was negative (${this.format(data.gp)}). Core operations are failing.`;
+                    data.denyReason = `Sustained Net Loss! Cost of Sales (${this.format(data.cos)}) exceeds Revenue (${this.format(rev)}). Net Profit is negative (${this.format(data.net_profit)}).`;
                 } 
                 else if (category === 3 && (this.state.mode === 'junior' || Math.random() > 0.4)) {
                     let fraudType = this.rnd(1, 4);
@@ -1092,7 +1101,7 @@
                     }
                     data.te = data.sc + data.re;
 
-                    data.denyReason = `Insolvent / Liquidity Crisis. Current Liabilities (${this.format(data.cl)}) far exceed Current Assets (${this.format(data.ca)}).`;
+                    data.denyReason = `Insolvent / Liquidity Crisis! Current Liabilities (${this.format(data.cl)}) far exceed Current Assets (${this.format(data.ca)}).`;
                 }
 
                 return data;
@@ -1100,6 +1109,7 @@
 
             nextCase() {
                 if(this.state.auditMode) this.toggleAuditMode();
+                
                 document.querySelectorAll('.stamp-mark').forEach(el => {
                     el.classList.remove('visible');
                     el.style.display = 'none';
@@ -1114,7 +1124,8 @@
 
                     this.els.docSci.classList.replace('out', 'in');
                     this.els.docBs.classList.replace('out', 'in');
-                }, 300);
+                    this.state.isProcessing = false;
+                }, 350);
             },
 
             renderTables() {
@@ -1177,6 +1188,7 @@
             },
 
             toggleAuditMode() {
+                if (this.state.isProcessing) return;
                 this.state.auditMode = !this.state.auditMode;
                 if (this.state.auditMode) {
                     document.body.classList.add('audit-mode');
@@ -1199,27 +1211,31 @@
 
             stamp(type) {
                 this.screenShake();
-                document.querySelectorAll('.stamp-mark').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.stamp-mark').forEach(el => {
+                    el.classList.remove('visible');
+                    el.style.display = 'none';
+                });
                 
                 if (type === 'approve') {
                     const s1 = document.getElementById('stamp-sci-app');
-                    s1.style.display = 'block'; setTimeout(()=> s1.classList.add('visible'), 10);
+                    if (s1) { s1.style.display = 'block'; setTimeout(()=> s1.classList.add('visible'), 10); }
                     if(this.state.mode === 'senior') {
                         const s2 = document.getElementById('stamp-bs-app');
-                        s2.style.display = 'block'; setTimeout(()=> s2.classList.add('visible'), 10);
+                        if (s2) { s2.style.display = 'block'; setTimeout(()=> s2.classList.add('visible'), 10); }
                     }
                 } else {
                     const s1 = document.getElementById('stamp-sci-den');
-                    s1.style.display = 'block'; setTimeout(()=> s1.classList.add('visible'), 10);
+                    if (s1) { s1.style.display = 'block'; setTimeout(()=> s1.classList.add('visible'), 10); }
                     if(this.state.mode === 'senior') {
                         const s2 = document.getElementById('stamp-bs-den');
-                        s2.style.display = 'block'; setTimeout(()=> s2.classList.add('visible'), 10);
+                        if (s2) { s2.style.display = 'block'; setTimeout(()=> s2.classList.add('visible'), 10); }
                     }
                 }
             },
 
             submitVerdict(verdict) {
-                if (this.state.auditMode) return;
+                if (this.state.isProcessing || this.state.auditMode) return;
+                this.state.isProcessing = true;
                 this.stamp(verdict);
                 clearInterval(this.clockTimer);
 
@@ -1231,33 +1247,34 @@
                     if (verdict === 'approve') {
                         if (c.category === 1) {
                             correct = true;
-                            reason = "Company is mathematically sound and structurally stable. Good work.";
+                            reason = "Correct! The company's financials are legitimate, profitable, and solvent.";
                         } else if (c.category === 2) {
                             correct = false;
-                            reason = `You approved a failing company. ${c.denyReason}`;
+                            reason = `Incorrect! You approved an insolvent/failing company. Reason: ${c.denyReason}`;
                         } else if (c.category === 3) {
                             correct = false;
-                            reason = `You approved a fraudulent company. ${c.fraudExplanation}`;
+                            reason = `Incorrect! You approved a fraudulent company! Reason: ${c.fraudExplanation}`;
                         }
                     } else if (verdict === 'deny') {
                         if (c.category === 2) {
                             correct = true;
-                            reason = `Correctly denied. ${c.denyReason}`;
+                            reason = `Correctly denied! Reason: ${c.denyReason}`;
                         } else if (c.category === 1) {
                             correct = false;
-                            reason = "You denied a perfectly healthy company. This halts economic growth.";
+                            reason = "Incorrect! You denied a perfectly healthy, solvent company. Ministry reprimand issued.";
                         } else if (c.category === 3) {
                             correct = false;
-                            reason = `You denied the company, but missed the fraud! They must be AUDITED and reported for falsification! ${c.fraudExplanation}`;
+                            reason = `Incorrect! You denied the company, but missed criminal accounting fraud! Falsified records must be INSPECTED and reported! Reason: ${c.fraudExplanation}`;
                         }
                     }
 
                     this.showMemo(correct, reason);
-                }, 700);
+                }, 600);
             },
 
             auditRow(rowId) {
-                if (!this.state.auditMode) return;
+                if (!this.state.auditMode || this.state.isProcessing) return;
+                this.state.isProcessing = true;
                 clearInterval(this.clockTimer);
 
                 const c = this.currentCompany;
@@ -1266,24 +1283,27 @@
 
                 if (c.category === 3 && c.fraudTarget === rowId) {
                     correct = true;
-                    reason = `Fraud Intercepted! ${c.fraudExplanation} The Ministry corrupt practices unit has been dispatched.`;
+                    reason = `Fraud Intercepted! ${c.fraudExplanation} The Ministry Enforcement Division has been dispatched.`;
                     const elem = document.getElementById(rowId);
-                    if (elem) elem.style.backgroundColor = "rgba(41, 109, 53, 0.4)";
+                    if (elem) elem.style.backgroundColor = "rgba(41, 109, 53, 0.5)";
                 } else {
                     correct = false;
                     if (c.category === 3) {
-                        reason = `Invalid inspection target. The actual fraud was elsewhere: ${c.fraudExplanation}`;
+                        reason = `Incorrect inspection line! The actual fraud was located elsewhere: ${c.fraudExplanation}`;
                     } else if (c.category === 2) {
-                        reason = `Invalid inspection. The numbers are accurate, but the company is in financial collapse. You should have DENIED them.`;
+                        reason = `Incorrect inspection! The numbers are genuine, but the company is failing/insolvent. You should have DENIED them.`;
                     } else {
-                        reason = `Invalid inspection. This company's records are completely legal. You wasted Ministry time.`;
+                        reason = `Incorrect inspection! This company's financial records are completely legal and accurate. You wasted Ministry time.`;
                     }
                 }
 
-                this.showMemo(correct, reason);
+                setTimeout(() => {
+                    this.showMemo(correct, reason);
+                }, 400);
             },
 
             showMemo(correct, reasonText) {
+                this.els.memoDate.innerText = `31/12/2026`;
                 this.els.memoOverlay.style.display = 'flex';
                 void this.els.memoOverlay.offsetWidth;
                 this.els.memoOverlay.classList.add('visible');
@@ -1318,7 +1338,7 @@
                 setTimeout(() => {
                     this.els.memoOverlay.style.display = 'none';
                     if (this.state.penalties >= this.state.maxPenalties) {
-                        this.showDialog("TERMINATION DISPATCH", "You have accumulated maximum penalties. Clear your desk immediately.", "RESTART", () => {
+                        this.showDialog("TERMINATION DISPATCH", "You have accumulated 3 penalties and failed Ministry compliance standards. Desk privileges revoked.", "RESTART GAME", () => {
                             this.returnToMenu();
                         });
                     } else {
@@ -1387,7 +1407,6 @@
                         if (data.mode === mode) items.push(data);
                     });
 
-                    // Sort in memory (Rule 2 compliant)
                     items.sort((a, b) => b.wage - a.wage);
 
                     if (items.length === 0) {
