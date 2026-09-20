@@ -515,6 +515,16 @@
                     <div class="stamp-mark stamp-red" id="stamp-bs-den">DENIED</div>
                 </div>
             </div>
+
+            <!-- Action Tool Tray -->
+            <div id="tool-tray">
+                <button id="btn-approve" class="action-btn" onclick="game.submitVerdict('approve')">APPROVE</button>
+                <button id="btn-deny" class="action-btn" onclick="game.submitVerdict('deny')">DENY</button>
+                <button id="btn-audit" class="action-btn" onclick="game.toggleAuditMode()">INSPECT</button>
+                <button id="btn-cancel" class="action-btn" onclick="game.toggleAuditMode()">CANCEL</button>
+            </div>
+        </div>
+
     <!-- Rulebook Modal -->
     <div id="rulebook-open">
         <div class="close-btn" onclick="game.toggleRulebook()">✖</div>
