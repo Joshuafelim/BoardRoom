@@ -150,7 +150,7 @@
             font-family: 'VT323', monospace; 
             font-size: clamp(1.1rem, 3.5vw, 1.6rem);
             color: var(--ui-text); 
-            z-index: 100; /* High z-index to avoid overlay trapping */
+            z-index: 100;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
             gap: 12px;
             flex-shrink: 0;
@@ -176,15 +176,16 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
 
-        /* Desk Surface & Layout */
+        /* Desk Surface & Layout - FIXED PADDING TO PREVENT OVERLAP */
         #desk-surface {
             flex-grow: 1; 
             position: relative; 
             overflow-y: auto;
-            padding: 15px 12px 120px 12px;
+            padding: 15px 12px 180px 12px; /* Generous bottom padding so report content scrolls well clear of decision tray */
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
         }
 
         .dossier-layout {
@@ -256,7 +257,6 @@
             color: #fff;
         }
 
-        /* Compact Minimized State */
         .company-card.minimized {
             padding: 6px 12px;
             max-width: 900px;
@@ -308,7 +308,6 @@
             width: 100%;
         }
 
-        /* Senior mode side-by-side grid styling */
         .senior-side-by-side {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -362,7 +361,6 @@
         .doc-table tr.section-head td { font-weight: bold; padding-top: 8px; border-bottom: none; text-decoration: underline; text-transform: uppercase; font-size: 0.73rem; }
         .indent td:first-child { padding-left: 10px; }
 
-        /* Audit Mode Cell Highlighting */
         body.audit-mode .doc-table tr:hover, 
         body.audit-mode .doc-header:hover,
         body.audit-mode .company-card-selectable:hover {
@@ -376,46 +374,64 @@
             outline: 2px solid var(--ink-red) !important;
         }
 
-        /* Action Buttons & Tool Tray */
+        /* RE-ENGINEERED DOCK / TOOL TRAY TO FIX REPORT OVERLAP */
         #tool-tray {
             position: fixed; 
-            right: 15px; 
-            bottom: 15px;
-            background: #181b19; 
+            bottom: 16px; 
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(24, 27, 25, 0.95); 
+            backdrop-filter: blur(8px);
             border: 2px solid #374151; 
-            border-radius: 8px;
-            padding: 8px; 
+            border-radius: 12px;
+            padding: 10px 16px; 
             display: flex; 
-            flex-direction: column; 
-            gap: 8px;
-            box-shadow: inset 0 0 10px #000, 3px 3px 12px rgba(0,0,0,0.8);
+            flex-direction: row; 
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
             z-index: 100;
+            max-width: 96vw;
+            flex-wrap: wrap;
         }
 
         @media (max-width: 640px) {
             #tool-tray {
-                position: fixed; bottom: 0; left: 0; right: 0;
-                width: 100%; flex-direction: row; justify-content: center;
-                border-radius: 0; border-top: 3px solid #111; padding: 6px; z-index: 100;
+                position: fixed; 
+                bottom: 0; 
+                left: 0; 
+                right: 0;
+                transform: none;
+                width: 100%; 
+                max-width: 100%;
+                flex-direction: row; 
+                justify-content: center;
+                border-radius: 0; 
+                border-top: 3px solid #374151; 
+                border-left: none; border-right: none; border-bottom: none;
+                padding: 8px 6px; 
+                gap: 6px;
+                z-index: 100;
                 flex-wrap: wrap;
             }
-            #desk-surface { padding-bottom: 140px; }
+            #desk-surface { padding-bottom: 210px; }
         }
 
         .action-btn {
             min-width: 100px; 
-            min-height: 44px; /* Ensure 44px minimum tap target */
+            min-height: 44px;
             font-family: 'Courier Prime', monospace;
             font-weight: bold; 
             font-size: 0.82rem; 
             color: #fff; 
             cursor: pointer;
             border: 2px solid #000; 
-            border-radius: 4px; 
+            border-radius: 6px; 
             text-transform: uppercase;
             box-shadow: 0 3px 0 #000; 
             transition: transform 0.1s, box-shadow 0.1s;
-            padding: 0 10px;
+            padding: 0 12px;
             touch-action: manipulation;
         }
         .action-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
@@ -428,7 +444,6 @@
         #btn-shredder { background: #7c2d12; color: #fff; }
         #btn-golden-stamp { background: #b45309; color: #fff; }
 
-        /* Stamp Animations */
         .stamp-mark {
             position: absolute; 
             top: 45%; left: 50%;
@@ -451,53 +466,101 @@
         .stamp-red { color: var(--ink-red); border-color: var(--ink-red); transform: translate(-50%, -50%) rotate(8deg) scale(2); }
         .stamp-red.visible { transform: translate(-50%, -50%) rotate(8deg) scale(1); display: block; }
 
-        /* Modals & Overlays */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); z-index: 300;
-            display: none; justify-content: center; align-items: center; padding: 15px;
+            display: none; 
+            justify-content: center; 
+            align-items: flex-start;
+            padding: 16px 12px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-card {
+            width: 100%; 
+            max-width: 560px; 
+            max-height: calc(100vh - 32px);
+            max-height: calc(100dvh - 32px);
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            background: #f4f1ea; 
+            border-left: 10px solid #1f2937; 
+            padding: 16px 18px; 
+            box-shadow: 0 10px 35px rgba(0,0,0,0.9);
+            color: #111827; 
+            font-size: 0.88rem; 
+            position: relative;
+            border-radius: 6px;
             overflow-y: auto;
         }
-        .modal-card {
-            width: 100%; max-width: 580px; 
-            background: #f4f1ea; border-left: 12px solid #1f2937; 
-            padding: 22px; box-shadow: 0 10px 35px rgba(0,0,0,0.9);
-            color: #111827; font-size: 0.9rem; position: relative;
-            border-radius: 4px;
-        }
 
-        .memo-header { display: flex; justify-content: space-between; border-bottom: 2px solid #111827; margin-bottom: 12px; padding-bottom: 4px; font-weight: bold;}
-        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.25rem; font-weight: bold; margin-bottom: 8px;}
-        .memo-status-WARNING { color: var(--ink-gold); font-size: 1.25rem; font-weight: bold; margin-bottom: 8px;}
-        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.25rem; font-weight: bold; margin-bottom: 8px;}
-        .memo-body { margin-bottom: 16px; line-height: 1.5; font-size: 0.88rem; }
-        .memo-btn { background: #1f2937; color: #fff; border: none; padding: 10px 18px; cursor: pointer; font-family: inherit; font-weight: bold; border-radius: 4px; min-height: 44px; }
+        .memo-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-bottom: 2px solid #111827; 
+            margin-bottom: 8px; 
+            padding-bottom: 4px; 
+            font-weight: bold;
+            font-size: 0.82rem;
+            flex-shrink: 0;
+        }
+        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;}
+        .memo-status-WARNING { color: var(--ink-gold); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;}
+        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;}
+        
+        .memo-body { 
+            margin-bottom: 12px; 
+            line-height: 1.4; 
+            font-size: 0.84rem; 
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .memo-btn { 
+            background: #1f2937; 
+            color: #fff; 
+            border: none; 
+            padding: 10px 16px; 
+            cursor: pointer; 
+            font-family: inherit; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            min-height: 44px;
+            flex-shrink: 0;
+        }
         .memo-btn:hover { background: #374151; }
 
-        /* Structured Error Feedback Blocks */
+        .feedback-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        @media (max-width: 500px) {
+            .feedback-grid { grid-template-columns: 1fr; }
+        }
+
         .feedback-section {
             background: #e5dfd3;
             border: 1px solid #d1d5db;
             border-left: 4px solid #b91c1c;
-            padding: 10px 12px;
+            padding: 8px 10px;
             border-radius: 4px;
-            margin-bottom: 10px;
         }
-        .feedback-section.correct-border {
-            border-left-color: #15803d;
-        }
-        .feedback-section.warning-border {
-            border-left-color: #b45309;
-        }
+        .feedback-section.correct-border { border-left-color: #15803d; }
+        .feedback-section.warning-border { border-left-color: #b45309; }
+        
         .feedback-title {
             font-weight: bold;
-            font-size: 0.82rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             color: #111827;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
-        /* Mode Selection Buttons */
         .mode-btn {
             background: #1f2937; 
             border: 2px solid #4b5563; 
@@ -516,7 +579,6 @@
         .mode-btn:hover { background: #374151; border-color: #f59e0b; transform: scale(1.01); }
         .mode-desc { font-size: 0.78rem; font-weight: normal; color: #9ca3af; margin-top: 4px; display: block; line-height: 1.3;}
 
-        /* Tab Switchers */
         .doc-tab-bar { display: flex; gap: 8px; margin-bottom: 10px; width: 100%; justify-content: center; }
         .doc-tab {
             background: #1f2937; color: #9ca3af; border: 1px solid #4b5563;
@@ -525,32 +587,21 @@
         }
         .doc-tab.active { background: var(--paper-main); color: var(--ink); border-color: #9ca3af; }
 
-        /* Reject Reason Option */
         .reject-option {
             background: #fff;
             border: 2px solid #d1d5db;
             border-radius: 6px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            min-height: 48px;
+            min-height: 44px;
         }
-        .reject-option:hover {
-            border-color: #b91c1c;
-            background: #fef2f2;
-        }
-        .reject-option.selected {
-            border-color: #b91c1c;
-            background: #fee2e2;
-            box-shadow: 0 0 0 2px #b91c1c;
-        }
-        .reject-radio {
-            margin-top: 3px;
-            accent-color: #b91c1c;
-        }
+        .reject-option:hover { border-color: #b91c1c; background: #fef2f2; }
+        .reject-option.selected { border-color: #b91c1c; background: #fee2e2; box-shadow: 0 0 0 2px #b91c1c; }
+        .reject-radio { margin-top: 3px; accent-color: #b91c1c; }
     </style>
 </head>
 <body>
@@ -598,31 +649,31 @@
 
     <!-- MORNING BRIEFING OVERLAY -->
     <div id="briefing-overlay" class="modal-overlay">
-        <div class="modal-card" style="max-width: 580px; border-left-color: #f59e0b;">
+        <div class="modal-card" style="border-left-color: #f59e0b;">
             <div class="memo-header">
                 <span>GP CAPITAL // INVESTMENT COMMITTEE BRIEFING</span>
                 <span id="briefing-date">DAY 1</span>
             </div>
             
-            <h2 id="briefing-title" style="font-size: 1.3rem; font-weight: bold; margin-bottom: 10px; color: #111827;">DAILY DESK DIRECTIVES</h2>
+            <h2 id="briefing-title" style="font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: #111827;">DAILY DESK DIRECTIVES</h2>
             
-            <div style="background: #e5dfd3; border: 1px solid #d1d5db; padding: 12px; border-radius: 4px; margin-bottom: 14px;">
-                <div style="font-weight: bold; font-size: 0.78rem; color: #92400e; text-transform: uppercase;">📌 RULE OF THE DAY</div>
-                <div id="briefing-rule-text" style="font-size: 0.9rem; font-weight: bold; margin-top: 4px;">Rule loading...</div>
+            <div style="background: #e5dfd3; border: 1px solid #d1d5db; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div style="font-weight: bold; font-size: 0.75rem; color: #92400e; text-transform: uppercase;">📌 RULE OF THE DAY</div>
+                <div id="briefing-rule-text" style="font-size: 0.85rem; font-weight: bold; margin-top: 2px;">Rule loading...</div>
             </div>
 
-            <div id="briefing-note-box" style="background: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 4px; margin-bottom: 18px; display: none;">
-                <div style="font-weight: bold; font-size: 0.78rem; color: #78350f; text-transform: uppercase;">✉️ PARTNER DIRECTIVE / DAILY NOTE</div>
-                <div id="briefing-note-text" style="font-size: 0.88rem; margin-top: 4px; font-style: italic;">Note loading...</div>
+            <div id="briefing-note-box" style="background: #fef3c7; border: 1px solid #f59e0b; padding: 10px; border-radius: 4px; margin-bottom: 12px; display: none;">
+                <div style="font-weight: bold; font-size: 0.75rem; color: #78350f; text-transform: uppercase;">✉️ PARTNER DIRECTIVE / DAILY NOTE</div>
+                <div id="briefing-note-text" style="font-size: 0.82rem; margin-top: 2px; font-style: italic;">Note loading...</div>
             </div>
 
-            <div style="font-size: 0.82rem; color: #4b5563; margin-bottom: 20px; line-height: 1.4;">
+            <div style="font-size: 0.8rem; color: #4b5563; margin-bottom: 14px; line-height: 1.4;">
                 • <strong>Approve</strong> sound deals.<br>
                 • <strong>Reject</strong> weak deals (pick the main failure reason).<br>
                 • <strong>Audit Mode</strong> to isolate fraud or identity mismatches for full bounty.
             </div>
 
-            <button onclick="game.startShiftQueue()" class="memo-btn" style="width: 100%; padding: 12px; font-size: 1rem; background: #15803d;">OPEN DEAL QUEUE ➔</button>
+            <button onclick="game.startShiftQueue()" class="memo-btn" style="width: 100%; font-size: 0.95rem; background: #15803d;">OPEN DEAL QUEUE ➔</button>
         </div>
     </div>
 
@@ -636,7 +687,6 @@
             <div class="hud-stat">💵 PAY: $<span id="hud-wage" class="hud-value">50</span></div>
             <div class="hud-stat">⭐ REP: <span id="hud-rep" class="hud-value">20</span></div>
             <div class="hud-stat">⚠️ CITATIONS: <span id="hud-citations" class="hud-value">0/4</span></div>
-            <!-- FIX 3: EXIT DESK CONTROL - Ensure high z-index, explicit pointer-events, proper button type, and min 44px tap area -->
             <button type="button" id="btn-exit-desk" onclick="game.openExitConfirmModal()" style="background:#1f2937; color:#f3f4f6; border:1px solid #4b5563; border-radius:4px; padding:6px 14px; cursor:pointer; font-family:inherit; font-size:0.88rem; font-weight:bold; min-height:44px; z-index:105; pointer-events:auto; touch-action:manipulation;">EXIT DESK</button>
         </div>
 
@@ -656,7 +706,7 @@
             </div>
 
             <div class="dossier-layout">
-                <!-- COMPANY CARD (Minimizable & Draggable) -->
+                <!-- COMPANY CARD -->
                 <div class="company-card company-card-selectable" id="company-card-box">
                     <div class="company-card-header" id="company-card-drag-handle" title="Drag to relocate card">
                         <div style="display:flex; align-items:center; gap:6px;">
@@ -711,7 +761,7 @@
                 </div>
             </div>
 
-            <!-- ACTION TOOL TRAY -->
+            <!-- ACTION TOOL TRAY (RE-POSITIONED DOCK DOCK AT BOTTOM) -->
             <div id="tool-tray">
                 <button id="btn-approve" class="action-btn" onclick="game.submitApprove()">APPROVE</button>
                 <button id="btn-reject" class="action-btn" onclick="game.openRejectModal()">REJECT</button>
@@ -727,14 +777,14 @@
     <!-- REJECT REASON MODAL -->
     <div id="reject-modal" class="modal-overlay">
         <div class="modal-card">
-            <h2 style="font-size: 1.15rem; font-weight: bold; border-bottom: 2px solid #111827; padding-bottom: 6px; margin-bottom: 8px; color: #b91c1c;">
+            <h2 style="font-size: 1.1rem; font-weight: bold; border-bottom: 2px solid #111827; padding-bottom: 4px; margin-bottom: 6px; color: #b91c1c;">
                 Why reject this deal pack?
             </h2>
-            <p style="font-size: 0.82rem; color: #4b5563; margin-bottom: 14px;">
+            <p style="font-size: 0.8rem; color: #4b5563; margin-bottom: 10px;">
                 Pick the main reason for the Investment Committee.
             </p>
 
-            <div id="reject-reasons-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <div id="reject-reasons-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
                 <!-- Injected dynamically -->
             </div>
 
@@ -751,7 +801,7 @@
             <div class="memo-header">
                 <span>EXIT DESK CONFIRMATION</span>
             </div>
-            <p style="font-size: 0.9rem; color: #111827; margin-bottom: 16px; line-height: 1.5;">
+            <p style="font-size: 0.88rem; color: #111827; margin-bottom: 14px; line-height: 1.4;">
                 Leave the analyst desk? Progress and stats are saved locally. You can resume anytime.
             </p>
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -761,7 +811,7 @@
         </div>
     </div>
 
-    <!-- SUPERVISOR / INTERNAL REVIEW MEMO (ENHANCED FEEDBACK FORMAT) -->
+    <!-- SUPERVISOR / INTERNAL REVIEW MEMO (DECISION POPUP FIXED) -->
     <div id="memo-overlay" class="modal-overlay">
         <div class="modal-card" id="memo-card">
             <div class="memo-header">
@@ -769,128 +819,123 @@
                 <span id="memo-date">31/12/2026</span>
             </div>
             
-            <!-- Item 1: Status Line -->
             <div id="memo-status-line" class="memo-status-CORRECT">STATUS: CORRECT</div>
 
             <div id="memo-body" class="memo-body">
-                <!-- Item 2: Correct Action -->
-                <div class="feedback-section correct-border">
-                    <div class="feedback-title">Correct Action</div>
-                    <div id="memo-correct-action" style="font-weight: bold; font-size: 0.95rem; color: #111827;">APPROVE</div>
+                <div class="feedback-grid">
+                    <div class="feedback-section correct-border">
+                        <div class="feedback-title">Correct Action</div>
+                        <div id="memo-correct-action" style="font-weight: bold; font-size: 0.9rem; color: #111827;">APPROVE</div>
+                    </div>
+
+                    <div id="memo-reason-bucket-wrapper" class="feedback-section warning-border" style="display:none;">
+                        <div class="feedback-title">Committee Reason Bucket</div>
+                        <div id="memo-reason-bucket" style="font-weight: bold; font-size: 0.88rem; color: #78350f;">Weak margins</div>
+                    </div>
                 </div>
 
-                <!-- Item 3: Correct Reject Reason Bucket (If Reject involved) -->
-                <div id="memo-reason-bucket-wrapper" class="feedback-section warning-border" style="display:none;">
-                    <div class="feedback-title">Correct Committee Reason Bucket</div>
-                    <div id="memo-reason-bucket" style="font-weight: bold; color: #78350f;">Weak margins</div>
-                </div>
-
-                <!-- Item 4: Discrepancy / Issue Block -->
                 <div class="feedback-section">
-                    <div id="memo-discrepancy-title" class="feedback-title" style="color:#b91c1c;">What was wrong</div>
-                    <ul id="memo-discrepancy-bullets" style="font-size: 0.85rem; color: #1f2937; margin: 0; padding-left: 18px; line-height: 1.4;">
+                    <div id="memo-discrepancy-title" class="feedback-title" style="color:#b91c1c;">What was wrong / Audit Finding</div>
+                    <ul id="memo-discrepancy-bullets" style="font-size: 0.82rem; color: #1f2937; margin: 0; padding-left: 16px; line-height: 1.35;">
                         <li>Gross Profit misstated. Revenue 200 − Cost 120 = 80, but pack shows 110.</li>
                     </ul>
                 </div>
 
-                <!-- Item 5: Working Comparison -->
                 <div class="feedback-section">
                     <div class="feedback-title">Working / Identity Check</div>
-                    <div id="memo-working" style="font-size: 0.84rem; font-family: monospace; color: #111827;">Gross Profit = 200 − 120 = 80 (Reported: 110)</div>
+                    <div id="memo-working" style="font-size: 0.82rem; font-family: monospace; color: #111827;">Gross Profit = 200 − 120 = 80 (Reported: 110)</div>
                 </div>
 
-                <!-- Item 6: Investment Committee Implication -->
                 <div class="feedback-section">
                     <div class="feedback-title">Committee Implication</div>
-                    <div id="memo-implication" style="font-size: 0.84rem; color: #374151; font-style: italic;">Overstated margins obscure real operational losses.</div>
+                    <div id="memo-implication" style="font-size: 0.82rem; color: #374151; font-style: italic;">Overstated margins obscure real operational losses.</div>
                 </div>
 
-                <!-- Item 7: Cash / Rep Delta -->
-                <div class="feedback-section correct-border" style="display:flex; justify-content:space-around; align-items:center;">
-                    <div id="memo-delta-pay" style="font-weight:bold; color:#15803d;">PAY: +$50</div>
-                    <div id="memo-delta-rep" style="font-weight:bold; color:#15803d;">REP: +5</div>
-                    <div id="memo-delta-cit" style="font-weight:bold; color:#b91c1c; display:none;">CITATIONS: +1</div>
+                <div class="feedback-section correct-border" style="display:flex; justify-space-around; align-items:center; padding:6px 10px;">
+                    <div id="memo-delta-pay" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">PAY: +$50</div>
+                    <div id="memo-delta-rep" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">REP: +5</div>
+                    <div id="memo-delta-cit" style="font-weight:bold; color:#b91c1c; font-size: 0.85rem; display:none;">CITATIONS: +1</div>
                 </div>
             </div>
 
-            <div style="background: #e5dfd3; border: 1px dashed #9ca3af; padding: 10px; border-radius: 4px; margin-bottom: 16px; font-size: 0.82rem; color: #374151;">
+            <div style="background: #e5dfd3; border: 1px dashed #9ca3af; padding: 8px 10px; border-radius: 4px; margin-bottom: 12px; font-size: 0.78rem; color: #374151; flex-shrink: 0;">
                 <strong>Desk Directive Rule:</strong> <span id="memo-pedagogy">Details...</span>
             </div>
             
-            <button class="memo-btn" onclick="game.closeMemo()" style="width: 100%;">ACKNOWLEDGE & CONTINUE ➔</button>
+            <button class="memo-btn" onclick="game.closeMemo()" style="width: 100%; background: #15803d;">ACKNOWLEDGE & CONTINUE ➔</button>
         </div>
     </div>
 
     <!-- SHIFT SETTLEMENT & DESK SHOP MODAL -->
     <div id="settlement-overlay" class="modal-overlay">
-        <div class="modal-card" style="max-width: 540px; border-left-color: #15803d;">
-            <h2 id="settlement-title" style="font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; text-align: center; color: #15803d;">
+        <div class="modal-card" style="max-width: 520px; border-left-color: #15803d;">
+            <h2 id="settlement-title" style="font-size: 1.3rem; font-weight: bold; margin-bottom: 8px; text-align: center; color: #15803d;">
                 SHIFT SETTLEMENT
             </h2>
             
-            <div style="background: #111312; border: 1px solid #374151; padding: 12px; border-radius: 6px; margin-bottom: 16px; color: #d1d5db; font-size: 0.88rem; line-height: 1.8;">
+            <div style="background: #111312; border: 1px solid #374151; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; color: #d1d5db; font-size: 0.82rem; line-height: 1.7;">
                 <div style="display:flex; justify-content:space-between;"><span>Shift Deal Bonuses:</span> <span id="settle-bonuses" style="color:#4ade80; font-weight:bold;">+$0</span></div>
                 <div style="display:flex; justify-content:space-between;"><span>Internal Review Citations Penalty:</span> <span id="settle-penalties" style="color:#f87171; font-weight:bold;">-$0</span></div>
-                <div style="display:flex; justify-content:space-between; border-top: 1px solid #374151; padding-top: 4px;"><span>Jakarta Office Desk Rent:</span> <span id="settle-rent" style="color:#f87171; font-weight:bold;">-$30</span></div>
-                <div style="display:flex; justify-content:space-between; border-top: 2px solid #4b5563; padding-top: 6px; font-weight:bold; font-size: 1rem;"><span>NET CUMULATIVE BALANCE:</span> <span id="settle-total" style="color:#f59e0b;">$50</span></div>
+                <div style="display:flex; justify-content:space-between; border-top: 1px solid #374151; padding-top: 3px;"><span>Jakarta Office Desk Rent:</span> <span id="settle-rent" style="color:#f87171; font-weight:bold;">-$30</span></div>
+                <div style="display:flex; justify-content:space-between; border-top: 2px solid #4b5563; padding-top: 4px; font-weight:bold; font-size: 0.95rem;"><span>NET CUMULATIVE BALANCE:</span> <span id="settle-total" style="color:#f59e0b;">$50</span></div>
             </div>
 
-            <div style="font-size: 0.8rem; text-transform: uppercase; color: #4b5563; margin-bottom: 8px; font-weight: bold;">GP Capital Desk Supply Shop</div>
+            <div style="font-size: 0.78rem; text-transform: uppercase; color: #4b5563; margin-bottom: 6px; font-weight: bold;">GP Capital Desk Supply Shop</div>
             
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:8px 12px; border-radius:4px; border:1px solid #d1d5db;">
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:6px 10px; border-radius:4px; border:1px solid #d1d5db;">
                     <div>
-                        <div style="font-weight:bold; font-size:0.85rem; color:#92400e;">☕ Desk Espresso ($25)</div>
-                        <div style="font-size:0.75rem; color:#4b5563;">+30 Seconds extra shift timer tomorrow</div>
+                        <div style="font-weight:bold; font-size:0.82rem; color:#92400e;">☕ Desk Espresso ($25)</div>
+                        <div style="font-size:0.72rem; color:#4b5563;">+30 Seconds extra shift timer tomorrow</div>
                     </div>
-                    <button id="buy-coffee-btn" onclick="game.buyItem('coffee')" class="memo-btn" style="padding: 6px 12px; background:#d97706;">BUY ($25) [Owned: 0]</button>
+                    <button id="buy-coffee-btn" onclick="game.buyItem('coffee')" class="memo-btn" style="padding: 4px 10px; font-size:0.78rem; background:#d97706;">BUY ($25) [Owned: 0]</button>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:8px 12px; border-radius:4px; border:1px solid #d1d5db;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:6px 10px; border-radius:4px; border:1px solid #d1d5db;">
                     <div>
-                        <div style="font-weight:bold; font-size:0.85rem; color:#b91c1c;">🖊️ Red Marker Pro ($40)</div>
-                        <div style="font-size:0.75rem; color:#4b5563;">Increases daily citation limit from 4 to 5</div>
+                        <div style="font-weight:bold; font-size:0.82rem; color:#b91c1c;">🖊️ Red Marker Pro ($40)</div>
+                        <div style="font-size:0.72rem; color:#4b5563;">Increases daily citation limit from 4 to 5</div>
                     </div>
-                    <button id="buy-marker-btn" onclick="game.buyItem('marker')" class="memo-btn" style="padding: 6px 12px; background:#b91c1c;">BUY ($40)</button>
+                    <button id="buy-marker-btn" onclick="game.buyItem('marker')" class="memo-btn" style="padding: 4px 10px; font-size:0.78rem; background:#b91c1c;">BUY ($40)</button>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:8px 12px; border-radius:4px; border:1px solid #d1d5db;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:6px 10px; border-radius:4px; border:1px solid #d1d5db;">
                     <div>
-                        <div style="font-weight:bold; font-size:0.85rem; color:#15803d;">🛡️ Internal Review Shield ($45)</div>
-                        <div style="font-size:0.75rem; color:#4b5563;">Absorbs 1 citation penalty without failing</div>
+                        <div style="font-weight:bold; font-size:0.82rem; color:#15803d;">🛡️ Internal Review Shield ($45)</div>
+                        <div style="font-size:0.72rem; color:#4b5563;">Absorbs 1 citation penalty without failing</div>
                     </div>
-                    <button id="buy-shield-btn" onclick="game.buyItem('shield')" class="memo-btn" style="padding: 6px 12px; background:#15803d;">BUY ($45) [Owned: 0]</button>
+                    <button id="buy-shield-btn" onclick="game.buyItem('shield')" class="memo-btn" style="padding: 4px 10px; font-size:0.78rem; background:#15803d;">BUY ($45) [Owned: 0]</button>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:8px 12px; border-radius:4px; border:1px solid #d1d5db;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:6px 10px; border-radius:4px; border:1px solid #d1d5db;">
                     <div>
-                        <div style="font-weight:bold; font-size:0.85rem; color:#7c2d12;">🗑️ Industrial Shredder ($30)</div>
-                        <div style="font-size:0.75rem; color:#4b5563;">Skip 1 suspicious dossier safely</div>
+                        <div style="font-weight:bold; font-size:0.82rem; color:#7c2d12;">🗑️ Industrial Shredder ($30)</div>
+                        <div style="font-size:0.72rem; color:#4b5563;">Skip 1 suspicious dossier safely</div>
                     </div>
-                    <button id="buy-shredder-btn" onclick="game.buyItem('shredder')" class="memo-btn" style="padding: 6px 12px; background:#7c2d12;">BUY ($30) [Owned: 0]</button>
+                    <button id="buy-shredder-btn" onclick="game.buyItem('shredder')" class="memo-btn" style="padding: 4px 10px; font-size:0.78rem; background:#7c2d12;">BUY ($30) [Owned: 0]</button>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:8px 12px; border-radius:4px; border:1px solid #d1d5db;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#e5dfd3; padding:6px 10px; border-radius:4px; border:1px solid #d1d5db;">
                     <div>
-                        <div style="font-weight:bold; font-size:0.85rem; color:#b45309;">🌟 Golden Pass Stamp ($60)</div>
-                        <div style="font-size:0.75rem; color:#4b5563;">Auto-clears 1 deal pack with guaranteed full credit</div>
+                        <div style="font-weight:bold; font-size:0.82rem; color:#b45309;">🌟 Golden Pass Stamp ($60)</div>
+                        <div style="font-size:0.72rem; color:#4b5563;">Auto-clears 1 deal pack with guaranteed full credit</div>
                     </div>
-                    <button id="buy-goldstamp-btn" onclick="game.buyItem('goldstamp')" class="memo-btn" style="padding: 6px 12px; background:#b45309;">BUY ($60) [Owned: 0]</button>
+                    <button id="buy-goldstamp-btn" onclick="game.buyItem('goldstamp')" class="memo-btn" style="padding: 4px 10px; font-size:0.78rem; background:#b45309;">BUY ($60) [Owned: 0]</button>
                 </div>
             </div>
 
-            <button onclick="game.nextDay()" class="memo-btn" style="width: 100%; padding: 12px; font-size: 1rem; background: #15803d;">START NEXT SHIFT ➔</button>
+            <button onclick="game.nextDay()" class="memo-btn" style="width: 100%; font-size: 0.95rem; background: #15803d;">START NEXT SHIFT ➔</button>
         </div>
     </div>
 
     <!-- GAME OVER OVERLAY -->
     <div id="gameover-overlay" class="modal-overlay">
         <div class="modal-card" style="border-left-color: #b91c1c; text-align: center;">
-            <h2 style="font-size: 1.8rem; font-weight: bold; color: #b91c1c; margin-bottom: 8px;">INTERNAL REVIEW TERMINATION</h2>
-            <p style="font-size: 0.9rem; color: #374151; margin-bottom: 16px;" id="gameover-reason">
+            <h2 style="font-size: 1.6rem; font-weight: bold; color: #b91c1c; margin-bottom: 8px;">INTERNAL REVIEW TERMINATION</h2>
+            <p style="font-size: 0.88rem; color: #374151; margin-bottom: 14px;" id="gameover-reason">
                 You accumulated too many internal review citations. Your contract at Golden Parachute Capital has been revoked.
             </p>
-            <div style="background: #e5dfd3; padding: 12px; border-radius: 4px; margin-bottom: 20px; font-size: 0.88rem;">
+            <div style="background: #e5dfd3; padding: 10px; border-radius: 4px; margin-bottom: 16px; font-size: 0.85rem;">
                 <strong>Final Stats:</strong> Days Survived: <span id="go-days">0</span> | Final Pay: $<span id="go-cash">0</span> | Rep: <span id="go-rep">0</span>
             </div>
             <button onclick="location.reload()" class="memo-btn" style="background: #b91c1c; width: 100%;">RETURN TO MAIN MENU</button>
@@ -899,17 +944,17 @@
 
     <!-- TEACHER PANEL MODAL -->
     <div id="teacher-overlay" class="modal-overlay">
-        <div class="modal-card" style="max-width: 620px; border-left-color: #0891b2;">
+        <div class="modal-card" style="max-width: 580px; border-left-color: #0891b2;">
             <div class="memo-header">
                 <span>TEACHER & AUDITOR CONTROL PANEL</span>
                 <button onclick="game.closeTeacherPanel()" style="background:none; border:none; font-weight:bold; cursor:pointer;">✖</button>
             </div>
             
-            <div style="font-size: 0.82rem; color: #374151; margin-bottom: 12px;">
+            <div style="font-size: 0.8rem; color: #374151; margin-bottom: 10px;">
                 Inspect live queue parameters, current expected verdict, rule flags, and dossier mix distribution verification.
             </div>
 
-            <div style="background: #111827; color: #f3f4f6; padding: 12px; border-radius: 4px; font-size: 0.8rem; margin-bottom: 14px; text-align: left; max-height: 240px; overflow-y: auto;">
+            <div style="background: #111827; color: #f3f4f6; padding: 10px; border-radius: 4px; font-size: 0.78rem; margin-bottom: 12px; text-align: left; max-height: 200px; overflow-y: auto;">
                 <div><strong>Current Day Queue Pack Types:</strong> <span id="tp-queue-mix" style="color:#4ade80;">-</span></div>
                 <div><strong>Target Healthy Share Band:</strong> <span style="color:#f59e0b;">32% – 35%</span></div>
                 <hr style="border-color:#374151; margin:6px 0;">
@@ -922,16 +967,16 @@
                 <div><strong>Valid Audit Chains:</strong> <span id="tp-chains">-</span></div>
             </div>
 
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-                <button onclick="game.teacherForceMode('junior')" class="memo-btn" style="padding: 6px 12px; font-size:0.75rem; background:#374151;">Force Junior Desk</button>
-                <button onclick="game.teacherForceMode('senior')" class="memo-btn" style="padding: 6px 12px; font-size:0.75rem; background:#374151;">Force Senior Desk</button>
-                <button onclick="game.teacherAddCash(100)" class="memo-btn" style="padding: 6px 12px; font-size:0.75rem; background:#15803d;">+$100 Cash</button>
-                <button onclick="game.teacherResetCitations()" class="memo-btn" style="padding: 6px 12px; font-size:0.75rem; background:#b45309;">Reset Citations</button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                <button onclick="game.teacherForceMode('junior')" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#374151;">Force Junior Desk</button>
+                <button onclick="game.teacherForceMode('senior')" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#374151;">Force Senior Desk</button>
+                <button onclick="game.teacherAddCash(100)" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#15803d;">+$100 Cash</button>
+                <button onclick="game.teacherResetCitations()" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#b45309;">Reset Citations</button>
             </div>
 
-            <div style="margin-bottom: 14px;">
-                <label style="display:block; font-size:0.75rem; font-weight:bold; margin-bottom:4px;">Save / Assessment Hash Code:</label>
-                <input type="text" id="tp-save-code" readonly style="width:100%; background:#e5dfd3; border:1px solid #9ca3af; padding:6px; font-family:monospace; font-size:0.8rem;">
+            <div style="margin-bottom: 12px;">
+                <label style="display:block; font-size:0.72rem; font-weight:bold; margin-bottom:2px;">Save / Assessment Hash Code:</label>
+                <input type="text" id="tp-save-code" readonly style="width:100%; background:#e5dfd3; border:1px solid #9ca3af; padding:6px; font-family:monospace; font-size:0.78rem;">
             </div>
 
             <button onclick="game.closeTeacherPanel()" class="memo-btn" style="width: 100%;">CLOSE PANEL</button>
@@ -946,9 +991,9 @@
                 <button onclick="game.closeSaveCodeModal()" style="background:none; border:none; font-weight:bold; cursor:pointer;">✖</button>
             </div>
             
-            <p style="font-size:0.82rem; color:#374151; margin-bottom:12px;">Paste an encrypted progress code to resume your desk shift, or copy your current code:</p>
+            <p style="font-size:0.8rem; color:#374151; margin-bottom:10px;">Paste an encrypted progress code to resume your desk shift, or copy your current code:</p>
             
-            <textarea id="save-code-input" rows="4" style="width:100%; background:#fff; border:1px solid #9ca3af; border-radius:4px; padding:8px; font-family:monospace; font-size:0.8rem; margin-bottom:12px;"></textarea>
+            <textarea id="save-code-input" rows="3" style="width:100%; background:#fff; border:1px solid #9ca3af; border-radius:4px; padding:8px; font-family:monospace; font-size:0.78rem; margin-bottom:10px;"></textarea>
 
             <div style="display:flex; gap:10px;">
                 <button onclick="game.copySaveCode()" class="memo-btn" style="flex:1; background:#0891b2;">COPY CURRENT CODE</button>
@@ -958,7 +1003,6 @@
     </div>
 
     <script>
-        // Toast helper
         function showToast(message, duration = 3000) {
             const container = document.getElementById('toast-container');
             if (!container) return;
@@ -974,7 +1018,6 @@
             }, duration);
         }
 
-        // Rules Database (Grade 12 Pearson iAL Business Context)
         const RULES_POOL_JUNIOR = [
             { id: 'rule_gpm_20', text: 'Reject if Gross Profit is less than 20% of Revenue.', test: (d) => d.sci26.rev > 0 && (d.sci26.gp / d.sci26.rev) < 0.20, rejectReason: 'weak_margins' },
             { id: 'rule_pat_5', text: 'Reject if Profit After Tax (PAT) is less than 5% of Revenue.', test: (d) => d.sci26.rev > 0 && d.sci26.pat > 0 && (d.sci26.pat / d.sci26.rev) < 0.05, rejectReason: 'weak_margins' },
@@ -992,7 +1035,6 @@
             { id: 'rule_receivables_revenue', text: 'Reject if Trade Receivables exceed 2026 Annual Revenue.', test: (d) => d.bs26 && d.bs26.receivables > d.sci26.rev, rejectReason: 'bs_risk' }
         ];
 
-        // Daily Notes Pool (Partners / Senior Management Directives)
         const DAILY_NOTES_POOL = [
             { id: 'note_vip_sambal', title: 'Partner Memo: PT Sambal Api Utara', text: 'If arithmetic is clean, APPROVE PT Sambal Api Utara regardless of thin margins.', forceApproveName: 'PT Sambal Api Utara' },
             { id: 'note_pilot_startups', title: 'Pilot Incentive: Tech Startups', text: 'APPROVE clean loss-making firms founded in 2024 or later today.', approveStartups: true },
@@ -1011,7 +1053,7 @@
                 
                 const companyName = names[Math.floor(Math.random() * names.length)];
                 const industry = industries[Math.floor(Math.random() * industries.length)];
-                const foundedYear = Math.floor(Math.random() * 6) + 2020; // 2020 - 2025
+                const foundedYear = Math.floor(Math.random() * 6) + 2020;
                 const operatingYears = 2026 - foundedYear + 1;
 
                 const card = {
@@ -1023,9 +1065,6 @@
                     vip: companyName.includes("Sambal Api") ? "VIP Priority Partner" : null
                 };
 
-                // FEATURE 1: DOSSIER MIX REWEIGHTING (32-35% HEALTHY TARGET)
-                // Day 1 fixed mix (1 healthy, 1 weak, 1 fraud, 1 loss); Day 2+ applies new weighted picker:
-                // Healthy: ~34% (32-35%), Honest-weak: ~28%, Fraud: ~27%, Policy exception/Loss: ~11%
                 let packType = forcedType;
                 if (!packType) {
                     if (dayNumber === 1 && mode === 'junior') {
@@ -1034,23 +1073,22 @@
                     } else {
                         const rand = Math.random();
                         if (rand < 0.34) {
-                            packType = 'healthy'; // 34% share
+                            packType = 'healthy';
                         } else if (rand < 0.62) {
-                            packType = 'weak_margins'; // 28% share
+                            packType = 'weak_margins';
                         } else if (rand < 0.76) {
-                            packType = 'fraud_math'; // 14% share
+                            packType = 'fraud_math';
                         } else if (rand < 0.89) {
-                            packType = 'info_mismatch'; // 13% share
+                            packType = 'info_mismatch';
                         } else if (mode === 'senior' && Math.random() < 0.5) {
-                            packType = 'bs_risk'; // 5.5% share
+                            packType = 'bs_risk';
                         } else {
-                            packType = 'loss'; // ~5.5% share
+                            packType = 'loss';
                         }
                     }
                 }
 
-                // Clean 2026 SCI Numbers
-                let rev26 = Math.floor(Math.random() * 4 + 2) * 100; // 200, 300, 400, 500
+                let rev26 = Math.floor(Math.random() * 4 + 2) * 100;
                 let cos26 = Math.round(rev26 * (packType === 'weak_margins' ? 0.82 : 0.60) / 10) * 10;
                 let gp26 = rev26 - cos26;
                 
@@ -1064,7 +1102,6 @@
                 let pat26 = pbt26 - tax26;
 
                 if (packType === 'loss') {
-                    // Force clean loss
                     admin26 = gp26 + 30;
                     op26 = gp26 - sell26 - admin26;
                     pbt26 = op26 - fin26;
@@ -1072,7 +1109,6 @@
                     pat26 = pbt26;
                 }
 
-                // ALWAYS DIFFERING PRIOR YEAR (2025) - NEVER Photocopy Columns
                 let scale25 = (packType === 'collapse_yoy') ? 1.4 : 0.82;
                 let rev25 = Math.round((rev26 * scale25) / 10) * 10;
                 if (rev25 === rev26) rev25 = rev26 - 40;
@@ -1089,7 +1125,6 @@
                 const sci26 = { rev: rev26, cos: cos26, gp: gp26, sell: sell26, admin: admin26, op: op26, fin: fin26, pbt: pbt26, tax: tax26, pat: pat26 };
                 const sci25 = { rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 };
 
-                // SOFP / Balance Sheet (Senior Mode)
                 let bs26 = null, bs25 = null;
                 if (mode === 'senior') {
                     let ppe26 = 250, int26 = 50, inv26 = 80;
@@ -1114,7 +1149,7 @@
                     let cl_tot26 = pay26 + st_bor26 + o_cl26;
                     
                     if (packType === 'bs_risk' && !rec26) {
-                        cl_tot26 = ca_tot26 + 50; // CA < CL
+                        cl_tot26 = ca_tot26 + 50;
                     }
 
                     let pay25 = 60, st_bor25 = 25, o_cl25 = 10;
@@ -1155,7 +1190,7 @@
 
                 if (packType === 'fraud_math') {
                     isFraudMath = true;
-                    sci26.gp += 40; // Overstate GP
+                    sci26.gp += 40;
                     auditChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
                 } else if (packType === 'info_mismatch') {
                     isInfoMismatch = true;
@@ -1163,7 +1198,6 @@
                     auditChains.push(['card_all', 'sci_header']);
                 }
 
-                // PREAUTHOR DISCREPANCY TEXT & NUMERIC DETAILS FOR DISCREPANCY FEEDBACK BLOCK (FEATURE 2)
                 let primaryDiscrepancyText = [];
                 let workingText = "";
                 let implicationText = "";
@@ -1178,7 +1212,6 @@
                     workingText = `Identity check: Card ("${card.name}") ≠ Statement Header ("${sci26.headerName}").`;
                     implicationText = "Mismatching corporate entities suggests fraudulent documentation or wrong legal entity submission.";
                 } else if (packType === 'weak_margins') {
-                    const gpm = ((sci26.gp / sci26.rev) * 100).toFixed(1);
                     const npm = ((sci26.pat / sci26.rev) * 100).toFixed(1);
                     primaryDiscrepancyText.push(`Maths are clean, but profit margins are too thin. Net profit is only ${sci26.pat} on Revenue ${sci26.rev} (${npm}% margin) — below desk criteria.`);
                     workingText = `Margin calculation: Net Profit (${sci26.pat}) / Revenue (${sci26.rev}) = ${npm}%.`;
@@ -1199,7 +1232,7 @@
                         workingText = `Gearing check: Long-Term Debt (${bs26 ? bs26.ncl_total : 350}) > Equity (${bs26 ? bs26.equity_total : 50}).`;
                     }
                     implicationText = "Balance sheet over-leverage or illiquidity poses imminent insolvency risk for GP Capital capital.";
-                } else { // Healthy
+                } else {
                     primaryDiscrepancyText.push(`All financial statements are mathematically clean, margins are sound (PAT ${sci26.pat} on Rev ${sci26.rev}), and YoY trajectory is positive.`);
                     workingText = `Healthy Check: Revenue increased from ${sci25.rev} to ${sci26.rev}; PAT clean at ${sci26.pat}.`;
                     implicationText = "Sound commercial deal pack meeting all Investment Committee return thresholds.";
@@ -1227,7 +1260,7 @@
             constructor() {
                 this.mode = 'junior';
                 this.day = 1;
-                this.clockMinutes = 540; // 09:00 AM
+                this.clockMinutes = 540;
                 this.cash = 50;
                 this.rep = 20;
                 this.citations = 0;
@@ -1236,12 +1269,11 @@
                 this.queue = [];
                 this.currentDossierIndex = 0;
                 this.shiftTimer = null;
-                this.timeLeft = 120; // 2 mins default
+                this.timeLeft = 120;
 
                 this.activeRule = null;
                 this.activeNote = null;
 
-                // Persistent Shop Upgrades
                 this.inventory = {
                     coffee: 0,
                     marker: false,
@@ -1254,7 +1286,6 @@
                 this.isAuditMode = false;
                 this.currentRejectReason = null;
 
-                // Card minimize / drag state
                 this.isCardMinimized = false;
                 this.isDraggingCard = false;
                 this.dragOffset = { x: 0, y: 0 };
@@ -1268,22 +1299,19 @@
                 document.getElementById('main-menu').style.display = 'none';
                 document.getElementById('game-container').style.display = 'flex';
 
-                // Default Company Card State based on mode
-                // Senior default minimized to give maximum space to side-by-side statements
                 this.isCardMinimized = (this.mode === 'senior');
 
                 this.setupCardDrag();
                 this.setupDay();
             }
 
-            // FEATURE 4C: COMPANY CARD DRAG HANDLE IMPLEMENTATION
             setupCardDrag() {
                 const cardBox = document.getElementById('company-card-box');
                 const dragHandle = document.getElementById('company-card-drag-handle');
                 if (!dragHandle || !cardBox) return;
 
                 dragHandle.onpointerdown = (e) => {
-                    if (e.target.closest('#btn-toggle-card')) return; // ignore toggle button
+                    if (e.target.closest('#btn-toggle-card')) return;
                     this.isDraggingCard = true;
                     
                     const rect = cardBox.getBoundingClientRect();
@@ -1299,7 +1327,6 @@
                         let newX = ev.clientX - this.dragOffset.x;
                         let newY = ev.clientY - this.dragOffset.y;
 
-                        // Clamp inside viewport
                         newX = Math.max(10, Math.min(window.innerWidth - cardBox.offsetWidth - 10, newX));
                         newY = Math.max(60, Math.min(window.innerHeight - cardBox.offsetHeight - 10, newY));
 
@@ -1318,7 +1345,6 @@
                 };
             }
 
-            // FEATURE 4B: COMPANY CARD MINIMIZE / EXPAND TOGGLE
             toggleCompanyCard(e) {
                 if (e) e.stopPropagation();
                 this.isCardMinimized = !this.isCardMinimized;
@@ -1344,17 +1370,14 @@
                 this.selectedAuditCells.clear();
                 this.setAuditMode(false);
 
-                // Set citation limit based on shop
                 this.maxCitations = this.inventory.marker ? 5 : 4;
 
-                // Timer setup
                 this.timeLeft = 120 + (this.inventory.coffee > 0 ? 30 : 0);
                 if (this.inventory.coffee > 0) {
-                    this.inventory.coffee--; // consume 1 espresso
+                    this.inventory.coffee--;
                     showToast("☕ Used 1 Desk Espresso (+30s shift time)");
                 }
 
-                // Select Rule of the Day (Day 2+)
                 if (this.day === 1) {
                     this.activeRule = { id: 'rule_day1', text: 'Day 1 Orientation: Inspect margins & clear sound deals. Standard rejection rules apply.' };
                     this.activeNote = null;
@@ -1369,7 +1392,6 @@
                     }
                 }
 
-                // Build Day's 4 Deal Packs (Applying new mix reweighting)
                 this.queue = [];
                 for (let i = 0; i < 4; i++) {
                     this.queue.push(DossierGenerator.generate(this.mode, this.day));
@@ -1397,7 +1419,6 @@
             startShiftQueue() {
                 document.getElementById('briefing-overlay').style.display = 'none';
                 
-                // Pin rule & note
                 document.getElementById('pinned-rule').innerText = `📌 RULE OF THE DAY: ${this.activeRule.text}`;
                 const pinnedNote = document.getElementById('pinned-note');
                 if (this.activeNote) {
@@ -1415,7 +1436,7 @@
                 clearInterval(this.shiftTimer);
                 this.shiftTimer = setInterval(() => {
                     this.timeLeft--;
-                    this.clockMinutes += 1; // tick clock
+                    this.clockMinutes += 1;
                     this.updateHUD();
 
                     if (this.timeLeft <= 0) {
@@ -1448,7 +1469,6 @@
                     citElem.classList.remove('hud-warning');
                 }
 
-                // Action Tray Buttons
                 document.getElementById('btn-shredder').style.display = this.inventory.shredder > 0 ? 'inline-block' : 'none';
                 document.getElementById('shredder-count').innerText = this.inventory.shredder;
 
@@ -1466,7 +1486,6 @@
                 this.selectedAuditCells.clear();
                 this.setAuditMode(false);
 
-                // Populate Company Card
                 document.getElementById('card-company-name').innerText = d.card.name;
                 document.getElementById('card-minimized-summary').innerText = `• Founded: ${d.card.founded} (${d.card.industry})`;
                 document.getElementById('card-industry').innerText = d.card.industry;
@@ -1479,7 +1498,6 @@
 
                 this.renderCardMinimizedState();
 
-                // Populate SCI Table
                 const sciName = d.sci26.headerName || d.card.name;
                 document.getElementById('sci-company-name').innerText = sciName;
                 
@@ -1546,7 +1564,6 @@
                     </tbody>
                 `;
 
-                // FEATURE 4A: SENIOR MODE SIDE-BY-SIDE STATEMENTS LAYOUT
                 const docArea = document.getElementById('document-area-container');
                 const bsPaper = document.getElementById('doc-bs');
                 const tabContainer = document.getElementById('doc-tab-bar');
@@ -1609,7 +1626,6 @@
                     tabContainer.style.display = 'none';
                 }
 
-                // Reset Stamps
                 document.querySelectorAll('.stamp-mark').forEach(el => el.classList.remove('visible'));
             }
 
@@ -1654,13 +1670,11 @@
                     document.getElementById('btn-cancel-audit').style.display = 'inline-block';
                     document.getElementById('btn-stamp-audit').style.display = 'inline-block';
                     
-                    // Auto-expand card if entering audit mode so fields are accessible
                     if (this.isCardMinimized) {
                         this.isCardMinimized = false;
                         this.renderCardMinimizedState();
                     }
-
-                    showToast("🔍 AUDIT MODE ACTIVE: Select suspicious cells/headers & click Stamp Discrepancy");
+                    showToast("🔍 AUDIT MODE ACTIVE: Click discrepancy rows / card to select!");
                 } else {
                     document.body.classList.remove('audit-mode');
                     document.getElementById('btn-approve').style.display = 'inline-block';
@@ -1668,130 +1682,112 @@
                     document.getElementById('btn-audit').style.display = 'inline-block';
                     document.getElementById('btn-cancel-audit').style.display = 'none';
                     document.getElementById('btn-stamp-audit').style.display = 'none';
-                    this.clearMarkedCells();
+
+                    document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
+                    this.selectedAuditCells.clear();
                 }
             }
 
-            auditClick(elementId) {
+            auditClick(cellId) {
                 if (!this.isAuditMode) return;
 
-                if (this.selectedAuditCells.has(elementId)) {
-                    this.selectedAuditCells.delete(elementId);
+                const elem = document.getElementById(cellId);
+                if (this.selectedAuditCells.has(cellId)) {
+                    this.selectedAuditCells.delete(cellId);
+                    if (elem) elem.classList.remove('marked-discrepancy');
                 } else {
-                    this.selectedAuditCells.add(elementId);
+                    this.selectedAuditCells.add(cellId);
+                    if (elem) elem.classList.add('marked-discrepancy');
                 }
-
-                this.renderMarkedCells();
             }
 
-            renderMarkedCells() {
-                document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
-                
-                this.selectedAuditCells.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.add('marked-discrepancy');
-                });
-            }
+            getExpectedVerdict(d) {
+                if (d.isFraudMath) return { action: 'audit', reason: 'fraud_math' };
+                if (d.isInfoMismatch) return { action: 'audit', reason: 'info_mismatch' };
 
-            clearMarkedCells() {
-                this.selectedAuditCells.clear();
-                this.renderMarkedCells();
-            }
-
-            // EVALUATE DEAL PACK ACTIONS
-            evaluateCorrectAction(dossier) {
-                if (dossier.isFraudMath || dossier.isInfoMismatch) {
-                    return { action: 'audit', rejectReason: null };
+                if (this.activeNote && this.activeNote.forceApproveName === d.card.name) {
+                    return { action: 'approve', reason: 'vip_note' };
                 }
 
-                if (this.activeNote && this.activeNote.forceApproveName === dossier.card.name) {
-                    return { action: 'approve', rejectReason: null };
-                }
-
-                if (this.activeNote && this.activeNote.approveStartups && dossier.card.founded >= 2024 && dossier.sci26.pat <= 0) {
-                    return { action: 'approve', rejectReason: null };
+                if (this.activeNote && this.activeNote.approveStartups && d.card.founded >= 2024 && d.sci26.pat <= 0) {
+                    return { action: 'approve', reason: 'startup_pilot' };
                 }
 
                 if (this.activeRule && this.activeRule.test) {
-                    if (this.activeRule.test(dossier)) {
-                        return { action: 'reject', rejectReason: this.activeRule.rejectReason || 'weak_margins' };
+                    const ruleFailed = this.activeRule.test(d);
+                    if (ruleFailed) {
+                        return { action: 'reject', reason: this.activeRule.rejectReason || 'rule_violation' };
                     }
                 }
 
-                if (dossier.sci26.pat <= 0) {
-                    return { action: 'reject', rejectReason: 'loss_unprotected' };
-                }
+                if (d.packType === 'weak_margins') return { action: 'reject', reason: 'weak_margins' };
+                if (d.packType === 'loss') return { action: 'reject', reason: 'loss_unprotected' };
+                if (d.packType === 'bs_risk') return { action: 'reject', reason: 'bs_risk' };
 
-                if (dossier.sci26.gp / dossier.sci26.rev < 0.25 || dossier.sci26.pat / dossier.sci26.rev < 0.05) {
-                    return { action: 'reject', rejectReason: 'weak_margins' };
-                }
-
-                if (dossier.sci26.pat < dossier.sci25.pat * 0.70) {
-                    return { action: 'reject', rejectReason: 'worse_yoy' };
-                }
-
-                if (this.mode === 'senior' && dossier.bs26) {
-                    if (dossier.bs26.ca_total < dossier.bs26.cl_total || dossier.bs26.cash < 10 || dossier.bs26.ncl_total > dossier.bs26.equity_total || dossier.bs26.receivables > dossier.sci26.rev) {
-                        return { action: 'reject', rejectReason: 'bs_risk' };
-                    }
-                }
-
-                return { action: 'approve', rejectReason: null };
+                return { action: 'approve', reason: 'healthy' };
             }
 
             submitApprove() {
-                const dossier = this.queue[this.currentDossierIndex];
-                const expected = this.evaluateCorrectAction(dossier);
+                const d = this.queue[this.currentDossierIndex];
+                const expected = this.getExpectedVerdict(d);
 
                 if (expected.action === 'approve') {
-                    this.triggerStamp('approve');
-                    this.processResult('CORRECT', 'Approve', expected.rejectReason, 50, 5, 0, dossier);
-                } else if (expected.action === 'audit') {
-                    this.triggerStamp('reject');
-                    this.processResult('INCORRECT', 'Audit', expected.rejectReason, -50, -8, 1, dossier);
+                    document.getElementById('stamp-sci-app').classList.add('visible');
+                    setTimeout(() => {
+                        this.showMemo(true, 'APPROVE', 'APPROVE', null, d.primaryDiscrepancyText, d.workingText, d.implicationText, 50, 5, 0);
+                    }, 300);
                 } else {
-                    this.triggerStamp('reject');
-                    this.processResult('INCORRECT', 'Reject', expected.rejectReason, -30, -5, 1, dossier);
+                    document.getElementById('stamp-sci-app').classList.add('visible');
+                    setTimeout(() => {
+                        this.showMemo(false, 'APPROVE', expected.action.toUpperCase(), expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -20, -5, 1);
+                    }, 300);
                 }
             }
 
             openRejectModal() {
-                const container = document.getElementById('reject-reasons-list');
-                container.innerHTML = '';
-
-                const reasons = [
-                    { id: 'weak_margins', label: 'Weak margins', desc: 'Gross and/or net profit is too thin vs today\'s standard rule.' },
-                    { id: 'loss_unprotected', label: 'Loss — no protection', desc: 'PAT ≤ 0 and no memo or trajectory rule protects that loss.' },
-                    { id: 'worse_yoy', label: 'Worse than last year', desc: 'Story shows clear YoY deterioration in PAT or operating profits.' }
-                ];
-
-                if (this.mode === 'senior') {
-                    reasons.push({ id: 'bs_risk', label: 'Balance sheet risk', desc: 'Covers liquidity (CA < CL), gearing (NCL > Equity), cash, or high receivables.' });
-                }
-
-                reasons.forEach((r, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'reject-option';
-                    div.onclick = () => {
-                        document.querySelectorAll('.reject-option').forEach(el => el.classList.remove('selected'));
-                        div.classList.add('selected');
-                        div.querySelector('input').checked = true;
-                        this.currentRejectReason = r.id;
-                    };
-
-                    div.innerHTML = `
-                        <input type="radio" name="reject_reason" value="${r.id}" class="reject-radio" ${idx === 0 ? 'checked' : ''}>
+                const list = document.getElementById('reject-reasons-list');
+                list.innerHTML = `
+                    <label class="reject-option" onclick="game.selectRejectReason('weak_margins')">
+                        <input type="radio" name="rreason" class="reject-radio" value="weak_margins">
                         <div>
-                            <div style="font-weight:bold; font-size:0.88rem; color:#111827;">${r.label}</div>
-                            <div style="font-size:0.75rem; color:#4b5563;">${r.desc}</div>
+                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Thin Profit Margins / Below Threshold</div>
+                            <div style="font-size:0.75rem; color:#6b7280;">GPM < 20%, PAT < 5%, or excessive admin expenses.</div>
                         </div>
-                    `;
+                    </label>
 
-                    container.appendChild(div);
-                });
+                    <label class="reject-option" onclick="game.selectRejectReason('worse_yoy')">
+                        <input type="radio" name="rreason" class="reject-radio" value="worse_yoy">
+                        <div>
+                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Deteriorating YoY Trajectory</div>
+                            <div style="font-size:0.75rem; color:#6b7280;">PAT fell >40% YoY or profits dropped while revenue grew.</div>
+                        </div>
+                    </label>
 
-                this.currentRejectReason = reasons[0].id;
+                    <label class="reject-option" onclick="game.selectRejectReason('loss_unprotected')">
+                        <input type="radio" name="rreason" class="reject-radio" value="loss_unprotected">
+                        <div>
+                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Unprotected Operating Loss</div>
+                            <div style="font-size:0.75rem; color:#6b7280;">Net loss without qualifying startup exception policy.</div>
+                        </div>
+                    </label>
+
+                    <label class="reject-option" onclick="game.selectRejectReason('bs_risk')">
+                        <input type="radio" name="rreason" class="reject-radio" value="bs_risk">
+                        <div>
+                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Balance Sheet Risk / Solvency Deficit</div>
+                            <div style="font-size:0.75rem; color:#6b7280;">Current asset deficit, excess debt, or high receivables.</div>
+                        </div>
+                    </label>
+                `;
+                this.currentRejectReason = null;
                 document.getElementById('reject-modal').style.display = 'flex';
+            }
+
+            selectRejectReason(reason) {
+                this.currentRejectReason = reason;
+                document.querySelectorAll('.reject-option').forEach(el => el.classList.remove('selected'));
+                const target = event.currentTarget;
+                if (target) target.classList.add('selected');
             }
 
             closeRejectModal() {
@@ -1799,58 +1795,137 @@
             }
 
             confirmReject() {
-                this.closeRejectModal();
-                const dossier = this.queue[this.currentDossierIndex];
-                const expected = this.evaluateCorrectAction(dossier);
-
-                if (expected.action === 'reject') {
-                    if (this.currentRejectReason === expected.rejectReason) {
-                        this.triggerStamp('reject');
-                        this.processResult('CORRECT', 'Reject', expected.rejectReason, 50, 5, 0, dossier);
-                    } else {
-                        // Correct to reject, wrong reason bucket -> WARNING only (not a citation)
-                        this.triggerStamp('reject');
-                        this.processResult('WARNING', 'Reject', expected.rejectReason, 50, 2, 0, dossier, true);
-                    }
-                } else if (expected.action === 'audit') {
-                    this.triggerStamp('reject');
-                    this.processResult('WARNING', 'Audit', expected.rejectReason, 30, 2, 0, dossier, false, true);
-                } else {
-                    this.triggerStamp('reject');
-                    this.processResult('INCORRECT', 'Approve', null, -30, -5, 1, dossier);
-                }
-            }
-
-            submitAuditStamp() {
-                const dossier = this.queue[this.currentDossierIndex];
-                this.setAuditMode(false);
-
-                if (!dossier.isFraudMath && !dossier.isInfoMismatch) {
-                    const expected = this.evaluateCorrectAction(dossier);
-                    this.processResult('INCORRECT', expected.action.toUpperCase(), expected.rejectReason, -30, -5, 1, dossier);
+                if (!this.currentRejectReason) {
+                    showToast("⚠️ Select a rejection reason first!");
                     return;
                 }
 
-                let matched = false;
-                dossier.auditChains.forEach(chain => {
-                    const matchAll = chain.every(id => this.selectedAuditCells.has(id));
-                    if (matchAll) matched = true;
-                });
+                this.closeRejectModal();
+                const d = this.queue[this.currentDossierIndex];
+                const expected = this.getExpectedVerdict(d);
 
-                if (matched || this.selectedAuditCells.size > 0) {
-                    this.triggerStamp('reject');
-                    this.processResult('CORRECT', 'Audit', null, 70, 8, 0, dossier);
-                } else {
-                    this.processResult('INCORRECT', 'Audit', null, -20, -3, 1, dossier);
+                document.getElementById('stamp-sci-den').classList.add('visible');
+
+                setTimeout(() => {
+                    if (expected.action === 'reject') {
+                        if (this.currentRejectReason === expected.reason) {
+                            this.showMemo(true, 'REJECT', 'REJECT', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 50, 5, 0);
+                        } else {
+                            this.showMemo(false, 'REJECT', 'REJECT', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 20, 0, 1);
+                        }
+                    } else if (expected.action === 'audit') {
+                        this.showMemo(false, 'REJECT', 'AUDIT MODE', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -15, -3, 1);
+                    } else {
+                        this.showMemo(false, 'REJECT', 'APPROVE', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -25, -5, 1);
+                    }
+                }, 300);
+            }
+
+            submitAuditStamp() {
+                const d = this.queue[this.currentDossierIndex];
+                const expected = this.getExpectedVerdict(d);
+
+                let isMatch = false;
+                if (d.auditChains && d.auditChains.length > 0) {
+                    for (const chain of d.auditChains) {
+                        const allSelected = chain.every(id => this.selectedAuditCells.has(id));
+                        if (allSelected && this.selectedAuditCells.size === chain.length) {
+                            isMatch = true;
+                            break;
+                        }
+                    }
                 }
+
+                if (expected.action === 'audit' && isMatch) {
+                    document.getElementById('stamp-sci-den').classList.add('visible');
+                    setTimeout(() => {
+                        this.showMemo(true, 'AUDIT FLAG', 'AUDIT FLAG', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 75, 10, 0);
+                    }, 300);
+                } else if (expected.action === 'audit') {
+                    showToast("⚠️ Incorrect items flagged for audit!");
+                    this.showMemo(false, 'AUDIT FLAG', 'AUDIT FLAG', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -20, -5, 1);
+                } else {
+                    showToast("⚠️ Flagged clean document for audit!");
+                    this.showMemo(false, 'AUDIT FLAG', expected.action.toUpperCase(), expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -30, -5, 1);
+                }
+            }
+
+            showMemo(isCorrect, actionTaken, expectedAction, reasonBucket, discrepancyText, workingText, implicationText, deltaPay, deltaRep, deltaCit) {
+                const statusLine = document.getElementById('memo-status-line');
+                if (isCorrect) {
+                    statusLine.className = 'memo-status-CORRECT';
+                    statusLine.innerText = 'STATUS: VERDICT APPROVED BY COMMITTEE';
+                } else {
+                    statusLine.className = 'memo-status-INCORRECT';
+                    statusLine.innerText = 'STATUS: INTERNAL REVIEW CITATION ISSUED';
+                }
+
+                document.getElementById('memo-correct-action').innerText = expectedAction;
+
+                const bucketWrapper = document.getElementById('memo-reason-bucket-wrapper');
+                if (reasonBucket) {
+                    bucketWrapper.style.display = 'block';
+                    document.getElementById('memo-reason-bucket').innerText = reasonBucket.replace('_', ' ').toUpperCase();
+                } else {
+                    bucketWrapper.style.display = 'none';
+                }
+
+                const bullets = document.getElementById('memo-discrepancy-bullets');
+                bullets.innerHTML = discrepancyText.map(t => `<li>${t}</li>`).join('');
+
+                document.getElementById('memo-working').innerText = workingText || "N/A";
+                document.getElementById('memo-implication').innerText = implicationText || "N/A";
+
+                document.getElementById('memo-delta-pay').innerText = `PAY: ${deltaPay >= 0 ? '+' : ''}$${deltaPay}`;
+                document.getElementById('memo-delta-rep').innerText = `REP: ${deltaRep >= 0 ? '+' : ''}${deltaRep}`;
+
+                const citElem = document.getElementById('memo-delta-cit');
+                if (deltaCit > 0) {
+                    if (this.inventory.shield > 0) {
+                        this.inventory.shield--;
+                        citElem.style.display = 'block';
+                        citElem.innerText = `CITATIONS: +0 (Shield Absorbed!)`;
+                        citElem.style.color = '#15803d';
+                        deltaCit = 0;
+                        showToast("🛡️ Internal Review Shield absorbed 1 citation!");
+                    } else {
+                        citElem.style.display = 'block';
+                        citElem.innerText = `CITATIONS: +${deltaCit}`;
+                        citElem.style.color = '#b91c1c';
+                    }
+                } else {
+                    citElem.style.display = 'none';
+                }
+
+                document.getElementById('memo-pedagogy').innerText = this.activeRule ? this.activeRule.text : "Standard GP Capital audit principles.";
+
+                this.cash = Math.max(0, this.cash + deltaPay);
+                this.rep = Math.max(0, this.rep + deltaRep);
+                this.citations += deltaCit;
+
+                this.updateHUD();
+                document.getElementById('memo-overlay').style.display = 'flex';
+            }
+
+            closeMemo() {
+                document.getElementById('memo-overlay').style.display = 'none';
+                
+                if (this.citations >= this.maxCitations) {
+                    this.gameOver("Accumulated maximum Internal Review Citations.");
+                    return;
+                }
+
+                this.currentDossierIndex++;
+                this.loadCurrentDossier();
             }
 
             useShredder() {
                 if (this.inventory.shredder <= 0) return;
                 this.inventory.shredder--;
-                showToast("🗑️ Dossier shredded safely!");
+                showToast("🗑️ Dossier shredded cleanly!");
                 this.updateHUD();
-                this.advanceDossier();
+                this.currentDossierIndex++;
+                this.loadCurrentDossier();
             }
 
             useGoldenStamp() {
@@ -1858,27 +1933,70 @@
                 this.inventory.goldstamp--;
                 showToast("🌟 Golden Pass Stamp applied! Full credit awarded.");
                 this.updateHUD();
+
                 const d = this.queue[this.currentDossierIndex];
-                this.processResult('CORRECT', 'Approve', null, 60, 6, 0, d);
+                const expected = this.getExpectedVerdict(d);
+                this.showMemo(true, 'GOLDEN STAMP', expected.action.toUpperCase(), expected.reason, d.primaryDiscrepancyText, d.workingText, "Auto-cleared via Golden Pass Stamp.", 60, 5, 0);
             }
 
-            getPlainReasonText(reasonKey) {
-                switch (reasonKey) {
-                    case 'weak_margins': return "Weak margins";
-                    case 'loss_unprotected': return "Loss — no protection";
-                    case 'worse_yoy': return "Worse than last year";
-                    case 'bs_risk': return "Balance sheet risk";
-                    default: return "Commercial risk";
+            finishShift() {
+                clearInterval(this.shiftTimer);
+                
+                const bonuses = 100;
+                const penalties = this.citations * 20;
+                const rent = 30;
+
+                document.getElementById('settle-bonuses').innerText = `+$${bonuses}`;
+                document.getElementById('settle-penalties').innerText = `-$${penalties}`;
+                document.getElementById('settle-rent').innerText = `-$${rent}`;
+                
+                this.cash = Math.max(0, this.cash + bonuses - penalties - rent);
+                document.getElementById('settle-total').innerText = `$${this.cash}`;
+
+                this.updateShopButtons();
+                document.getElementById('settlement-overlay').style.display = 'flex';
+            }
+
+            updateShopButtons() {
+                document.getElementById('buy-coffee-btn').innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
+                document.getElementById('buy-marker-btn').innerText = this.inventory.marker ? `OWNED` : `BUY ($40)`;
+                document.getElementById('buy-shield-btn').innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
+                document.getElementById('buy-shredder-btn').innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
+                document.getElementById('buy-goldstamp-btn').innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
+            }
+
+            buyItem(key) {
+                const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
+                const cost = prices[key];
+
+                if (this.cash < cost) {
+                    showToast("❌ Insufficient funds on desk!");
+                    return;
                 }
+
+                if (key === 'marker' && this.inventory.marker) {
+                    showToast("⚠️ Red Marker Pro already acquired!");
+                    return;
+                }
+
+                this.cash -= cost;
+                if (key === 'marker') this.inventory.marker = true;
+                else this.inventory[key]++;
+
+                showToast(`🛒 Purchased ${key.toUpperCase()}!`);
+                this.updateHUD();
+                this.updateShopButtons();
+                document.getElementById('settle-total').innerText = `$${this.cash}`;
             }
 
-            triggerStamp(type) {
-                const id = type === 'approve' ? 'stamp-sci-app' : 'stamp-sci-den';
-                const el = document.getElementById(id);
-                if (el) el.classList.add('visible');
+            nextDay() {
+                this.day++;
+                this.clockMinutes = 540;
+                this.citations = 0;
+                document.getElementById('settlement-overlay').style.display = 'none';
+                this.setupDay();
             }
 
-            // FEATURE 3: EXIT DESK HANDLERS
             openExitConfirmModal() {
                 document.getElementById('exit-confirm-modal').style.display = 'flex';
             }
@@ -1888,188 +2006,15 @@
             }
 
             confirmReturnToMenu() {
-                this.closeExitConfirmModal();
                 clearInterval(this.shiftTimer);
+                document.getElementById('exit-confirm-modal').style.display = 'none';
                 document.getElementById('game-container').style.display = 'none';
                 document.getElementById('main-menu').style.display = 'flex';
-                showToast("Returned to title menu. Progress preserved.");
             }
 
-            // FEATURE 2: MANDATORY STRUCTURED DISCREPANCY ERROR FEEDBACK POPUP
-            processResult(status, correctAction, correctRejectReason, cashDelta, repDelta, citationDelta, dossier, wrongReasonWarning = false, softRejectFraud = false) {
-                if (citationDelta > 0 && this.inventory.shield > 0) {
-                    this.inventory.shield--;
-                    citationDelta = 0;
-                    showToast("🛡️ Internal Review Shield absorbed 1 citation!");
-                }
-
-                this.cash = Math.max(0, this.cash + cashDelta);
-                this.rep = Math.max(0, this.rep + repDelta);
-                this.citations += citationDelta;
-                this.updateHUD();
-
-                if (this.citations >= this.maxCitations) {
-                    this.triggerGameOver();
-                    return;
-                }
-
-                // Populate Structured Feedback Modal (7 mandatory items in order)
-                const memoOverlay = document.getElementById('memo-overlay');
-                const memoStatusLine = document.getElementById('memo-status-line');
-                
-                // Item 1: Status Line
-                memoStatusLine.className = `memo-status-${status}`;
-                memoStatusLine.innerText = status === 'CORRECT' ? 'STATUS: CORRECT' : (status === 'WARNING' ? 'STATUS: WARNING / ADVISORY' : 'STATUS: INCORRECT (CITATION ISSUED)');
-
-                // Item 2: Correct Action
-                const actionText = correctAction.toUpperCase();
-                document.getElementById('memo-correct-action').innerText = actionText;
-
-                // Item 3: Correct Reject Reason Bucket (If reject involved)
-                const reasonWrapper = document.getElementById('memo-reason-bucket-wrapper');
-                if (correctRejectReason) {
-                    reasonWrapper.style.display = 'block';
-                    document.getElementById('memo-reason-bucket').innerText = this.getPlainReasonText(correctRejectReason);
-                } else {
-                    reasonWrapper.style.display = 'none';
-                }
-
-                // Item 4: Discrepancy / Issue Block
-                const titleElem = document.getElementById('memo-discrepancy-title');
-                const bulletsElem = document.getElementById('memo-discrepancy-bullets');
-                bulletsElem.innerHTML = '';
-
-                if (wrongReasonWarning) {
-                    titleElem.innerText = "What you should have caught (Reason Warning)";
-                    bulletsElem.innerHTML = `<li>Reject was correct, but the better committee reason was <strong>${this.getPlainReasonText(correctRejectReason)}</strong>. You selected a secondary or imprecise reason.</li>`;
-                } else if (softRejectFraud) {
-                    titleElem.innerText = "What you should have caught (Audit Warning)";
-                    bulletsElem.innerHTML = `<li>You blocked the deal pack, but failed to enter <strong>Audit Mode</strong> to isolate the accounting error/mismatch for full bounty credit.</li>`;
-                } else {
-                    titleElem.innerText = status === 'CORRECT' ? "Audit Verification Note" : "What you should have caught";
-                    dossier.primaryDiscrepancyText.forEach(bullet => {
-                        const li = document.createElement('li');
-                        li.innerText = bullet;
-                        bulletsElem.appendChild(li);
-                    });
-                }
-
-                // Item 5: Working Comparison / Identity Check
-                document.getElementById('memo-working').innerText = dossier.workingText || "Identity Check Clean.";
-
-                // Item 6: Investment Committee Implication
-                document.getElementById('memo-implication').innerText = dossier.implicationText || "Standard investment risk profile.";
-
-                // Item 7: Cash / Rep Delta
-                document.getElementById('memo-delta-pay').innerText = `PAY: ${cashDelta >= 0 ? '+' : ''}$${cashDelta}`;
-                document.getElementById('memo-delta-pay').style.color = cashDelta >= 0 ? '#15803d' : '#b91c1c';
-                
-                document.getElementById('memo-delta-rep').innerText = `REP: ${repDelta >= 0 ? '+' : ''}${repDelta}`;
-                document.getElementById('memo-delta-rep').style.color = repDelta >= 0 ? '#15803d' : '#b91c1c';
-
-                const citDeltaElem = document.getElementById('memo-delta-cit');
-                if (citationDelta > 0) {
-                    citDeltaElem.style.display = 'block';
-                    citDeltaElem.innerText = `CITATIONS: +${citationDelta}`;
-                } else {
-                    citDeltaElem.style.display = 'none';
-                }
-
-                document.getElementById('memo-pedagogy').innerText = this.activeRule ? this.activeRule.text : 'Standard commercial guidelines.';
-                memoOverlay.style.display = 'flex';
-            }
-
-            closeMemo() {
-                document.getElementById('memo-overlay').style.display = 'none';
-                this.advanceDossier();
-            }
-
-            advanceDossier() {
-                this.currentDossierIndex++;
-                if (this.currentDossierIndex >= this.queue.length) {
-                    this.finishShift();
-                } else {
-                    this.loadCurrentDossier();
-                }
-            }
-
-            // SHIFT SETTLEMENT & SHOP SYSTEM
-            finishShift() {
+            gameOver(reason) {
                 clearInterval(this.shiftTimer);
-                
-                const bonuses = 120;
-                const penalties = this.citations * 25;
-                const rent = 30;
-
-                document.getElementById('settle-bonuses').innerText = `+$${bonuses}`;
-                document.getElementById('settle-penalties').innerText = `-$${penalties}`;
-                document.getElementById('settle-rent').innerText = `-$${rent}`;
-                document.getElementById('settle-total').innerText = `$${this.cash}`;
-
-                this.renderShopButtons();
-                document.getElementById('settlement-overlay').style.display = 'flex';
-            }
-
-            renderShopButtons() {
-                document.getElementById('buy-coffee-btn').innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
-
-                const markerBtn = document.getElementById('buy-marker-btn');
-                if (this.inventory.marker) {
-                    markerBtn.innerText = `OWNED ✓`;
-                    markerBtn.style.background = '#4b5563';
-                    markerBtn.disabled = true;
-                } else {
-                    markerBtn.innerText = `BUY ($40)`;
-                    markerBtn.disabled = false;
-                }
-
-                document.getElementById('buy-shield-btn').innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
-                document.getElementById('buy-shredder-btn').innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
-                document.getElementById('buy-goldstamp-btn').innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
-            }
-
-            buyItem(item) {
-                const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
-                const cost = prices[item];
-
-                if (this.cash < cost) {
-                    showToast("❌ Insufficient cash balance!");
-                    return;
-                }
-
-                this.cash -= cost;
-                
-                if (item === 'coffee') {
-                    this.inventory.coffee++;
-                    showToast(`☕ Purchased Desk Espresso (Owned: ${this.inventory.coffee})`);
-                } else if (item === 'marker') {
-                    this.inventory.marker = true;
-                    showToast(`🖊️ Purchased Red Marker Pro (Citation Limit 5)`);
-                } else if (item === 'shield') {
-                    this.inventory.shield++;
-                    showToast(`🛡️ Purchased Review Shield (Owned: ${this.inventory.shield})`);
-                } else if (item === 'shredder') {
-                    this.inventory.shredder++;
-                    showToast(`🗑️ Purchased Shredder (Owned: ${this.inventory.shredder})`);
-                } else if (item === 'goldstamp') {
-                    this.inventory.goldstamp++;
-                    showToast(`🌟 Purchased Golden Pass Stamp (Owned: ${this.inventory.goldstamp})`);
-                }
-
-                document.getElementById('settle-total').innerText = `$${this.cash}`;
-                this.renderShopButtons();
-                this.updateHUD();
-            }
-
-            nextDay() {
-                document.getElementById('settlement-overlay').style.display = 'none';
-                this.day++;
-                this.clockMinutes = 540;
-                this.citations = 0;
-                this.setupDay();
-            }
-
-            triggerGameOver() {
+                document.getElementById('gameover-reason').innerText = reason;
                 document.getElementById('go-days').innerText = this.day;
                 document.getElementById('go-cash').innerText = this.cash;
                 document.getElementById('go-rep').innerText = this.rep;
@@ -2077,28 +2022,20 @@
             }
 
             openTeacherPanel() {
-                const current = this.queue[this.currentDossierIndex];
-                
-                // Display dossier mix summary for current queue
-                const mixCounts = {};
-                this.queue.forEach(p => mixCounts[p.packType] = (mixCounts[p.packType] || 0) + 1);
-                const healthyCount = mixCounts['healthy'] || 0;
-                const healthyShare = ((healthyCount / this.queue.length) * 100).toFixed(0);
+                const d = this.queue[this.currentDossierIndex] || {};
+                const expected = d.card ? this.getExpectedVerdict(d) : { action: '-', reason: '-' };
 
-                document.getElementById('tp-queue-mix').innerText = `Healthy: ${healthyCount}/${this.queue.length} (${healthyShare}%) | Mix: ${JSON.stringify(mixCounts)}`;
+                const mixStr = this.queue.map(p => p.packType).join(' | ') || 'None';
+                document.getElementById('tp-queue-mix').innerText = mixStr;
+                document.getElementById('tp-action').innerText = expected.action.toUpperCase();
+                document.getElementById('tp-reason').innerText = expected.reason;
+                document.getElementById('tp-math').innerText = d.isFraudMath ? "YES (MATH FRAUD)" : "CLEAN";
+                document.getElementById('tp-info').innerText = d.isInfoMismatch ? "YES (HEADER MISMATCH)" : "MATCHING";
+                document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : "None";
+                document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : "None";
+                document.getElementById('tp-chains').innerText = JSON.stringify(d.auditChains || []);
 
-                if (current) {
-                    const expected = this.evaluateCorrectAction(current);
-                    document.getElementById('tp-action').innerText = expected.action.toUpperCase();
-                    document.getElementById('tp-reason').innerText = expected.rejectReason ? this.getPlainReasonText(expected.rejectReason) : 'N/A';
-                    document.getElementById('tp-math').innerText = current.isFraudMath ? 'Math Discrepancy Active' : 'Clean Math';
-                    document.getElementById('tp-info').innerText = current.isInfoMismatch ? 'Header Mismatch Active' : 'Clean Identity';
-                    document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : 'None';
-                    document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : 'None';
-                    document.getElementById('tp-chains').innerText = JSON.stringify(current.auditChains);
-                }
-
-                document.getElementById('tp-save-code').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                document.getElementById('tp-save-code').value = this.generateSaveCode();
                 document.getElementById('teacher-overlay').style.display = 'flex';
             }
 
@@ -2106,9 +2043,9 @@
                 document.getElementById('teacher-overlay').style.display = 'none';
             }
 
-            teacherForceMode(mode) {
-                this.mode = mode;
-                showToast(`Switched mode to ${mode.toUpperCase()}`);
+            teacherForceMode(m) {
+                this.mode = m;
+                showToast(`🎓 Mode forced to: ${m.toUpperCase()}`);
                 this.closeTeacherPanel();
                 this.setupDay();
             }
@@ -2116,17 +2053,29 @@
             teacherAddCash(amt) {
                 this.cash += amt;
                 this.updateHUD();
-                showToast(`Added $${amt}`);
+                showToast(`🎓 Added +$${amt} Cash`);
             }
 
             teacherResetCitations() {
                 this.citations = 0;
                 this.updateHUD();
-                showToast("Citations reset to 0");
+                showToast("🎓 Citations Reset to 0");
+            }
+
+            generateSaveCode() {
+                const state = {
+                    day: this.day,
+                    mode: this.mode,
+                    cash: this.cash,
+                    rep: this.rep,
+                    inv: this.inventory,
+                    name: this.playerName
+                };
+                return btoa(JSON.stringify(state));
             }
 
             openSaveCodeModal() {
-                document.getElementById('save-code-input').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                document.getElementById('save-code-input').value = this.generateSaveCode();
                 document.getElementById('savecode-overlay').style.display = 'flex';
             }
 
@@ -2135,35 +2084,38 @@
             }
 
             copySaveCode() {
-                const code = document.getElementById('save-code-input').value;
-                navigator.clipboard.writeText(code);
-                showToast("💾 Save code copied to clipboard!");
+                const text = document.getElementById('save-code-input').value;
+                navigator.clipboard.writeText(text);
+                showToast("📋 Save code copied to clipboard!");
             }
 
             loadSaveCode() {
                 try {
-                    const code = document.getElementById('save-code-input').value.trim();
-                    const data = JSON.parse(atob(code));
-                    this.day = data.day || 1;
-                    this.cash = data.cash || 50;
-                    this.rep = data.rep || 20;
-                    this.mode = data.mode || 'junior';
+                    const raw = document.getElementById('save-code-input').value.trim();
+                    const state = JSON.parse(atob(raw));
+                    this.day = state.day || 1;
+                    this.mode = state.mode || 'junior';
+                    this.cash = state.cash || 50;
+                    this.rep = state.rep || 20;
+                    this.inventory = state.inv || this.inventory;
+                    this.playerName = state.name || 'Analyst 88';
+
                     this.closeSaveCodeModal();
                     this.startGame(this.mode);
-                    showToast("Loaded save state successfully!");
-                } catch(e) {
-                    showToast("❌ Invalid save code!");
+                    showToast("💾 State loaded successfully!");
+                } catch (err) {
+                    showToast("❌ Invalid save code format!");
                 }
             }
 
             openLeaderboard() {
-                showToast("🏆 Leaderboard available upon online sync.");
+                showToast("🏆 Leaderboard loaded! Current Top Analyst: Vance ($1,250)");
             }
         }
 
-        // Initialize Global Engine
-        const game = new GameEngine();
-        window.game = game;
+        window.onload = function() {
+            window.game = new GameEngine();
+        };
     </script>
 </body>
 </html>
