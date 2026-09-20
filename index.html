@@ -3,892 +3,1044 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boardroom Wars: Tycoon Edition</title>
+    <title>Audit Desk: Golden Parachute</title>
     <style>
         :root {
-            --bg-dark: #0b0f19;
-            --panel-bg: #151b2b;
-            --panel-border: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --neon-pink: #ec4899;
-            --neon-green: #10b981;
-            --neon-blue: #0ea5e9;
-            --neon-purple: #8b5cf6;
-            --neon-red: #ef4444;
-            --font-main: 'Inter', system-ui, sans-serif;
-            --font-mono: 'Courier New', Courier, monospace;
+            --desk-color: #2b1704;
+            --paper: #f4f1ea;
+            --folder: #c8a063;
+            --red: #aa2222;
+            --green: #228833;
+            --blue: #2255aa;
+            --text: #111;
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            overflow-x: hidden;
-            overflow-y: auto;
-            min-height: 100vh;
             user-select: none;
         }
 
-        h1, h2, h3 { text-transform: uppercase; letter-spacing: 1px; }
-        .text-green { color: var(--neon-green); text-shadow: 0 0 5px rgba(16, 185, 129, 0.5); }
-        .text-red { color: var(--neon-red); text-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
-        .text-blue { color: var(--neon-blue); }
-        .text-pink { color: var(--neon-pink); }
-        .text-purple { color: var(--neon-purple); }
-        
-        .flex { display: flex; }
-        .flex-col { display: flex; flex-direction: column; }
-        .justify-between { justify-content: space-between; }
-        .align-center { align-items: center; }
-        .grid { display: grid; }
-        
-        .hidden { display: none !important; }
-
-        #game-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #000;
+            color: #fff;
         }
 
-        header {
-            background: rgba(21, 27, 43, 0.9);
-            border-bottom: 1px solid var(--neon-purple);
-            padding: 15px 30px;
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-            z-index: 10;
-        }
-
-        .header-stats {
-            display: flex;
-            gap: 20px;
-            font-family: var(--font-mono);
-            font-size: 1.1rem;
-        }
-
-        .main-content {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 20px;
-            padding: 20px;
-            align-items: start;
-        }
-
-        .war-room {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        .control-group {
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 3px solid var(--neon-blue);
-        }
-
-        .control-group label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .val-display { font-family: var(--font-mono); color: var(--text-main); font-weight: bold; }
-
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--neon-blue);
-            cursor: pointer;
-        }
-
-        .btn {
-            background: transparent;
-            border: 2px solid var(--neon-blue);
-            color: var(--neon-blue);
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            transition: all 0.2s;
-            font-family: var(--font-main);
-            text-shadow: 0 0 5px rgba(14, 165, 233, 0.5);
-        }
-
-        .btn:hover { background: var(--neon-blue); color: var(--bg-dark); box-shadow: 0 0 15px var(--neon-blue); }
-        .btn:disabled { border-color: #333; color: #555; cursor: not-allowed; text-shadow: none; box-shadow: none; background: transparent; }
-        
-        .btn-action { border-color: var(--neon-purple); color: var(--neon-purple); text-shadow: 0 0 5px rgba(139, 92, 246, 0.5); }
-        .btn-action:hover:not(:disabled) { background: var(--neon-purple); color: white; box-shadow: 0 0 15px var(--neon-purple); }
-
-        .btn-giant {
-            background: var(--neon-green);
-            color: var(--bg-dark);
-            font-size: 1.2rem;
-            padding: 20px;
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
-            animation: pulse 2s infinite;
-        }
-        .btn-giant:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 30px rgba(16, 185, 129, 1); }
-
-        .the-books {
-            display: grid;
-            grid-template-rows: auto auto;
-            gap: 20px;
-        }
-
-        .book-panel {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        .book-panel h2 {
-            border-bottom: 2px solid #334155;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .acc-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed rgba(255,255,255,0.1);
-            font-family: var(--font-mono);
-        }
-        .acc-row.total {
-            border-bottom: none;
-            border-top: 2px solid #475569;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-top: 5px;
-            padding-top: 10px;
-        }
-        .acc-row.sub-total {
-            border-bottom: 1px solid #475569;
-            margin-bottom: 5px;
-        }
-
-        .overlay {
-            position: fixed;
+        /* --- SCREENS --- */
+        .screen {
+            position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(11, 15, 25, 0.95);
-            display: flex;
+            display: none;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
             align-items: center;
+            background: #111;
             z-index: 100;
-            overflow-y: auto;
-            padding: 40px 20px;
+        }
+        .active-screen { display: flex; }
+
+        /* --- MAIN GAME UI --- */
+        #game-screen {
+            background: radial-gradient(circle at 50% 50%, #3a2210 0%, #110802 100%);
+            position: relative;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+        
+        /* Desk Noise Overlay */
+        #game-screen::before {
+            content: "";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 4px);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .start-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            max-width: 900px;
-            margin-top: 20px;
+        /* Top HUD */
+        #hud {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.8);
+            border-bottom: 2px solid #555;
+            z-index: 10;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .warning { color: #ff5555; font-weight: bold; }
+
+        /* The Window */
+        #window {
+            position: absolute; top: 60px; left: 20px;
+            width: 180px; height: 250px;
+            background: #111e25;
+            border: 12px solid #1a0f08;
+            border-bottom: 20px solid #1a0f08;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.8), inset 0 0 20px #000;
+            overflow: hidden;
+            z-index: 2;
+        }
+        .rain {
+            width: 200%; height: 200%;
+            background: repeating-linear-gradient(-45deg, transparent 0, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 12px);
+            animation: rainFall 0.5s linear infinite;
+        }
+        #pigeon {
+            position: absolute; bottom: -5px; right: 10px;
+            font-size: 2rem; display: none;
+            transform: scaleX(-1);
         }
 
-        .archetype-card {
-            background: var(--panel-bg);
-            border: 2px solid var(--panel-border);
-            border-radius: 12px;
+        /* The Plant */
+        #plant {
+            position: absolute; top: 60px; right: 20px;
+            font-size: 4rem; cursor: pointer;
+            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.6));
+            z-index: 2;
+            transition: transform 0.1s;
+        }
+        #plant:active { transform: scale(0.9); }
+
+        /* Character */
+        #character-area {
+            position: absolute; top: 40px; left: 50%;
+            transform: translateX(-50%);
+            width: 150px; height: 180px;
+            z-index: 1;
+            display: flex; justify-content: center; align-items: flex-end;
+        }
+        #avatar {
+            font-size: 6rem;
+            animation: breathe 2s infinite alternate ease-in-out;
+            position: relative;
+            transform-origin: bottom center;
+        }
+        #sweat {
+            position: absolute; top: 10px; right: 0;
+            font-size: 2rem; display: none;
+            animation: drip 1s infinite;
+        }
+
+        /* Documents */
+        #desk-area {
+            position: absolute; top: 150px; left: 50%;
+            transform: translateX(-50%);
+            width: 800px; height: 500px;
+            z-index: 5;
+            display: flex; justify-content: center; gap: 20px;
+        }
+        
+        .folder {
+            width: 380px; height: 480px;
+            background: var(--folder);
+            border-radius: 5px 15px 5px 5px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.7), inset -5px -5px 10px rgba(0,0,0,0.2);
+            position: relative;
+            transition: transform 0.4s ease-out;
+            transform: translateY(100vh) rotate(-2deg);
+        }
+        .folder.in { transform: translateY(0) rotate(-2deg); }
+        .folder.out { transform: translateY(-100vh) rotate(5deg); }
+        
+        .paper {
+            position: absolute; top: 10px; left: 10px;
+            width: 350px; height: 460px;
+            background: var(--paper);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            color: var(--text);
             padding: 20px;
-            text-align: center;
+            font-size: 0.8rem;
+            transform: rotate(1.5deg);
+            background-image: repeating-linear-gradient(transparent 0, transparent 23px, rgba(0,100,200,0.1) 23px, rgba(0,100,200,0.1) 24px);
+            background-position: 0 4px;
+        }
+        .paper h2 { margin: 0 0 10px 0; font-size: 1rem; border-bottom: 2px solid #333; text-align: center; }
+        
+        .doc-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .doc-table td { padding: 3px 0; }
+        .doc-table tr { cursor: default; }
+        .doc-table td:nth-child(2) { text-align: right; }
+        .subtotal td { border-top: 1px solid #777; font-weight: bold; }
+        .total td { border-top: 2px double #111; font-weight: bold; font-size: 0.9rem; }
+        .indent td:first-child { padding-left: 10px; }
+
+        /* Audit Mode */
+        body.audit-mode { cursor: crosshair; }
+        body.audit-mode .doc-table tr:hover {
+            background-color: rgba(170, 34, 34, 0.3);
+            outline: 2px solid var(--red);
             cursor: pointer;
-            transition: all 0.3s;
         }
-        .archetype-card:hover {
-            border-color: var(--neon-pink);
-            box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
-            transform: translateY(-5px);
-        }
-        .archetype-card h3 { color: var(--neon-pink); margin: 10px 0; }
-        .archetype-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;}
-        .archetype-card .emoji { font-size: 3rem; }
-
-        .modal-box {
-            background: var(--panel-bg);
-            border: 2px solid var(--neon-blue);
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
+        .tooltip {
+            position: absolute; background: #222; color: #0f0; border: 1px solid #0f0;
+            padding: 5px; font-size: 0.8rem; pointer-events: none; display: none; z-index: 1000;
         }
 
-        .modal-box h2 { color: var(--neon-blue); margin-bottom: 15px; }
-        .modal-box p { margin-bottom: 20px; line-height: 1.5; }
+        /* Stamps */
+        .stamp-mark {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 3rem; font-weight: bolder; border: 5px solid; padding: 10px;
+            opacity: 0.8; z-index: 10; pointer-events: none; display: none;
+            text-shadow: 0 0 2px #fff;
+        }
+        .stamp-green { color: var(--green); border-color: var(--green); }
+        .stamp-red { color: var(--red); border-color: var(--red); transform: translate(-50%, -50%) rotate(10deg); }
 
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: white;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-family: var(--font-mono);
+        /* Tools */
+        #tools {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 30px; z-index: 10;
+        }
+        .tool-btn {
+            width: 120px; height: 120px;
+            border-radius: 10px;
+            border: 4px solid #111;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem; font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.3);
+            text-shadow: 1px 1px 2px #000; color: #fff;
+            transition: all 0.1s;
+        }
+        .tool-btn:active { transform: translateY(8px); box-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        #btn-approve { background: linear-gradient(#3a9, #173); }
+        #btn-deny { background: linear-gradient(#d55, #922); }
+        #btn-audit { background: linear-gradient(#57d, #248); }
+        #btn-cancel { background: linear-gradient(#777, #444); display: none; }
+
+        /* Events */
+        #event-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 50;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .event-box {
+            background: #222; border: 2px solid #555; padding: 30px; text-align: center; max-width: 400px;
+            box-shadow: 0 0 30px #000;
+        }
+        .event-btn { padding: 15px 20px; margin: 10px; font-size: 1.2rem; cursor: pointer; background: #333; color: #fff; border: 1px solid #777; }
+        .event-btn:hover { background: #555; }
+        
+        #cat {
+            position: absolute; font-size: 15rem; z-index: 50; display: none;
+            left: 50%; top: 50%; transform: translate(-50%, -50%);
+            cursor: crosshair; user-select: none; filter: drop-shadow(0 20px 20px #000);
+        }
+        
+        #power-outage {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98); z-index: 60; display: none;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        #breaker-btn {
+            background: red; color: white; width: 200px; height: 200px; border-radius: 50%;
+            font-size: 2rem; font-weight: bold; border: 10px solid darkred; cursor: pointer;
+            box-shadow: 0 0 50px red;
         }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
-            50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.9); }
-            100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+        /* Animations */
+        @keyframes rainFall { 0% { background-position: 0 0; } 100% { background-position: 20px 100px; } }
+        @keyframes breathe { 0% { transform: scaleY(1); } 100% { transform: scaleY(1.05) translateY(-5px); } }
+        @keyframes drip { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
+        .shake-active { animation: shake 0.4s; }
 
-        @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area {
-                position: absolute;
-                left: 0; top: 0; width: 100%;
-                background: white; color: black;
-                padding: 40px; font-family: serif;
-            }
-            .acc-row { border-bottom: 1px solid #ccc; color: black; }
-            .acc-row.total { border-top: 2px solid black; color: black; }
-            .text-green, .text-red, .text-blue { color: black !important; text-shadow: none; }
-            h1, h2 { color: black; border-bottom: 2px solid black; }
-        }
+        /* UI Styling */
+        h1 { color: #d7b878; text-shadow: 2px 2px 4px #000; font-size: 3rem; margin-bottom: 10px; text-align: center; }
+        .menu-btn { padding: 15px 30px; font-size: 1.5rem; margin: 10px; background: #333; color: #fff; border: 2px solid #555; cursor: pointer; border-radius: 5px; font-family: inherit;}
+        .menu-btn:hover { background: #555; }
+        .input-box { padding: 10px; font-size: 1.2rem; width: 300px; text-align: center; margin-bottom: 10px; font-family: inherit; background: #222; color: #fff; border: 1px solid #555;}
+        
+        .shop-item { display: flex; justify-content: space-between; align-items: center; width: 400px; background: #222; padding: 15px; border: 1px solid #555; margin-bottom: 10px;}
+        .shop-item button { padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold;}
+        .shop-item button:disabled { background: #555; cursor: not-allowed; }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main-content { grid-template-columns: 1fr; overflow-y: auto; }
-            .start-grid { grid-template-columns: 1fr; }
-            .war-room { overflow: visible; }
-        }
+        #code-display { background: #000; color: #0f0; padding: 15px; border: 1px solid #0f0; margin-top: 20px; word-wrap: break-word; max-width: 600px; text-align: center;}
     </style>
 </head>
 <body>
 
-    <div id="start-screen" class="overlay">
-        <div class="flex-col align-center" style="margin: auto;">
-            <h1 style="font-size: 3rem; text-shadow: 0 0 20px var(--neon-pink); color: var(--text-main); margin-bottom: 10px;">BOARDROOM WARS</h1>
-            <h2 class="text-blue">TYCOON EDITION</h2>
-            <div class="start-grid" id="archetype-grid">
-                <!-- Injected via JS -->
-            </div>
-            <div style="margin-top: 30px; display: flex; gap: 15px;">
-                <button class="btn btn-action" onclick="showLoadModal()">Load Save Code</button>
-            </div>
+    <!-- Main Menu -->
+    <div id="screen-menu" class="screen active-screen">
+        <h1>AUDIT DESK:<br>GOLDEN PARACHUTE</h1>
+        <p>A procedural document-inspection simulator.</p>
+        <p style="color: #aaa; max-width: 600px; text-align: center; margin-bottom: 30px;">
+            Goal: Survive 10 Days & earn $5,000 to escape the city.<br>
+            - APPROVE healthy companies.<br>
+            - DENY bankrupt or illiquid companies.<br>
+            - AUDIT fraudulent companies (lies/math errors). Click the fake number.<br>
+            Watch the clock. Watch the plant. Trust no one.
+        </p>
+        <button class="menu-btn" onclick="app.startNewGame()">NEW GAME</button>
+        <div style="margin-top: 20px;">
+            <input type="text" id="load-code" class="input-box" placeholder="Paste Save Code Here"><br>
+            <button class="menu-btn" onclick="app.loadGame()">LOAD GAME</button>
         </div>
     </div>
 
-    <div id="game-container" class="hidden">
-        <header class="flex justify-between align-center">
-            <div>
-                <h2 id="header-company-name" class="text-pink">Company Name</h2>
-                <div style="font-size: 0.8rem; color: var(--text-muted);" id="header-archetype">Archetype</div>
+    <!-- Night / End of Day Screen -->
+    <div id="screen-night" class="screen">
+        <h1>END OF DAY <span id="night-day-display">1</span></h1>
+        <div style="font-size: 1.5rem; margin-bottom: 20px;">
+            <p>Cash earned: $<span id="night-earned">0</span></p>
+            <p style="color: #ff5555">Daily Expenses (Rent/Food): -$60</p>
+            <p>Total Cash: $<span id="night-cash">0</span> | Rep: <span id="night-rep">0</span></p>
+            <p id="night-warning" style="color: #ff5555; font-weight:bold;"></p>
+        </div>
+        
+        <h2>UPGRADES</h2>
+        <div class="shop-item">
+            <div>Espresso Machine ($150)<br><small>+45s daily time</small></div>
+            <button id="buy-espresso" onclick="app.buyItem('espresso', 150)">BUY</button>
+        </div>
+        <div class="shop-item">
+            <div>The Red Marker ($300)<br><small>Allows 4 citations/day</small></div>
+            <button id="buy-marker" onclick="app.buyItem('redMarker', 300)">BUY</button>
+        </div>
+        <div class="shop-item">
+            <div>Auto-Calculator ($500)<br><small>Hover tooltip reveals real math</small></div>
+            <button id="buy-calc" onclick="app.buyItem('autoCalc', 500)">BUY</button>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 20px;">
+            <button class="menu-btn" onclick="app.startDay()">START NEXT DAY</button>
+            <button class="menu-btn" onclick="app.saveGame()">SAVE GAME</button>
+        </div>
+        <div id="code-display" style="display: none;"></div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="screen-gameover" class="screen">
+        <h1 id="end-title" style="color: #ff3333;">FIRED.</h1>
+        <p id="end-desc" style="font-size: 1.5rem; max-width: 600px; text-align: center;">You made too many mistakes.</p>
+        <div id="victory-code-container" style="display:none; margin: 20px 0;">
+            <p style="color: gold;">Victory Code (Copy for Leaderboard):</p>
+            <div id="victory-code" style="background:#000; padding:10px; border:1px solid gold; color:gold;"></div>
+        </div>
+        <button class="menu-btn" onclick="location.reload()">RETURN TO MENU</button>
+    </div>
+
+    <!-- Main Game UI -->
+    <div id="game-screen" class="screen">
+        <div id="hud">
+            <div>DAY <span id="hud-day">1</span></div>
+            <div>TIME: <span id="hud-time">2:30</span></div>
+            <div>CASH: $<span id="hud-cash">100</span></div>
+            <div>REP: <span id="hud-rep">0</span></div>
+            <div class="warning">CITATIONS: <span id="hud-cit">0/3</span></div>
+        </div>
+
+        <div id="window">
+            <div class="rain"></div>
+            <div id="pigeon">🐦</div>
+        </div>
+
+        <div id="plant" onclick="app.waterPlant()">🌵</div>
+
+        <div id="character-area">
+            <div id="avatar">👨‍💼</div>
+            <div id="sweat">💧</div>
+        </div>
+
+        <div id="desk-area">
+            <!-- SCI Folder -->
+            <div class="folder" id="folder-sci">
+                <div class="paper">
+                    <h2 id="doc-company-name">COMPANY NAME</h2>
+                    <div style="text-align: center; margin-bottom:10px; font-weight:bold;">Statement of Comprehensive Income<br>Year Ended 31 Dec 2026</div>
+                    <table class="doc-table" id="sci-table">
+                        <!-- Populated by JS -->
+                    </table>
+                    <div class="stamp-mark stamp-green" id="stamp-sci-app">APPROVED</div>
+                    <div class="stamp-mark stamp-red" id="stamp-sci-den">DENIED</div>
+                </div>
             </div>
-            <div class="header-stats">
-                <div>🗓️ QTR: <span id="ui-quarter" class="text-blue">1</span>/8</div>
-                <div>📦 INV: <span id="header-inventory" class="text-purple">0</span></div>
-                <div>📈 STOCK: $<span id="ui-stock" class="text-green">10.00</span></div>
-                <div id="cash-flow-warning" class="text-red hidden">⚠️ CASH FLOW RISK</div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" onclick="showSaveModal()">Save</button>
-                <button class="btn" onclick="exportReport()">Print Audit</button>
-            </div>
-        </header>
 
-        <div class="main-content">
-            <div class="war-room">
-                <h3 class="text-blue flex justify-between">
-                    <span>⚔️ The War Room</span>
-                    <span style="font-size: 0.8rem; font-family: var(--font-mono);">PREVIEW</span>
-                </h3>
-
-                <div class="control-group">
-                    <label>Set Product Price ($) <span id="val-price" class="val-display">$0</span></label>
-                    <input type="range" id="slider-price" min="1" max="100" value="10" oninput="updatePreview()">
-                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">Optimal: $<span id="opt-price-min">0</span> - $<span id="opt-price-max">0</span></div>
-                </div>
-
-                <div class="control-group">
-                    <label>Production Volume <span id="val-volume" class="val-display">0 units</span></label>
-                    <input type="range" id="slider-volume" min="0" max="1000" value="0" oninput="updatePreview()">
-                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">Factory Cap: <span id="factory-cap">0</span> | Base Cost: $<span id="base-cost-display">0</span>/unit</div>
-                </div>
-
-                <div class="control-group">
-                    <label>Marketing Budget <span id="val-marketing" class="val-display">$0</span></label>
-                    <input type="range" id="slider-marketing" min="0" max="10000" step="1000" value="0" oninput="updatePreview()">
-                </div>
-
-                <div class="control-group">
-                    <label>Admin / R&D Budget <span id="val-admin" class="val-display">$0</span></label>
-                    <input type="range" id="slider-admin" min="0" max="10000" step="1000" value="0" oninput="updatePreview()">
-                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">Required for operations: $<span id="req-admin">0</span></div>
-                </div>
-
-                <div class="flex-col" style="gap: 10px;">
-                    <button class="btn btn-action" id="btn-factory" onclick="buildFactory()">Build Factory/Server ($50k)</button>
-                    <button class="btn btn-action" onclick="takeLoan()">Secure Bank Loan ($50k)</button>
-                </div>
-
-                <button class="btn btn-giant" id="btn-next-quarter" onclick="nextQuarter()">EXECUTE QUARTER</button>
-                <div id="funds-warning" class="text-red hidden" style="text-align: center; font-weight: bold; font-size: 0.9rem;">❌ INSUFFICIENT FUNDS FOR PRODUCTION/EXPENSES</div>
-            </div>
-
-            <div class="the-books">
-                <div class="book-panel" style="border-color: var(--neon-pink);">
-                    <h2><span>The Profit Engine</span> <span>(Income Statement)</span></h2>
-                    
-                    <div class="acc-row"><span>Revenue (Sales: <span id="stat-sold">0</span>)</span> <span id="stmt-rev">$0</span></div>
-                    <div class="acc-row"><span>Cost of sales</span> <span id="stmt-cogs" class="text-red">$0</span></div>
-                    <div class="acc-row sub-total"><span>Gross profit</span> <span id="stmt-gp">$0</span></div>
-                    
-                    <div class="acc-row" style="margin-top: 10px;"><span>Selling expenses</span> <span id="stmt-mkt" class="text-red">$0</span></div>
-                    <div class="acc-row"><span>Admin expenses</span> <span id="stmt-admin" class="text-red">$0</span></div>
-                    <div class="acc-row sub-total"><span>Operating profit</span> <span id="stmt-op">$0</span></div>
-                    
-                    <div class="acc-row" style="margin-top: 10px;"><span>Finance costs (10%)</span> <span id="stmt-interest" class="text-red">$0</span></div>
-                    <div class="acc-row sub-total"><span>Profit for the year (before tax)</span> <span id="stmt-npbt">$0</span></div>
-                    
-                    <div class="acc-row"><span>Taxation (20%)</span> <span id="stmt-tax" class="text-red">$0</span></div>
-                    <div class="acc-row total"><span class="text-pink">PROFIT FOR THE YEAR</span> <span id="stmt-np" class="text-green">$0</span></div>
-                </div>
-
-                <div class="book-panel" style="border-color: var(--neon-green);">
-                    <h2><span>The Vault</span> <span>(Balance Sheet)</span></h2>
-                    
-                    <div style="font-weight: bold; color: var(--neon-blue); margin-bottom: 5px;">ASSETS</div>
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Non-Current Assets</div>
-                    <div class="acc-row"><span>Property, Plant & Equipment</span> <span id="bs-factory">$0</span></div>
-                    
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Current Assets</div>
-                    <div class="acc-row"><span>Inventory (Closing)</span> <span id="bs-inv">$0</span></div>
-                    <div class="acc-row"><span>Cash and Equivalents</span> <span id="bs-cash">$0</span></div>
-                    <div class="acc-row total" style="margin-bottom: 15px;"><span>TOTAL ASSETS</span> <span id="bs-total-assets">$0</span></div>
-                    
-                    <div style="font-weight: bold; color: var(--neon-blue); margin-bottom: 5px;">EQUITY & LIABILITIES</div>
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Equity</div>
-                    <div class="acc-row"><span>Share Capital</span> <span id="bs-capital">$0</span></div>
-                    <div class="acc-row"><span>Retained Earnings</span> <span id="bs-re">$0</span></div>
-                    
-                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">Non-Current Liabilities</div>
-                    <div class="acc-row"><span>Bank Loans</span> <span id="bs-loans">$0</span></div>
-                    
-                    <div class="acc-row total"><span>TOTAL EQUITY & LIAB.</span> <span id="bs-total-le">$0</span></div>
-                    <div id="accounting-check" style="text-align: right; font-size: 0.7rem; margin-top: 5px; color: var(--neon-green);">✓ Balanced</div>
+            <!-- Balance Sheet Folder (Days 4+) -->
+            <div class="folder" id="folder-bs" style="display:none;">
+                <div class="paper">
+                    <h2>STATEMENT OF FINANCIAL POSITION</h2>
+                    <div style="text-align: center; margin-bottom:10px;">As at 31 Dec 2026</div>
+                    <table class="doc-table" id="bs-table">
+                         <!-- Populated by JS -->
+                    </table>
+                    <div class="stamp-mark stamp-green" id="stamp-bs-app">APPROVED</div>
+                    <div class="stamp-mark stamp-red" id="stamp-bs-den">DENIED</div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="event-modal" class="overlay hidden">
-        <div class="modal-box">
-            <h2 id="event-title">Quarterly Report</h2>
-            <div style="font-size: 3rem; margin: 10px 0;" id="event-emoji">📰</div>
-            <p id="event-desc">Event details here.</p>
-            <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 0.9rem;" id="event-impact">
-                Impact data
-            </div>
-            <button class="btn btn-action" onclick="closeEventModal()">Acknowledge</button>
+        <div id="tools">
+            <button class="tool-btn" id="btn-approve" onclick="app.submitVerdict('approve')">APPROVE<br>🟢</button>
+            <button class="tool-btn" id="btn-deny" onclick="app.submitVerdict('deny')">DENY<br>🔴</button>
+            <button class="tool-btn" id="btn-audit" onclick="app.toggleAuditMode()">AUDIT<br>🔍</button>
+            <button class="tool-btn" id="btn-cancel" onclick="app.toggleAuditMode()">CANCEL<br>✖️</button>
         </div>
-    </div>
 
-    <div id="save-modal" class="overlay hidden">
-        <div class="modal-box">
-            <h2>System Save/Load</h2>
-            <p>Copy your save code below or paste one to load a game.</p>
-            <input type="text" id="save-code-input" placeholder="Paste save code here...">
-            <div class="flex justify-between" style="gap: 10px;">
-                <button class="btn" onclick="generateSave()">Generate Save</button>
-                <button class="btn btn-action" onclick="loadSave()">Load Save</button>
-                <button class="btn" style="border-color: var(--neon-red); color: var(--neon-red);" onclick="closeSaveModal()">Cancel</button>
+        <!-- Overlays -->
+        <div id="event-overlay">
+            <div class="event-box" id="bribe-box">
+                <div style="font-size: 4rem;">✉️</div>
+                <h3>A Proposal</h3>
+                <p>The CEO slides an envelope across the desk. "Ignore the massive debt. Here is $400."</p>
+                <button class="event-btn" onclick="app.resolveBribe(true)">ACCEPT BRIBE</button>
+                <button class="event-btn" onclick="app.resolveBribe(false)">KICK OUT</button>
             </div>
         </div>
-    </div>
 
-    <div id="print-area" class="hidden">
-        <h1 style="text-align: center;">AUDIT REPORT - <span id="print-company"></span></h1>
-        <p style="text-align: center;">End of Quarter <span id="print-quarter"></span></p>
-        <hr>
-        <div id="print-sci" style="margin-bottom: 40px; margin-top: 20px;"></div>
-        <hr>
-        <div id="print-bs" style="margin-top: 20px;"></div>
+        <div id="cat" onclick="app.shooCat()">🐈‍⬛</div>
+
+        <div id="power-outage">
+            <h1 style="color: red; animation: blink 1s infinite;">SYSTEM FAILURE</h1>
+            <button id="breaker-btn" onclick="app.clickBreaker()">RESET BREAKER</button>
+        </div>
+        
+        <div id="auto-calc-tooltip" class="tooltip"></div>
     </div>
 
     <script>
-        const archetypes = {
-            fashion: { id: 'fashion', name: "Fast Fashion", icon: "👕", desc: "The Volume Play. Razor-thin margins, massive volume.", baseCost: 10, minPrice: 25, maxPrice: 40, baseDemand: 100000, startCash: 250000, factoryCap: 50000, factoryPrice: 50000, mktSens: 1.2, adminSens: 0.8 },
-            tech: { id: 'tech', name: "Premium Tech", icon: "📱", desc: "The Margin Play. Needs huge R&D to maintain hype.", baseCost: 300, minPrice: 800, maxPrice: 1200, baseDemand: 5000, startCash: 1000000, factoryCap: 5000, factoryPrice: 100000, mktSens: 1.0, adminSens: 2.5 },
-            sneakers: { id: 'sneakers', name: "Viral Sneakers", icon: "👟", desc: "The Hype Play. Driven entirely by marketing spend.", baseCost: 30, minPrice: 150, maxPrice: 250, baseDemand: 15000, startCash: 200000, factoryCap: 10000, factoryPrice: 50000, mktSens: 2.8, adminSens: 0.5 },
-            ev: { id: 'ev', name: "EV Manufacturer", icon: "🚗", desc: "Capital Heavyweight. Take huge loans to build factories.", baseCost: 25000, minPrice: 40000, maxPrice: 50000, baseDemand: 200, startCash: 5000000, factoryCap: 100, factoryPrice: 1000000, mktSens: 1.0, adminSens: 1.5 },
-            indie: { id: 'indie', name: "Indie Studio", icon: "🎮", desc: "The Digital Asset. No physical manufacturing needed.", baseCost: 0, minPrice: 20, maxPrice: 60, baseDemand: 15000, startCash: 150000, factoryCap: 999999, factoryPrice: 50000, mktSens: 1.5, adminSens: 2.0 },
-            makeup: { id: 'makeup', name: "Celeb Cosmetics", icon: "💄", desc: "The Brand Machine. Cheap to make, expensive to buy.", baseCost: 5, minPrice: 50, maxPrice: 80, baseDemand: 30000, startCash: 300000, factoryCap: 50000, factoryPrice: 50000, mktSens: 2.2, adminSens: 0.5 }
-        };
-
-        const chaosEvents = [
-            { title: "Viral Dance", emoji: "🕺", desc: "CEO caught doing a cringe TikTok dance. Sales spike!", impact: "Demand +30%", type: 'demand', val: 1.3 },
-            { title: "Canal Blocked", emoji: "🚢", desc: "A massive cargo ship is stuck. Supply lines ruined.", impact: "Base Costs +30%", type: 'cost', val: 1.3 },
-            { title: "Rival Diss Track", emoji: "🎤", desc: "A competitor dropped a fire diss track about your brand.", impact: "Marketing Effectiveness halved", type: 'mkt', val: 0.5 },
-            { title: "Tech Breakthrough", emoji: "🔬", desc: "Your R&D team found a cheaper way to produce goods.", impact: "Base Costs -20%", type: 'cost', val: 0.8 },
-            { title: "Celeb Endorsement", emoji: "⭐", desc: "A major celebrity was seen using your product organically.", impact: "Demand +50%", type: 'demand', val: 1.5 },
-            { title: "Scandal", emoji: "📉", desc: "PR disaster strikes!", impact: "Demand -40%", type: 'demand', val: 0.6 },
-            { title: "Economic Boom", emoji: "📈", desc: "People have more disposable income.", impact: "Demand +20%", type: 'demand', val: 1.2 },
-            { title: "Quiet Quarter", emoji: "☕", desc: "Nothing much happened. Steady as she goes.", impact: "No modifiers", type: 'none', val: 1.0 }
-        ];
-
-        let state = {
-            archId: null,
-            companyName: "",
-            quarter: 1,
-            cash: 0,
-            inventoryUnits: 0,
-            inventoryValue: 0,
-            factoriesValue: 0,
-            factoryCount: 0,
-            loans: 0,
-            shareCapital: 0,
-            retainedEarnings: 0,
-            stockPrice: 10.00,
+        const app = {
+            // --- STATE ---
+            state: {
+                day: 1,
+                cash: 100,
+                rep: 0,
+                citations: 0,
+                maxCitations: 3,
+                items: { espresso: false, redMarker: false, autoCalc: false },
+                dayTime: 150, 
+                timeLeft: 150,
+                plantTime: 60,
+                gameState: 'menu', // menu, playing, night, end
+                auditMode: false,
+                catClicks: 0,
+                breakerClicks: 0
+            },
             
-            // Current inputs
-            price: 0, volume: 0, mkt: 0, admin: 0,
-            
-            // Modifiers for NEXT quarter
-            modDemand: 1.0, modCost: 1.0, modMkt: 1.0,
-            _tempFin: null
-        };
+            timers: { main: null },
+            currentCase: null,
 
-        const formatCurr = (num) => '$' + num.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-        const getEl = (id) => document.getElementById(id);
+            // --- DOM ELEMENTS ---
+            els: {},
 
-        function initStartScreen() {
-            const grid = getEl('archetype-grid');
-            grid.innerHTML = '';
-            for (const key in archetypes) {
-                const a = archetypes[key];
-                grid.innerHTML += `
-                    <div class="archetype-card" onclick="startGame('${key}')">
-                        <div class="emoji">${a.icon}</div>
-                        <h3>${a.name}</h3>
-                        <p>${a.desc}</p>
-                        <div style="font-size:0.75rem; color:#94a3b8;">
-                            Cost: $${a.baseCost} | Optimal: $${a.minPrice}-$${a.maxPrice}
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        function startGame(archId, isLoaded = false) {
-            if (!isLoaded) {
-                let cName = prompt("Enter your Company Name:", "MegaCorp");
-                if (!cName) cName = "MegaCorp";
-                
-                const arch = archetypes[archId];
-                state = {
-                    archId: archId,
-                    companyName: cName,
-                    quarter: 1,
-                    cash: arch.startCash,
-                    inventoryUnits: 0,
-                    inventoryValue: 0,
-                    factoriesValue: 0,
-                    factoryCount: 0,
-                    loans: 0,
-                    shareCapital: arch.startCash,
-                    retainedEarnings: 0,
-                    stockPrice: 10.00,
-                    price: arch.minPrice,
-                    volume: 0,
-                    mkt: 0,
-                    admin: 0,
-                    modDemand: 1.0, modCost: 1.0, modMkt: 1.0,
-                    _tempFin: null
+            init() {
+                this.els = {
+                    menu: document.getElementById('screen-menu'),
+                    game: document.getElementById('game-screen'),
+                    night: document.getElementById('screen-night'),
+                    gameover: document.getElementById('screen-gameover'),
+                    hudDay: document.getElementById('hud-day'),
+                    hudTime: document.getElementById('hud-time'),
+                    hudCash: document.getElementById('hud-cash'),
+                    hudRep: document.getElementById('hud-rep'),
+                    hudCit: document.getElementById('hud-cit'),
+                    plant: document.getElementById('plant'),
+                    pigeon: document.getElementById('pigeon'),
+                    avatar: document.getElementById('avatar'),
+                    sweat: document.getElementById('sweat'),
+                    sciFolder: document.getElementById('folder-sci'),
+                    bsFolder: document.getElementById('folder-bs'),
+                    sciTable: document.getElementById('sci-table'),
+                    bsTable: document.getElementById('bs-table'),
+                    btnApp: document.getElementById('btn-approve'),
+                    btnDeny: document.getElementById('btn-deny'),
+                    btnAudit: document.getElementById('btn-audit'),
+                    btnCancel: document.getElementById('btn-cancel'),
+                    eventOverlay: document.getElementById('event-overlay'),
+                    bribeBox: document.getElementById('bribe-box'),
+                    cat: document.getElementById('cat'),
+                    powerOutage: document.getElementById('power-outage'),
+                    tooltip: document.getElementById('auto-calc-tooltip')
                 };
-            }
 
-            getEl('start-screen').classList.add('hidden');
-            getEl('game-container').classList.remove('hidden');
-            setupDashboard();
-            updatePreview();
-        }
+                // Tooltip follow
+                document.addEventListener('mousemove', (e) => {
+                    if (this.state.items.autoCalc && this.state.auditMode) {
+                        this.els.tooltip.style.left = (e.pageX + 15) + 'px';
+                        this.els.tooltip.style.top = (e.pageY + 15) + 'px';
+                    }
+                });
+            },
 
-        function setupDashboard() {
-            const arch = archetypes[state.archId];
-            getEl('header-company-name').innerText = state.companyName;
-            getEl('header-archetype').innerText = `${arch.icon} ${arch.name}`;
-            
-            getEl('opt-price-min').innerText = arch.minPrice;
-            getEl('opt-price-max').innerText = arch.maxPrice;
-            
-            // Configure Sliders based on archetype
-            const pSlider = getEl('slider-price');
-            pSlider.min = Math.floor(arch.baseCost * 0.8);
-            pSlider.max = arch.maxPrice * 2.5;
-            pSlider.value = state.price;
+            showScreen(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+                document.getElementById(id).classList.add('active-screen');
+            },
 
-            const vSlider = getEl('slider-volume');
-            updateVolumeSliderMax();
-            vSlider.value = state.volume;
+            // --- CORE LOOP ---
+            startNewGame() {
+                this.state = {
+                    day: 1, cash: 100, rep: 0, citations: 0, maxCitations: 3,
+                    items: { espresso: false, redMarker: false, autoCalc: false },
+                    dayTime: 150, timeLeft: 150, plantTime: 60, gameState: 'playing',
+                    auditMode: false, catClicks: 0, breakerClicks: 0
+                };
+                this.startDay();
+            },
 
-            getEl('slider-marketing').max = state.cash + state.loans > 0 ? (state.cash + 100000) : 50000;
-            getEl('slider-admin').max = state.cash + state.loans > 0 ? (state.cash + 100000) : 50000;
-            getEl('slider-marketing').value = state.mkt;
-            getEl('slider-admin').value = state.admin;
-
-            getEl('btn-factory').innerText = arch.id === 'indie' ? "Buy Server Farm ($50k)" : `Build Factory (${formatCurr(arch.factoryPrice)})`;
-            if (arch.id === 'indie') getEl('btn-factory').disabled = true; // Indie doesn't need factories for capacity, handled differently. Let's disable for simplicity or allow server buying. Let's disable.
-        }
-
-        function updateVolumeSliderMax() {
-            const arch = archetypes[state.archId];
-            const vSlider = getEl('slider-volume');
-            let cap = arch.id === 'indie' ? Infinity : (state.factoryCount === 0 && arch.factoryCap < Infinity ? arch.factoryCap : (state.factoryCount * arch.factoryCap) + (state.factoryCount===0 ? arch.factoryCap : 0)); // Everyone gets 1 initial "factory" worth of capacity free to start.
-            
-            if (state.factoryCount === 0) cap = arch.factoryCap; // Base capacity
-            else cap = arch.factoryCap * (state.factoryCount + 1);
-
-            vSlider.max = cap === Infinity ? 1000000 : cap;
-            getEl('factory-cap').innerText = cap === Infinity ? "Unlimited" : cap;
-        }
-
-        function buildFactory() {
-            const arch = archetypes[state.archId];
-            if (state.cash >= arch.factoryPrice) {
-                state.cash -= arch.factoryPrice;
-                state.factoriesValue += arch.factoryPrice;
-                state.factoryCount++;
-                updateVolumeSliderMax();
-                updatePreview();
-            } else {
-                alert("Not enough cash! Secure a bank loan.");
-            }
-        }
-
-        function takeLoan() {
-            state.cash += 50000;
-            state.loans += 50000;
-            updatePreview();
-        }
-
-        function calculateFinancials() {
-            const arch = archetypes[state.archId];
-            
-            // Read UI state
-            state.price = parseInt(getEl('slider-price').value) || 0;
-            state.volume = parseInt(getEl('slider-volume').value) || 0;
-            state.mkt = parseInt(getEl('slider-marketing').value) || 0;
-            state.admin = parseInt(getEl('slider-admin').value) || 0;
-
-            // Update Labels
-            getEl('val-price').innerText = formatCurr(state.price);
-            getEl('val-volume').innerText = state.volume + " units";
-            getEl('val-marketing').innerText = formatCurr(state.mkt);
-            getEl('val-admin').innerText = formatCurr(state.admin);
-
-            let currentBaseCost = arch.baseCost * state.modCost;
-            
-            // Admin Logic for realism
-            let reqAdmin = Math.floor(2000 + (state.factoryCount * 15000) + (state.volume * (arch.baseCost * 0.05)));
-            getEl('req-admin').innerText = formatCurr(reqAdmin);
-
-            let adminRatio = state.admin / (reqAdmin || 1);
-            let adminPenalty = 1.0;
-            let adminBonus = 1.0;
-            
-            if (adminRatio < 1) {
-                adminPenalty = Math.max(0.1, adminRatio); // Very harsh penalty for underfunding
-                currentBaseCost = currentBaseCost / adminPenalty; // Base costs skyrocket due to inefficiency
-            } else {
-                adminBonus = 1 + (Math.log2(adminRatio) * arch.adminSens * 0.2); // Small bonus for overfunding
-                adminBonus = Math.min(adminBonus, 1.5); // Cap the efficiency bonus
-            }
-            getEl('base-cost-display').innerText = currentBaseCost.toFixed(2);
-
-            // Realistic Elastic Demand Calculation
-            let optimalMid = (arch.minPrice + arch.maxPrice) / 2;
-            let priceRatio = state.price / (optimalMid || 1);
-            
-            let elasticity;
-            if (priceRatio <= 1) {
-                // Cheaper than optimal -> increased demand, but diminishing returns
-                elasticity = Math.pow(priceRatio, -1.2);
-                elasticity = Math.min(elasticity, 3.0);
-            } else {
-                // More expensive than optimal -> demand drops off a cliff (exponentially)
-                elasticity = Math.pow(priceRatio, -3.5);
-            }
-
-            // Diminishing returns on Marketing
-            let baselineRev = arch.baseDemand * optimalMid;
-            let targetMkt = baselineRev * 0.05; // 5% of potential revenue is a normal budget
-            let mktRatio = state.mkt / (targetMkt || 1);
-            let mktFactor = 1 + (Math.log2(1 + mktRatio) * arch.mktSens * 0.5 * state.modMkt);
-
-            let demand = Math.floor(arch.baseDemand * elasticity * mktFactor * adminBonus * state.modDemand * adminPenalty);
-            
-            // Hard cap demand so players can't sell infinite units
-            let maxMarketSize = arch.baseDemand * 6;
-            if (demand > maxMarketSize) demand = maxMarketSize;
-            if (state.price === 0) demand = 0;
-            
-            // Inventory Math (Average Cost Method)
-            let openingInvUnits = state.inventoryUnits || 0;
-            let openingInvValue = state.inventoryValue || 0;
-            
-            let productionCost = state.volume * currentBaseCost;
-            let totalAvailableUnits = openingInvUnits + state.volume;
-            let totalAvailableValue = openingInvValue + productionCost;
-            
-            let avgCostPerUnit = totalAvailableUnits > 0 ? totalAvailableValue / totalAvailableUnits : 0;
-            
-            let unitsSold = Math.min(demand, totalAvailableUnits);
-            let closingInvUnits = totalAvailableUnits - unitsSold;
-            
-            // Financial Statements
-            let revenue = unitsSold * state.price;
-            let cogs = unitsSold * avgCostPerUnit;
-            let closingInvValue = closingInvUnits * avgCostPerUnit;
-            
-            let grossProfit = revenue - cogs;
-            let opProfit = grossProfit - state.mkt - state.admin;
-            let interest = Math.floor(state.loans * 0.10);
-            let npbt = opProfit - interest;
-            let tax = npbt > 0 ? Math.floor(npbt * 0.20) : 0;
-            let netProfit = npbt - tax;
-
-            // Strict Cash Flow Logic
-            // Cash Outflows this quarter (Production costs, expenses, interest, tax)
-            let cashOutflows = productionCost + state.mkt + state.admin + interest + tax;
-            let projCash = state.cash + revenue - cashOutflows;
-            let isBankruptWarning = (projCash < 0);
-
-            return {
-                unitsSold, closingInvUnits, demand, avgCostPerUnit,
-                revenue, cogs, grossProfit, opProfit, interest,
-                npbt, tax, netProfit, closingInvValue, cashOutflows, projCash, isBankruptWarning
-            };
-        }
-
-        function updatePreview() {
-            const fin = calculateFinancials();
-            
-            // Income Statement UI
-            getEl('stat-sold').innerText = fin.unitsSold;
-            getEl('header-inventory').innerText = fin.closingInvUnits;
-            
-            getEl('stmt-rev').innerText = formatCurr(fin.revenue);
-            getEl('stmt-cogs').innerText = `(${formatCurr(fin.cogs)})`;
-            getEl('stmt-gp').innerText = formatCurr(fin.grossProfit);
-            
-            getEl('stmt-mkt').innerText = `(${formatCurr(state.mkt)})`;
-            getEl('stmt-admin').innerText = `(${formatCurr(state.admin)})`;
-            getEl('stmt-op').innerText = formatCurr(fin.opProfit);
-            
-            getEl('stmt-interest').innerText = `(${formatCurr(fin.interest)})`;
-            getEl('stmt-npbt').innerText = formatCurr(fin.npbt);
-            getEl('stmt-tax').innerText = `(${formatCurr(fin.tax)})`;
-            
-            const npEl = getEl('stmt-np');
-            npEl.innerText = formatCurr(fin.netProfit);
-            npEl.className = fin.netProfit >= 0 ? 'text-green' : 'text-red';
-
-            // Projected Balance Sheet UI
-            let projRE = state.retainedEarnings + fin.netProfit;
-            
-            getEl('bs-cash').innerText = formatCurr(fin.projCash);
-            getEl('bs-inv').innerText = formatCurr(fin.closingInvValue);
-            getEl('bs-factory').innerText = formatCurr(state.factoriesValue);
-            
-            let totalAssets = fin.projCash + fin.closingInvValue + state.factoriesValue;
-            getEl('bs-total-assets').innerText = formatCurr(totalAssets);
-            
-            getEl('bs-loans').innerText = formatCurr(state.loans);
-            getEl('bs-capital').innerText = formatCurr(state.shareCapital);
-            getEl('bs-re').innerText = formatCurr(projRE);
-            
-            let totalLE = state.loans + state.shareCapital + projRE;
-            getEl('bs-total-le').innerText = formatCurr(totalLE);
-
-            // Validation checks
-            if (fin.isBankruptWarning) {
-                getEl('funds-warning').classList.remove('hidden');
-                getEl('btn-next-quarter').disabled = true;
-                getEl('cash-flow-warning').classList.remove('hidden');
-            } else {
-                getEl('funds-warning').classList.add('hidden');
-                getEl('btn-next-quarter').disabled = false;
-                getEl('cash-flow-warning').classList.add('hidden');
-            }
-
-            // Top bar
-            getEl('ui-quarter').innerText = state.quarter;
-            getEl('ui-stock').innerText = state.stockPrice.toFixed(2);
-            if(state.stockPrice < 5) getEl('ui-stock').className = 'text-red';
-            else getEl('ui-stock').className = 'text-green';
-            
-            // Check Accounting Equation (with tiny floating point tolerance)
-            const isBalanced = Math.abs(totalAssets - totalLE) <= 2; 
-            getEl('accounting-check').innerText = isBalanced ? "✓ Balanced" : "❌ Unbalanced!";
-            getEl('accounting-check').style.color = isBalanced ? "var(--neon-green)" : "var(--neon-red)";
-            
-            state._tempFin = fin;
-        }
-
-        function nextQuarter() {
-            const fin = state._tempFin;
-            
-            // Apply Financials to State
-            state.cash = fin.projCash;
-            state.inventoryUnits = fin.closingInvUnits;
-            state.inventoryValue = fin.closingInvValue;
-            state.retainedEarnings += fin.netProfit;
-            
-            // Update Stock Price (Simplified logic based on profit margin & equity growth)
-            let equity = state.shareCapital + state.retainedEarnings;
-            let equityRatio = equity / state.shareCapital;
-            let profitMargin = fin.revenue > 0 ? (fin.netProfit / fin.revenue) : 0;
-            
-            state.stockPrice = 10 * equityRatio * (1 + profitMargin);
-            if (state.stockPrice < 0.1) state.stockPrice = 0.1;
-
-            // End game check
-            if (state.cash < 0 && state.loans > state.factoriesValue) {
-                getEl('event-title').innerText = "BANKRUPT!";
-                getEl('event-emoji').innerText = "📉";
-                getEl('event-desc').innerText = `Your company ran out of cash in Quarter ${state.quarter}.`;
-                getEl('event-impact').innerText = `Stock Price: $0.00`;
-                getEl('event-modal').classList.remove('hidden');
-                getEl('btn-next-quarter').disabled = true;
-                return;
-            }
-
-            if (state.quarter >= 8) {
-                getEl('event-title').innerText = "GAME OVER!";
-                getEl('event-emoji').innerText = "🏆";
-                getEl('event-desc').innerText = `You survived 8 quarters! Click 'Print Audit' to save your final books.`;
-                getEl('event-impact').innerText = `Final Stock Price: $${state.stockPrice.toFixed(2)}`;
-                getEl('event-modal').classList.remove('hidden');
-                getEl('btn-next-quarter').disabled = true;
-                updatePreview();
-                return;
-            }
-
-            // Advance Quarter
-            state.quarter++;
-            
-            // Trigger Random Event for next quarter
-            triggerEvent();
-        }
-
-        function triggerEvent() {
-            // Reset modifiers
-            state.modDemand = 1.0; state.modCost = 1.0; state.modMkt = 1.0;
-
-            const ev = chaosEvents[Math.floor(Math.random() * chaosEvents.length)];
-            
-            if (ev.type === 'demand') state.modDemand = ev.val;
-            if (ev.type === 'cost') state.modCost = ev.val;
-            if (ev.type === 'mkt') state.modMkt = ev.val;
-
-            getEl('event-title').innerText = "Quarterly Update (Q" + state.quarter + ")";
-            getEl('event-emoji').innerText = ev.emoji;
-            getEl('event-desc').innerText = ev.desc;
-            getEl('event-impact').innerText = ev.impact;
-            
-            getEl('event-modal').classList.remove('hidden');
-        }
-
-        function closeEventModal() {
-            getEl('event-modal').classList.add('hidden');
-            
-            // Reset Sliders to 0 to force user to plan again, except price
-            getEl('slider-volume').value = 0;
-            getEl('slider-marketing').value = 0;
-            getEl('slider-admin').value = 0;
-            
-            updateVolumeSliderMax(); // capacity might have changed
-            updatePreview();
-        }
-
-        function showSaveModal() {
-            getEl('save-code-input').value = "";
-            getEl('save-modal').classList.remove('hidden');
-        }
-        function closeSaveModal() {
-            getEl('save-modal').classList.add('hidden');
-        }
-
-        function generateSave() {
-            try {
-                const json = JSON.stringify(state);
-                const encoded = btoa(json);
-                getEl('save-code-input').value = encoded;
-                getEl('save-code-input').select();
-                document.execCommand('copy');
-                alert("Save code copied to clipboard!");
-            } catch (e) {
-                alert("Error generating save.");
-            }
-        }
-
-        function loadSave() {
-            const code = getEl('save-code-input').value;
-            if (!code) return;
-            try {
-                const decoded = atob(code);
-                const parsed = JSON.parse(decoded);
-                if (parsed && parsed.archId) {
-                    state = parsed;
-                    startGame(state.archId, true);
-                    closeSaveModal();
-                    alert("Game Loaded Successfully!");
+            startDay() {
+                if(this.state.day > 10) {
+                    this.triggerEnding();
+                    return;
                 }
-            } catch(e) {
-                alert("Invalid save code.");
+                
+                this.state.gameState = 'playing';
+                this.state.citations = 0;
+                this.state.timeLeft = this.state.dayTime + (this.state.items.espresso ? 45 : 0);
+                this.state.plantTime = 60;
+                this.state.maxCitations = this.state.items.redMarker ? 4 : 3;
+                
+                this.els.plant.innerText = '🌵';
+                this.els.cat.style.display = 'none';
+                this.els.powerOutage.style.display = 'none';
+                this.els.eventOverlay.style.display = 'none';
+                this.updateHUD();
+                
+                this.showScreen('game-screen');
+                this.nextCase();
+
+                clearInterval(this.timers.main);
+                this.timers.main = setInterval(() => this.tick(), 1000);
+            },
+
+            tick() {
+                if (this.state.gameState !== 'playing') return;
+                
+                this.state.timeLeft--;
+                this.state.plantTime--;
+
+                // Plant Logic
+                if (this.state.plantTime <= 0 && this.els.plant.innerText === '🌵') {
+                    this.els.plant.innerText = '🥀';
+                }
+
+                // Window Logic
+                if (Math.random() < 0.05) {
+                    this.els.pigeon.style.display = Math.random() < 0.3 ? 'block' : 'none';
+                }
+
+                // Random Events
+                if (this.state.timeLeft > 10 && this.state.timeLeft < this.state.dayTime - 10) {
+                    if (Math.random() < 0.005 && this.els.cat.style.display === 'none') {
+                        this.triggerCat();
+                    } else if (Math.random() < 0.005 && this.els.powerOutage.style.display === 'none') {
+                        this.triggerPower();
+                    }
+                }
+
+                this.updateHUD();
+
+                if (this.state.timeLeft <= 0) {
+                    this.endDay();
+                }
+            },
+
+            updateHUD() {
+                const m = Math.floor(this.state.timeLeft / 60);
+                const s = this.state.timeLeft % 60;
+                this.els.hudTime.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+                this.els.hudCash.innerText = this.state.cash;
+                this.els.hudRep.innerText = this.state.rep;
+                this.els.hudCit.innerText = `${this.state.citations}/${this.state.maxCitations}`;
+                this.els.hudDay.innerText = this.state.day;
+            },
+
+            endDay() {
+                clearInterval(this.timers.main);
+                this.state.gameState = 'night';
+                this.state.cash -= 60; // Rent
+                
+                if (this.state.cash < 0) {
+                    this.triggerGameOver("Arrested for Debt.", "You couldn't pay your rent and basic living expenses. The enforcers have collected you.");
+                    return;
+                }
+
+                document.getElementById('night-day-display').innerText = this.state.day;
+                document.getElementById('night-cash').innerText = this.state.cash;
+                document.getElementById('night-rep').innerText = this.state.rep;
+                document.getElementById('night-warning').innerText = "";
+                document.getElementById('code-display').style.display = 'none';
+                
+                // Update Shop UI
+                const btns = {
+                    'buy-espresso': { has: this.state.items.espresso, cost: 150 },
+                    'buy-marker': { has: this.state.items.redMarker, cost: 300 },
+                    'buy-calc': { has: this.state.items.autoCalc, cost: 500 }
+                };
+                
+                for(let id in btns) {
+                    const btn = document.getElementById(id);
+                    if(btns[id].has) {
+                        btn.innerText = "OWNED";
+                        btn.disabled = true;
+                    } else if(this.state.cash < btns[id].cost) {
+                        btn.disabled = true;
+                    } else {
+                        btn.disabled = false;
+                        btn.innerText = "BUY";
+                    }
+                }
+
+                this.state.day++;
+                this.showScreen('screen-night');
+            },
+
+            buyItem(item, cost) {
+                if (this.state.cash >= cost && !this.state.items[item]) {
+                    this.state.cash -= cost;
+                    this.state.items[item] = true;
+                    document.getElementById('night-cash').innerText = this.state.cash;
+                    this.endDay(); // refresh shop UI
+                }
+            },
+
+            triggerGameOver(title, desc) {
+                clearInterval(this.timers.main);
+                this.state.gameState = 'end';
+                document.getElementById('end-title').innerText = title;
+                document.getElementById('end-desc').innerText = desc;
+                document.getElementById('victory-code-container').style.display = 'none';
+                this.showScreen('screen-gameover');
+            },
+
+            triggerEnding() {
+                clearInterval(this.timers.main);
+                this.state.gameState = 'end';
+                const vc = document.getElementById('victory-code-container');
+                const vctext = document.getElementById('victory-code');
+
+                if (this.state.cash >= 5000) {
+                    document.getElementById('end-title').innerText = "GOLDEN PARACHUTE ACTIVATED";
+                    document.getElementById('end-title').style.color = "gold";
+                    document.getElementById('end-desc').innerText = "You survived 10 days and earned enough to escape the city. The sunset looks beautiful from the helicopter.";
+                    vc.style.display = 'block';
+                    vctext.innerText = "ESCAPE-WIN-" + btoa(this.state.cash + ":" + this.state.rep);
+                } else if (this.state.rep >= 50) {
+                    document.getElementById('end-title').innerText = "PROMOTED TO HEAD INQUISITOR";
+                    document.getElementById('end-title').style.color = "#aaffaa";
+                    document.getElementById('end-desc').innerText = "You didn't make the $5000, but your flawless record caught the Commission's eye. You're trapped here, but in a nicer office.";
+                    vc.style.display = 'block';
+                    vctext.innerText = "PROMOTE-WIN-" + btoa(this.state.cash + ":" + this.state.rep);
+                } else {
+                    this.triggerGameOver("ARRESTED FOR DEBT", "You failed to earn $5,000 and didn't impress the Commission. The authorities are outside your door.");
+                    return; // already handled
+                }
+                this.showScreen('screen-gameover');
+            },
+
+            // --- INTERACTIONS ---
+            waterPlant() {
+                if (this.els.plant.innerText === '🥀') {
+                    this.els.plant.innerText = '🌵';
+                    this.state.plantTime = 60;
+                }
+            },
+
+            shooCat() {
+                this.state.catClicks--;
+                if (this.state.catClicks <= 0) {
+                    this.els.cat.style.display = 'none';
+                } else {
+                    this.screenShake();
+                }
+            },
+
+            triggerCat() {
+                this.state.catClicks = 3;
+                this.els.cat.style.display = 'block';
+                this.screenShake();
+            },
+
+            clickBreaker() {
+                this.state.breakerClicks--;
+                if (this.state.breakerClicks <= 0) {
+                    this.els.powerOutage.style.display = 'none';
+                }
+            },
+
+            triggerPower() {
+                this.state.breakerClicks = 5;
+                this.els.powerOutage.style.display = 'flex';
+            },
+
+            triggerBribe() {
+                this.els.eventOverlay.style.display = 'flex';
+                this.els.bribeBox.style.display = 'block';
+            },
+
+            resolveBribe(accepted) {
+                this.els.eventOverlay.style.display = 'none';
+                if (accepted) {
+                    this.state.cash += 400;
+                    if (Math.random() < 0.3) {
+                        this.applyCitation("Accepted Bribe CAUGHT.");
+                    }
+                }
+                this.updateHUD();
+                this.nextCase(); // Bribe dismisses current case
+            },
+
+            toggleAuditMode() {
+                this.state.auditMode = !this.state.auditMode;
+                if (this.state.auditMode) {
+                    document.body.classList.add('audit-mode');
+                    this.els.btnAudit.style.display = 'none';
+                    this.els.btnCancel.style.display = 'block';
+                    this.els.btnApp.style.opacity = 0.5;
+                    this.els.btnDeny.style.opacity = 0.5;
+                    if(this.state.items.autoCalc) this.els.tooltip.style.display = 'block';
+                } else {
+                    document.body.classList.remove('audit-mode');
+                    this.els.btnAudit.style.display = 'block';
+                    this.els.btnCancel.style.display = 'none';
+                    this.els.btnApp.style.opacity = 1;
+                    this.els.btnDeny.style.opacity = 1;
+                    this.els.tooltip.style.display = 'none';
+                }
+            },
+
+            screenShake() {
+                document.body.classList.remove('shake-active');
+                void document.body.offsetWidth; // trigger reflow
+                document.body.classList.add('shake-active');
+            },
+
+            applyStamp(type) {
+                this.screenShake();
+                const marks = document.querySelectorAll('.stamp-mark');
+                marks.forEach(m => m.style.display = 'none');
+                
+                if (type === 'approve') {
+                    document.getElementById('stamp-sci-app').style.display = 'block';
+                    if(this.state.day >= 4) document.getElementById('stamp-bs-app').style.display = 'block';
+                } else if (type === 'deny') {
+                    document.getElementById('stamp-sci-den').style.display = 'block';
+                    if(this.state.day >= 4) document.getElementById('stamp-bs-den').style.display = 'block';
+                }
+            },
+
+            applyCitation(reason) {
+                this.state.citations++;
+                this.state.cash -= 50;
+                this.els.hudCit.style.color = 'red';
+                setTimeout(() => this.els.hudCit.style.color = '', 500);
+                this.screenShake();
+                
+                if (this.state.citations >= this.state.maxCitations) {
+                    this.triggerGameOver("FIRED.", "Maximum citations reached today. You are escorted from the building.");
+                }
+            },
+
+            // --- GAMEPLAY LOGIC ---
+            nextCase() {
+                if (this.state.auditMode) this.toggleAuditMode();
+
+                // Clear stamps
+                document.querySelectorAll('.stamp-mark').forEach(m => m.style.display = 'none');
+
+                // Animate Out & In
+                this.els.sciFolder.classList.remove('in');
+                this.els.sciFolder.classList.add('out');
+                this.els.bsFolder.classList.remove('in');
+                this.els.bsFolder.classList.add('out');
+
+                setTimeout(() => {
+                    this.generateCompany();
+                    this.renderDocuments();
+                    
+                    this.els.sciFolder.classList.remove('out');
+                    this.els.sciFolder.classList.add('in');
+                    if (this.state.day >= 4) {
+                        this.els.bsFolder.style.display = 'block';
+                        this.els.bsFolder.classList.remove('out');
+                        this.els.bsFolder.classList.add('in');
+                    } else {
+                        this.els.bsFolder.style.display = 'none';
+                    }
+
+                    // Avatar
+                    const avatars = ['👨‍💼','👩‍💼','🧑‍💻','🦹‍♂️','🦹‍♀️','🕵️‍♂️','👔'];
+                    this.els.avatar.innerText = avatars[Math.floor(Math.random()*avatars.length)];
+                    this.els.sweat.style.display = this.currentCase.sweating ? 'block' : 'none';
+
+                    // Random Bribe on generation? (Rare)
+                    if (this.currentCase.type === 'fraud' && Math.random() < 0.15) {
+                        setTimeout(() => this.triggerBribe(), 1000);
+                    }
+
+                }, 400);
+            },
+
+            submitVerdict(verdict) {
+                if (this.state.auditMode) return;
+                this.applyStamp(verdict);
+                
+                let correct = false;
+                if (verdict === 'approve' && this.currentCase.type === 'healthy') correct = true;
+                if (verdict === 'deny' && this.currentCase.type === 'bad') correct = true;
+
+                setTimeout(() => {
+                    if (correct) {
+                        this.state.cash += 50;
+                        this.state.rep += 5;
+                    } else {
+                        this.applyCitation("Incorrect verdict.");
+                        this.state.rep -= 5;
+                    }
+                    this.updateHUD();
+                    this.nextCase();
+                }, 800);
+            },
+
+            auditRow(id) {
+                if (!this.state.auditMode) return;
+                
+                if (this.currentCase.type === 'fraud' && this.currentCase.fraudTarget === id) {
+                    // Success
+                    this.screenShake();
+                    document.getElementById(`row-${id}`).style.backgroundColor = 'rgba(0,255,0,0.5)';
+                    setTimeout(() => {
+                        this.state.cash += 100;
+                        this.state.rep += 10;
+                        this.updateHUD();
+                        this.nextCase();
+                    }, 800);
+                } else {
+                    // Mistake
+                    this.applyCitation("Invalid Audit Target.");
+                    this.toggleAuditMode();
+                }
+            },
+
+            showRowTooltip(id) {
+                if (!this.state.auditMode || !this.state.items.autoCalc) return;
+                const c = this.currentCase;
+                let text = "";
+                
+                // Real math helper
+                if(id === 'gp') text = `Gross = Rev (${c.sci.rev}) - CoS (${c.sci.cos}) = ${c.sci.rev - c.sci.cos}`;
+                if(id === 'op') text = `Op = GP - Sell - Admin = ${c.sci.gp_real - c.sci.sell - c.sci.admin}`;
+                if(id === 'np') text = `NP = PBT - Tax = ${c.sci.pbt_real - c.sci.tax}`;
+                if(id === 'ta') text = `Total Assets = NCA + CA = ${c.bs.nca + c.bs.ca_real}`;
+                if(id === 'tl') text = `Total Liabilities = CL + NCL = ${c.bs.cl_real + c.bs.ncl}`;
+                if(id === 'na') text = `Net Assets = TA - TL = ${c.bs.ta_real - c.bs.tl_real}`;
+                if(id === 'te') text = `Total Equity = Share + Retained = ${c.bs.sc + c.bs.re}`;
+
+                if (text) {
+                    this.els.tooltip.innerText = text;
+                } else {
+                    this.els.tooltip.innerText = "No auto-calc data.";
+                }
+            },
+
+            // --- FINANCIAL GENERATOR (EDEXCEL) ---
+            rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
+
+            generateCompany() {
+                const names = ["Omnicorp","Glove & Sons","Cattle Snaffle Ltd","Moosewear","Hassani Ltd","NuVan","File & Co","Apex Trading","Vortex Heavy"];
+                let cname = names[this.rnd(0, names.length-1)] + " " + this.rnd(10,99);
+                
+                let typeSeed = Math.random();
+                let type = 'healthy';
+                if (typeSeed < 0.3) type = 'bad';
+                else if (typeSeed < 0.6) type = 'fraud';
+
+                let sweating = (type === 'fraud' && Math.random() < 0.5);
+
+                // Base Maths
+                let rev = this.rnd(5000, 50000);
+                let cos = this.rnd(1000, rev * 0.6);
+                let gp = rev - cos;
+                let sell = this.rnd(100, gp * 0.2);
+                let admin = this.rnd(100, gp * 0.2);
+                let op = gp - sell - admin;
+                let fin = this.rnd(50, op * 0.1);
+                let pbt = op - fin;
+                let tax = pbt > 0 ? Math.floor(pbt * 0.2) : 0;
+                let np = pbt - tax;
+
+                let nca = this.rnd(10000, 50000);
+                let inv = this.rnd(500, 5000);
+                let rec = this.rnd(500, 5000);
+                let cash = this.rnd(1000, 10000);
+                let ca = inv + rec + cash;
+                let ta = nca + ca;
+
+                let pay = this.rnd(500, 5000);
+                let stb = this.rnd(0, 1000);
+                let cl = pay + stb + tax;
+                let ncl = this.rnd(1000, 15000);
+                let tl = cl + ncl;
+
+                let na = ta - tl;
+                let sc = Math.floor(na * 0.6);
+                let re = na - sc;
+
+                let caseData = {
+                    name: cname, type: type, sweating: sweating, fraudTarget: null,
+                    sci: { rev, cos, gp, sell, admin, op, fin, pbt, tax, np, gp_real:gp, op_real:op, pbt_real:pbt, np_real:np },
+                    bs: { nca, inv, rec, cash, ca, ta, pay, stb, tax, cl, ncl, tl, na, sc, re, ca_real:ca, ta_real:ta, cl_real:cl, tl_real:tl, na_real:na, te_real:sc+re }
+                };
+
+                if (type === 'bad') {
+                    // Massive loss OR Liquidity crisis
+                    if (Math.random() < 0.5) {
+                        // Loss
+                        caseData.sci.cos = rev + this.rnd(1000, 5000);
+                        caseData.sci.gp = rev - caseData.sci.cos;
+                        caseData.sci.op = caseData.sci.gp - sell - admin;
+                        caseData.sci.pbt = caseData.sci.op - fin;
+                        caseData.sci.tax = 0;
+                        caseData.sci.np = caseData.sci.pbt;
+                    } else {
+                        // Liquidity (Massive STB, zero cash)
+                        caseData.bs.cash = 10;
+                        caseData.bs.ca = caseData.bs.inv + caseData.bs.rec + 10;
+                        caseData.bs.stb = caseData.bs.ca + this.rnd(5000, 20000);
+                        caseData.bs.cl = pay + caseData.bs.stb + tax;
+                        caseData.bs.tl = caseData.bs.cl + ncl;
+                        caseData.bs.na = (nca + caseData.bs.ca) - caseData.bs.tl;
+                        caseData.bs.re = caseData.bs.na - sc; // adjust equity to balance
+                    }
+                } 
+                else if (type === 'fraud') {
+                    let lie = this.rnd(1, 4);
+                    // Only do BS lies if day >= 4
+                    if (this.state.day < 4 && lie > 2) lie = this.rnd(1,2); 
+
+                    if (lie === 1) { // GP Math Error
+                        caseData.sci.gp += this.rnd(1000, 5000);
+                        caseData.sci.op = caseData.sci.gp - sell - admin; // carries down
+                        caseData.sci.pbt = caseData.sci.op - fin;
+                        caseData.sci.np = caseData.sci.pbt - tax;
+                        caseData.fraudTarget = 'gp';
+                    } 
+                    else if (lie === 2) { // Exclude admin from OP
+                        caseData.sci.op = caseData.sci.gp - sell; // missed admin
+                        caseData.sci.pbt = caseData.sci.op - fin;
+                        caseData.sci.np = caseData.sci.pbt - tax;
+                        caseData.fraudTarget = 'op';
+                    }
+                    else if (lie === 3) { // BS Total Assets math error
+                        caseData.bs.ta += this.rnd(2000, 10000);
+                        caseData.fraudTarget = 'ta';
+                    }
+                    else if (lie === 4) { // Categorization (NCL as an asset)
+                        caseData.bs.ca += caseData.bs.ncl; // added borrowing to assets!
+                        caseData.bs.ta = caseData.bs.nca + caseData.bs.ca;
+                        caseData.fraudTarget = 'ca'; // CA row is fraudulent
+                    }
+                }
+
+                this.currentCase = caseData;
+            },
+
+            formatMoney(num) {
+                return num.toLocaleString();
+            },
+
+            renderDocuments() {
+                const c = this.currentCase;
+                document.getElementById('doc-company-name').innerText = c.name;
+
+                // Render SCI
+                let sciHTML = `
+                    <tr id="row-rev" onclick="app.auditRow('rev')" onmouseenter="app.showRowTooltip('rev')"><td>Revenue</td><td>${this.formatMoney(c.sci.rev)}</td></tr>
+                    <tr id="row-cos" onclick="app.auditRow('cos')" onmouseenter="app.showRowTooltip('cos')"><td>Cost of sales</td><td>(${this.formatMoney(c.sci.cos)})</td></tr>
+                    <tr id="row-gp" class="subtotal" onclick="app.auditRow('gp')" onmouseenter="app.showRowTooltip('gp')"><td>Gross profit</td><td>${this.formatMoney(c.sci.gp)}</td></tr>
+                    <tr id="row-sell" onclick="app.auditRow('sell')" onmouseenter="app.showRowTooltip('sell')"><td>Selling expenses</td><td>(${this.formatMoney(c.sci.sell)})</td></tr>
+                    <tr id="row-admin" onclick="app.auditRow('admin')" onmouseenter="app.showRowTooltip('admin')"><td>Admin expenses</td><td>(${this.formatMoney(c.sci.admin)})</td></tr>
+                    <tr id="row-op" class="subtotal" onclick="app.auditRow('op')" onmouseenter="app.showRowTooltip('op')"><td>Operating profit</td><td>${this.formatMoney(c.sci.op)}</td></tr>
+                    <tr id="row-fin" onclick="app.auditRow('fin')" onmouseenter="app.showRowTooltip('fin')"><td>Finance costs</td><td>(${this.formatMoney(c.sci.fin)})</td></tr>
+                    <tr id="row-pbt" class="subtotal" onclick="app.auditRow('pbt')" onmouseenter="app.showRowTooltip('pbt')"><td>Profit before tax</td><td>${this.formatMoney(c.sci.pbt)}</td></tr>
+                    <tr id="row-tax" onclick="app.auditRow('tax')" onmouseenter="app.showRowTooltip('tax')"><td>Taxation</td><td>(${this.formatMoney(c.sci.tax)})</td></tr>
+                    <tr id="row-np" class="total" onclick="app.auditRow('np')" onmouseenter="app.showRowTooltip('np')"><td>Profit for the year</td><td>${this.formatMoney(c.sci.np)}</td></tr>
+                `;
+                this.els.sciTable.innerHTML = sciHTML;
+
+                // Render BS
+                let bsHTML = `
+                    <tr id="row-nca" onclick="app.auditRow('nca')" onmouseenter="app.showRowTooltip('nca')"><td colspan="2"><b>Non-current assets</b></td></tr>
+                    <tr class="indent" id="row-nca-val" onclick="app.auditRow('nca-val')" onmouseenter="app.showRowTooltip('nca-val')"><td>Property & Equip</td><td>${this.formatMoney(c.bs.nca)}</td></tr>
+                    <tr id="row-ca" onclick="app.auditRow('ca')" onmouseenter="app.showRowTooltip('ca')"><td colspan="2"><b>Current assets</b></td></tr>
+                    <tr class="indent" id="row-inv" onclick="app.auditRow('inv')" onmouseenter="app.showRowTooltip('inv')"><td>Inventories</td><td>${this.formatMoney(c.bs.inv)}</td></tr>
+                    <tr class="indent" id="row-rec" onclick="app.auditRow('rec')" onmouseenter="app.showRowTooltip('rec')"><td>Trade receivables</td><td>${this.formatMoney(c.bs.rec)}</td></tr>
+                    <tr class="indent" id="row-cash" onclick="app.auditRow('cash')" onmouseenter="app.showRowTooltip('cash')"><td>Cash & equivalents</td><td>${this.formatMoney(c.bs.cash)}</td></tr>
+                    <tr id="row-ta" class="total" onclick="app.auditRow('ta')" onmouseenter="app.showRowTooltip('ta')"><td>Total assets</td><td>${this.formatMoney(c.bs.ta)}</td></tr>
+                    <tr><td colspan="2">&nbsp;</td></tr>
+                    <tr id="row-cl" onclick="app.auditRow('cl')" onmouseenter="app.showRowTooltip('cl')"><td colspan="2"><b>Current liabilities</b></td></tr>
+                    <tr class="indent" id="row-pay" onclick="app.auditRow('pay')" onmouseenter="app.showRowTooltip('pay')"><td>Trade payables</td><td>${this.formatMoney(c.bs.pay)}</td></tr>
+                    <tr class="indent" id="row-stb" onclick="app.auditRow('stb')" onmouseenter="app.showRowTooltip('stb')"><td>Short-term borrowings</td><td>${this.formatMoney(c.bs.stb)}</td></tr>
+                    <tr id="row-ncl" onclick="app.auditRow('ncl')" onmouseenter="app.showRowTooltip('ncl')"><td colspan="2"><b>Non-current liabilities</b></td></tr>
+                    <tr class="indent" id="row-ltb" onclick="app.auditRow('ltb')" onmouseenter="app.showRowTooltip('ltb')"><td>Long-term borrowings</td><td>${this.formatMoney(c.bs.ncl)}</td></tr>
+                    <tr id="row-tl" class="total" onclick="app.auditRow('tl')" onmouseenter="app.showRowTooltip('tl')"><td>Total liabilities</td><td>${this.formatMoney(c.bs.tl)}</td></tr>
+                    <tr id="row-na" class="total" onclick="app.auditRow('na')" onmouseenter="app.showRowTooltip('na')"><td>Net assets</td><td>${this.formatMoney(c.bs.na)}</td></tr>
+                    <tr><td colspan="2">&nbsp;</td></tr>
+                    <tr id="row-eq" onclick="app.auditRow('eq')" onmouseenter="app.showRowTooltip('eq')"><td colspan="2"><b>Shareholders' equity</b></td></tr>
+                    <tr class="indent" id="row-sc" onclick="app.auditRow('sc')" onmouseenter="app.showRowTooltip('sc')"><td>Share capital</td><td>${this.formatMoney(c.bs.sc)}</td></tr>
+                    <tr class="indent" id="row-re" onclick="app.auditRow('re')" onmouseenter="app.showRowTooltip('re')"><td>Retained earnings</td><td>${this.formatMoney(c.bs.re)}</td></tr>
+                    <tr id="row-te" class="total" onclick="app.auditRow('te')" onmouseenter="app.showRowTooltip('te')"><td>Total equity</td><td>${this.formatMoney(c.bs.sc + c.bs.re)}</td></tr>
+                `;
+                this.els.bsTable.innerHTML = bsHTML;
+            },
+
+            // --- SAVE / LOAD ---
+            saveGame() {
+                const saveObj = {
+                    day: this.state.day,
+                    cash: this.state.cash,
+                    rep: this.state.rep,
+                    items: this.state.items
+                };
+                const code = btoa(JSON.stringify(saveObj));
+                const cd = document.getElementById('code-display');
+                cd.style.display = 'block';
+                cd.innerText = code;
+            },
+
+            loadGame() {
+                const code = document.getElementById('load-code').value.trim();
+                if(!code) return;
+                try {
+                    const saveObj = JSON.parse(atob(code));
+                    if(saveObj.day && saveObj.cash !== undefined) {
+                        this.state = {
+                            day: saveObj.day, cash: saveObj.cash, rep: saveObj.rep, citations: 0, maxCitations: 3,
+                            items: saveObj.items || { espresso: false, redMarker: false, autoCalc: false },
+                            dayTime: 150, timeLeft: 150, plantTime: 60, gameState: 'menu',
+                            auditMode: false, catClicks: 0, breakerClicks: 0
+                        };
+                        this.endDay(); // Go to night screen to prep next day
+                    }
+                } catch(e) {
+                    alert("Invalid Save Code");
+                }
             }
-        }
+        };
 
-        function exportReport() {
-            // Populate Print Area
-            getEl('print-company').innerText = state.companyName;
-            getEl('print-quarter').innerText = state.quarter;
-            
-            const pSci = getEl('print-sci');
-            const pBs = getEl('print-bs');
-            
-            // Clone the books but clean them up
-            pSci.innerHTML = `<h2>STATEMENT OF COMPREHENSIVE INCOME</h2>` + document.querySelector('.book-panel:nth-child(1)').innerHTML;
-            pBs.innerHTML = `<h2>BALANCE SHEET</h2>` + document.querySelector('.book-panel:nth-child(2)').innerHTML;
-            
-            // Remove the header H2s from the cloned content since we added clean ones
-            const oldH2s = document.querySelectorAll('#print-area .book-panel h2');
-            oldH2s.forEach(el => el.style.display = 'none');
+        // Initialize on load
+        window.onload = () => app.init();
 
-            window.print();
-        }
-
-        // Initialize Start Screen on load
-        window.onload = initStartScreen;
     </script>
 </body>
 </html>
