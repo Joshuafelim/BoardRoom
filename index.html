@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Audit Desk: The Financial Inquisitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -25,97 +25,212 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-drag: none;
+            touch-action: manipulation;
         }
 
         body, html {
-            margin: 0; padding: 0; width: 100vw; height: 100vh;
-            overflow: hidden; background-color: #000;
+            margin: 0; padding: 0; 
+            width: 100%; height: 100%;
+            background-color: #121412;
             font-family: 'Courier Prime', monospace;
             color: var(--ink);
+            overflow-x: hidden;
+        }
+
+        #main-menu {
+            width: 100%; 
+            min-height: 100vh;
+            min-height: 100dvh; 
+            background: #1a1c1a;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            color: #d4e0d5; 
+            text-align: center;
+            padding: 2rem 1rem;
+            overflow-y: auto;
         }
 
         #game-container {
-            width: 100%; height: 100%; position: relative;
+            width: 100vw; 
+            height: 100vh;
+            height: 100dvh;
+            position: fixed;
+            top: 0;
+            left: 0;
             background-color: var(--desk-base);
             background-image: 
                 radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 20%, rgba(0,0,0,0.6) 100%),
                 repeating-linear-gradient(45deg, var(--desk-texture) 0, var(--desk-texture) 2px, transparent 2px, transparent 8px);
             display: none;
             flex-direction: column;
+            overflow: hidden;
+            z-index: 10;
         }
 
-        .active-screen { display: flex !important; }
+        .hidden-screen { display: none !important; }
 
         #hud {
-            width: 100%; height: 60px; background: var(--ui-bg);
+            width: 100%; 
+            min-height: 50px; 
+            background: var(--ui-bg);
             border-bottom: 4px solid var(--ui-border);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 30px; font-family: 'VT323', monospace; font-size: 1.8rem;
-            color: var(--ui-text); z-index: 50;
+            display: flex; 
+            flex-wrap: wrap;
+            justify-content: space-around; 
+            align-items: center;
+            padding: 8px 15px; 
+            font-family: 'VT323', monospace; 
+            font-size: clamp(1.2rem, 4vw, 1.8rem);
+            color: var(--ui-text); 
+            z-index: 50;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            gap: 10px;
+            flex-shrink: 0;
         }
         
-        .hud-stat { display: flex; align-items: center; gap: 15px; }
+        .hud-stat { display: flex; align-items: center; gap: 8px; }
         .hud-value { color: #d4e0d5; }
         .hud-penalty { color: #ff5555; text-shadow: 0 0 5px red; }
 
         #desk-surface {
-            flex-grow: 1; position: relative; overflow: hidden;
-            perspective: 1000px;
+            flex-grow: 1; 
+            position: relative; 
+            overflow: auto;
+            padding: 20px 10px 100px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* The Rulebook */
         #rulebook {
-            position: absolute; bottom: -20px; left: -20px;
-            width: 250px; height: 350px; background: #5c3a21;
-            border: 2px solid #2b180a; border-radius: 5px;
-            box-shadow: 10px 10px 20px rgba(0,0,0,0.6);
-            transform: rotate(5deg); transition: transform 0.3s, bottom 0.3s;
-            z-index: 10; cursor: pointer; display: flex; justify-content: center; align-items: center;
+            position: fixed; 
+            bottom: 20px; 
+            left: 20px;
+            width: 140px; 
+            height: 180px; 
+            background: #5c3a21;
+            border: 2px solid #2b180a; 
+            border-radius: 5px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.6);
+            transform: rotate(-3deg); 
+            transition: transform 0.2s, bottom 0.2s;
+            z-index: 40; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
         }
-        #rulebook:hover { transform: rotate(8deg) translateY(-20px); }
-        #rulebook::after { content: "MINISTRY OF\nFINANCE\n\nGUIDELINES"; color: #d4a373; font-weight: bold; text-align: center; white-space: pre-wrap; font-size: 1.2rem; }
+        #rulebook:hover { transform: rotate(0deg) translateY(-5px); }
+        #rulebook::after { 
+            content: "MINISTRY OF\nFINANCE\n\nGUIDELINES"; 
+            color: #d4a373; 
+            font-weight: bold; 
+            text-align: center; 
+            white-space: pre-wrap; 
+            font-size: 0.85rem; 
+        }
 
         #rulebook-open {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 800px; height: 600px; background: var(--paper-main);
-            border-radius: 5px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
-            z-index: 100; display: none; padding: 40px;
-            font-size: 0.9rem; overflow-y: auto;
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            width: 92%; 
+            max-width: 750px; 
+            max-height: 85vh; 
+            background: var(--paper-main);
+            border-radius: 5px; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            z-index: 100; 
+            display: none; 
+            padding: 25px;
+            font-size: 0.9rem; 
+            overflow-y: auto;
+            color: var(--ink);
         }
-        #rulebook-open h2 { border-bottom: 2px solid var(--ink); margin-bottom: 15px; }
-        .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+        #rulebook-open h2 { border-bottom: 2px solid var(--ink); margin-bottom: 12px; }
+        .close-btn { 
+            position: absolute; 
+            top: 15px; 
+            right: 20px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1.5rem; 
+            padding: 5px 10px;
+        }
 
         .document-area {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            display: flex; gap: 20px; z-index: 5;
+            display: flex; 
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px; 
+            z-index: 5;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .doc-tab-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .doc-tab {
+            background: #2a2f2b;
+            color: #a8b5a9;
+            border: 1px solid #4d544e;
+            padding: 8px 16px;
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .doc-tab.active {
+            background: var(--paper-main);
+            color: var(--ink);
+            border-color: #888;
         }
 
         .paper {
-            width: 420px; height: 600px; background: var(--paper-main);
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.5), inset 0 0 50px rgba(0,0,0,0.05);
-            padding: 30px 20px; position: relative; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-            transform: translateY(100vh) rotate(-5deg);
+            width: 100%;
+            max-width: 440px; 
+            min-height: 580px; 
+            background: var(--paper-main);
+            box-shadow: 2px 2px 12px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.05);
+            padding: 25px 18px; 
+            position: relative; 
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+            margin: 0 auto;
+            border-radius: 2px;
         }
         .paper::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: repeating-linear-gradient(transparent 0, transparent 24px, rgba(0,0,0,0.1) 24px, rgba(0,0,0,0.1) 25px);
-            pointer-events: none; z-index: 1;
+            content: ""; 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: repeating-linear-gradient(transparent 0, transparent 24px, rgba(0,0,0,0.08) 24px, rgba(0,0,0,0.08) 25px);
+            pointer-events: none; 
+            z-index: 1;
         }
-        .paper.in { transform: translateY(0) rotate(0deg); }
-        .paper.out { transform: translateY(-100vh) rotate(5deg); }
+        .paper.in { transform: translateY(0) scale(1); opacity: 1; }
+        .paper.out { transform: translateY(-50px) scale(0.95); opacity: 0; }
         
-        .doc-header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 10px; margin-bottom: 15px; position: relative; z-index: 2; }
-        .doc-header h1 { margin: 0; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; }
-        .doc-header p { margin: 5px 0 0 0; font-size: 0.8rem; }
+        .doc-header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 8px; margin-bottom: 12px; position: relative; z-index: 2; }
+        .doc-header h1 { margin: 0; font-size: 1.1rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .doc-header p { margin: 3px 0 0 0; font-size: 0.75rem; line-height: 1.2; }
 
-        .doc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; position: relative; z-index: 2; }
-        .doc-table td { padding: 4px 2px; border-bottom: 1px dotted rgba(0,0,0,0.2); }
-        .doc-table td:last-child { text-align: right; }
-        .doc-table tr.subtotal td { border-top: 1px solid var(--ink); border-bottom: none; font-weight: bold; padding-top: 8px;}
-        .doc-table tr.total td { border-top: 3px double var(--ink); border-bottom: none; font-weight: bold; font-size: 0.95rem; padding-top: 8px;}
-        .doc-table tr.header td { font-weight: bold; padding-top: 15px; border-bottom: none;}
-        .indent td:first-child { padding-left: 15px; }
+        .doc-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; position: relative; z-index: 2; }
+        .doc-table td { padding: 4px 2px; border-bottom: 1px dotted rgba(0,0,0,0.18); }
+        .doc-table td:last-child { text-align: right; font-weight: 700; }
+        .doc-table tr.subtotal td { border-top: 1px solid var(--ink); border-bottom: none; font-weight: bold; padding-top: 6px;}
+        .doc-table tr.total td { border-top: 3px double var(--ink); border-bottom: none; font-weight: bold; font-size: 0.9rem; padding-top: 6px;}
+        .doc-table tr.header td { font-weight: bold; padding-top: 10px; border-bottom: none; text-decoration: underline;}
+        .indent td:first-child { padding-left: 12px; }
 
         body.audit-mode .doc-table tr:hover {
             background-color: rgba(164, 42, 42, 0.2);
@@ -124,20 +239,57 @@
         }
 
         #tool-tray {
-            position: absolute; right: 20px; bottom: 20px;
-            background: #2a2a2a; border: 2px solid #111; border-radius: 10px;
-            padding: 15px; display: flex; flex-direction: column; gap: 15px;
-            box-shadow: inset 0 0 10px #000, 5px 5px 15px rgba(0,0,0,0.7);
-            z-index: 20;
+            position: fixed; 
+            right: 15px; 
+            bottom: 15px;
+            background: #2a2a2a; 
+            border: 2px solid #111; 
+            border-radius: 8px;
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+            box-shadow: inset 0 0 10px #000, 3px 3px 12px rgba(0,0,0,0.7);
+            z-index: 45;
+        }
+
+        @media (max-width: 640px) {
+            #tool-tray {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                border-radius: 0;
+                border-top: 3px solid #111;
+                padding: 8px;
+                z-index: 60;
+            }
+            .tool-label { display: none; }
+            #rulebook { bottom: 65px; left: 10px; width: 90px; height: 110px; }
+            #rulebook::after { font-size: 0.65rem; }
+            #desk-surface { padding-bottom: 120px; }
         }
 
         .action-btn {
-            width: 140px; height: 50px; font-family: 'Courier Prime', monospace;
-            font-weight: bold; font-size: 1rem; color: #fff; cursor: pointer;
-            border: 2px solid #000; border-radius: 4px; text-transform: uppercase;
-            box-shadow: 0 4px 0 #000; transition: transform 0.1s, box-shadow 0.1s;
+            min-width: 100px; 
+            height: 44px; 
+            font-family: 'Courier Prime', monospace;
+            font-weight: bold; 
+            font-size: 0.9rem; 
+            color: #fff; 
+            cursor: pointer;
+            border: 2px solid #000; 
+            border-radius: 4px; 
+            text-transform: uppercase;
+            box-shadow: 0 3px 0 #000; 
+            transition: transform 0.1s, box-shadow 0.1s;
+            padding: 0 10px;
         }
-        .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; }
+        .action-btn:active { transform: translateY(3px); box-shadow: 0 0 0 #000; }
         
         #btn-approve { background: #3b6e3b; }
         #btn-deny { background: #8c2a2a; }
@@ -146,54 +298,81 @@
 
         /* The Stamps */
         .stamp-mark {
-            position: absolute; top: 50%; left: 50%;
+            position: absolute; 
+            top: 50%; 
+            left: 50%;
             transform: translate(-50%, -50%) rotate(-15deg) scale(2);
-            font-size: 3rem; font-weight: bolder; border: 6px solid; padding: 10px 20px;
-            opacity: 0; z-index: 10; pointer-events: none;
+            font-size: clamp(2rem, 6vw, 3rem); 
+            font-weight: bolder; 
+            border: 5px solid; 
+            padding: 8px 16px;
+            opacity: 0; 
+            z-index: 10; 
+            pointer-events: none;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-family: 'Courier Prime', monospace; text-transform: uppercase;
+            font-family: 'Courier Prime', monospace; 
+            text-transform: uppercase;
+            text-align: center;
+            white-space: nowrap;
         }
         .stamp-mark.visible { opacity: 0.85; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
         .stamp-green { color: var(--ink-green); border-color: var(--ink-green); }
         .stamp-red { color: var(--ink-red); border-color: var(--ink-red); transform: translate(-50%, -50%) rotate(10deg) scale(2); }
         .stamp-red.visible { transform: translate(-50%, -50%) rotate(10deg) scale(1); }
 
-        #memo-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 200;
-            display: none; justify-content: center; align-items: center;
+        #memo-overlay, #dialog-overlay {
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); 
+            z-index: 200;
+            display: none; 
+            justify-content: center; 
+            align-items: center;
+            padding: 15px;
+            overflow-y: auto;
         }
         
-        #supervisor-memo {
-            width: 500px; background: #e8e6d1;
-            border-left: 20px solid #2a2a2a; padding: 30px;
+        #supervisor-memo, #dialog-box {
+            width: 100%; 
+            max-width: 500px; 
+            background: #e8e6d1;
+            border-left: 15px solid #2a2a2a; 
+            padding: 25px;
             box-shadow: 10px 10px 30px rgba(0,0,0,0.8);
-            transform: translateY(-50px); opacity: 0;
-            transition: all 0.3s ease-out; font-size: 0.95rem;
+            transform: translateY(-20px); 
+            opacity: 0;
+            transition: all 0.3s ease-out; 
+            font-size: 0.95rem;
+            color: #1a1a1a;
+            position: relative;
         }
-        #memo-overlay.visible #supervisor-memo { transform: translateY(0); opacity: 1; }
+        #memo-overlay.visible #supervisor-memo,
+        #dialog-overlay.visible #dialog-box { transform: translateY(0); opacity: 1; }
         
-        .memo-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 5px; font-weight: bold;}
-        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;}
-        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;}
-        .memo-reason { margin-bottom: 30px; line-height: 1.5; }
+        .memo-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold;}
+        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.3rem; font-weight: bold; margin-bottom: 10px;}
+        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.3rem; font-weight: bold; margin-bottom: 10px;}
+        .memo-reason { margin-bottom: 25px; line-height: 1.5; font-size: 0.9rem; }
         .memo-btn { background: #2a2a2a; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; float: right; }
 
-        #main-menu {
-            width: 100%; height: 100%; background: #1a1c1a;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: #d4e0d5; text-align: center;
-        }
-        #main-menu h1 { font-family: 'VT323', monospace; font-size: 5rem; margin: 0 0 10px 0; letter-spacing: 5px; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
-        #main-menu p { max-width: 600px; margin-bottom: 40px; line-height: 1.6; font-size: 1.1rem;}
-        
         .mode-btn {
-            background: #2a2f2b; border: 2px solid #4d544e; color: #d4e0d5;
-            padding: 20px 40px; font-size: 1.2rem; font-family: inherit; font-weight: bold;
-            cursor: pointer; margin: 10px; transition: all 0.2s; width: 400px;
+            background: #2a2f2b; 
+            border: 2px solid #4d544e; 
+            color: #d4e0d5;
+            padding: 15px 20px; 
+            font-size: 1.1rem; 
+            font-family: inherit; 
+            font-weight: bold;
+            cursor: pointer; 
+            margin: 10px 0; 
+            transition: all 0.2s; 
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border-radius: 6px;
         }
-        .mode-btn:hover { background: #3b423c; border-color: #d4e0d5; transform: scale(1.05); }
-        .mode-desc { font-size: 0.8rem; font-weight: normal; color: #999; margin-top: 5px; display: block;}
+        .mode-btn:hover, .mode-btn:focus { background: #3b423c; border-color: #d4e0d5; transform: scale(1.02); outline: none; }
+        .mode-desc { font-size: 0.8rem; font-weight: normal; color: #999; margin-top: 6px; display: block; line-height: 1.3;}
 
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
@@ -215,8 +394,8 @@
 
     <div id="main-menu" class="active-screen">
         <h1>AUDIT DESK</h1>
-        <div style="font-size: 1.5rem; margin-bottom: 20px; letter-spacing: 2px;">THE FINANCIAL INQUISITOR</div>
-        <p>
+        <div style="font-size: clamp(1rem, 3vw, 1.4rem); margin-bottom: 20px; letter-spacing: 2px; color: #a8b5a9;">THE FINANCIAL INQUISITOR</div>
+        <p style="max-width: 600px; margin-bottom: 30px; line-height: 1.6; font-size: 0.95rem;">
             Welcome to the Ministry of Finance. Your role is to inspect corporate financial statements to ensure compliance, stability, and truth.<br><br>
             Approve healthy companies. Deny those risking insolvency. Audit those committing accounting fraud.
         </p>
@@ -238,16 +417,23 @@
             <div class="hud-stat">🕒 <span id="hud-clock" class="hud-value">09:00</span></div>
             <div class="hud-stat">💵 WAGE: $<span id="hud-wage" class="hud-value">50</span></div>
             <div class="hud-stat">⚠️ PENALTIES: <span id="hud-penalties" class="hud-value">0/3</span></div>
+            <button onclick="game.returnToMenu()" style="background:#2a2f2b; color:#a8b5a9; border:1px solid #4d544e; border-radius:4px; padding:2px 10px; cursor:pointer; font-family:inherit; font-size:0.9rem;">MAIN MENU</button>
         </div>
 
         <div id="desk-surface">
-            <!-- Rulebook -->
+            <!-- Mobile Document Switch Tabs (Visible on small screens in Senior Mode) -->
+            <div id="doc-tab-bar" class="doc-tab-bar" style="display: none;">
+                <button id="tab-sci" class="doc-tab active" onclick="game.switchTab('sci')">INCOME STATEMENT (SCI)</button>
+                <button id="tab-bs" class="doc-tab" onclick="game.switchTab('bs')">BALANCE SHEET (BS)</button>
+            </div>
+
+            <!-- Rulebook Stamp/Book -->
             <div id="rulebook" onclick="game.toggleRulebook()"></div>
 
             <!-- Document Area -->
             <div class="document-area">
                 <!-- SCI Document -->
-                <div class="paper" id="doc-sci">
+                <div class="paper in" id="doc-sci">
                     <div class="doc-header">
                         <h1 id="sci-company-name">COMPANY NAME</h1>
                         <p>Statement of Comprehensive Income<br>Year Ended 31 Dec 2026</p>
@@ -260,7 +446,7 @@
                 </div>
 
                 <!-- Balance Sheet Document (Senior Mode) -->
-                <div class="paper" id="doc-bs" style="display:none;">
+                <div class="paper in" id="doc-bs" style="display:none;">
                     <div class="doc-header">
                         <h1 id="bs-company-name">COMPANY NAME</h1>
                         <p>Statement of Financial Position<br>As at 31 Dec 2026</p>
@@ -273,15 +459,15 @@
                 </div>
             </div>
 
-            <!-- Tools -->
+            <!-- Tools Tray -->
             <div id="tool-tray">
-                <div style="color: #888; font-size: 0.8rem; text-align: center; margin-bottom: 5px;">STAMPS</div>
+                <div class="tool-label" style="color: #888; font-size: 0.75rem; text-align: center; margin-bottom: 2px;">STAMPS</div>
                 <button class="action-btn" id="btn-approve" onclick="game.submitVerdict('approve')">APPROVE</button>
                 <button class="action-btn" id="btn-deny" onclick="game.submitVerdict('deny')">DENY</button>
-                <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
-                <div style="color: #888; font-size: 0.8rem; text-align: center; margin-bottom: 5px;">TOOLS</div>
+                <div class="tool-label" style="border-top: 1px solid #444; margin: 2px 0;"></div>
+                <div class="tool-label" style="color: #888; font-size: 0.75rem; text-align: center; margin-bottom: 2px;">TOOLS</div>
                 <button class="action-btn" id="btn-audit" onclick="game.toggleAuditMode()">INSPECT</button>
-                <button class="action-btn" id="btn-cancel" onclick="game.toggleAuditMode()">CANCEL INSP.</button>
+                <button class="action-btn" id="btn-cancel" onclick="game.toggleAuditMode()">CANCEL</button>
             </div>
         </div>
     </div>
@@ -290,15 +476,15 @@
         <div class="close-btn" onclick="game.toggleRulebook()">✖</div>
         <h2 style="font-family: 'VT323', monospace; font-size: 2rem;">MINISTRY DIRECTIVES</h2>
         <p><strong>1. The Statement of Comprehensive Income (SCI)</strong> reveals operational profitability.</p>
-        <ul style="margin-bottom: 20px;">
-            <li><b>Gross Profit</b> = Revenue - Cost of Sales. <i>(The purest measure of trading efficiency).</i></li>
+        <ul style="margin-bottom: 15px; padding-left: 20px; list-style-type: disc;">
+            <li><b>Gross Profit</b> = Revenue - Cost of Sales.</li>
             <li><b>Operating Profit (EBIT)</b> = Gross Profit - Selling Expenses - Admin Expenses.</li>
             <li><b>Profit Before Tax</b> = Operating Profit - Finance Costs.</li>
             <li><b>Net Profit (Profit for Year)</b> = Profit Before Tax - Taxation.</li>
         </ul>
         
         <p><strong>2. The Statement of Financial Position (Balance Sheet)</strong> reveals structural health and liquidity.</p>
-        <ul style="margin-bottom: 20px;">
+        <ul style="margin-bottom: 15px; padding-left: 20px; list-style-type: disc;">
             <li><b>Total Assets</b> = Non-current Assets + Current Assets.</li>
             <li><b>Total Liabilities</b> = Current Liabilities + Non-current Liabilities.</li>
             <li><b>Net Assets</b> = Total Assets - Total Liabilities.</li>
@@ -307,20 +493,21 @@
         </ul>
 
         <p><strong>3. Verdict Guidelines</strong></p>
-        <ul>
+        <ul style="padding-left: 20px; list-style-type: disc;">
             <li><b>APPROVE:</b> Company math is correct, profitable, and solvent (Current Assets > Current Liabilities).</li>
-            <li><b>DENY:</b> Company math is correct, but they are structurally failing (Sustained Net Loss) OR insolvent (Current Liabilities > Current Assets, creating Negative Working Capital).</li>
-            <li><b>INSPECT (AUDIT):</b> The company is lying. A calculation on the sheet is mathematically false. Activate Inspect mode and click the false row to report fraud.</li>
+            <li><b>DENY:</b> Company math is correct, but they are structurally failing (Sustained Net Loss) OR insolvent (Current Liabilities > Current Assets).</li>
+            <li><b>INSPECT (AUDIT):</b> The company is lying! A line item on the sheet is mathematically false. Activate Inspect mode and tap the corrupted line to report fraud.</li>
         </ul>
     </div>
 
+    <!-- Supervisor Memo Overlay -->
     <div id="memo-overlay">
         <div id="supervisor-memo">
             <div class="memo-header">
                 <span>MINISTRY OF FINANCE</span>
                 <span id="memo-date">12/08/1984</span>
             </div>
-            <div style="font-size: 0.8rem; margin-bottom: 15px;">ATTN: INSPECTOR DESK 4</div>
+            <div style="font-size: 0.8rem; margin-bottom: 12px; color: #555;">ATTN: INSPECTOR DESK 4</div>
             
             <div id="memo-status" class="memo-status-CORRECT">CORRECT VERDICT</div>
             <div id="memo-reason" class="memo-reason">
@@ -328,6 +515,18 @@
             </div>
             
             <button class="memo-btn" onclick="game.closeMemo()">ACKNOWLEDGE</button>
+        </div>
+    </div>
+
+    <div id="dialog-overlay">
+        <div id="dialog-box">
+            <div class="memo-header">
+                <span>MINISTRY NOTICE</span>
+                <span id="dialog-tag">DISPATCH</span>
+            </div>
+            <div id="dialog-title" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">NOTICE</div>
+            <div id="dialog-message" style="margin-bottom: 20px; font-size: 0.95rem; line-height: 1.5;">Message content</div>
+            <button id="dialog-confirm-btn" class="memo-btn" onclick="game.closeDialog()">CONTINUE</button>
         </div>
     </div>
 
@@ -341,10 +540,12 @@
                 penalties: 0,
                 maxPenalties: 3,
                 auditMode: false,
-                rulebookOpen: false
+                rulebookOpen: false,
+                activeTab: 'sci'
             },
             currentCompany: null,
             clockTimer: null,
+            dialogCallback: null,
 
             // DOM Elements
             els: {},
@@ -370,8 +571,39 @@
                     rulebookOpen: document.getElementById('rulebook-open'),
                     memoOverlay: document.getElementById('memo-overlay'),
                     memoStatus: document.getElementById('memo-status'),
-                    memoReason: document.getElementById('memo-reason')
+                    memoReason: document.getElementById('memo-reason'),
+                    docTabBar: document.getElementById('doc-tab-bar'),
+                    tabSci: document.getElementById('tab-sci'),
+                    tabBs: document.getElementById('tab-bs'),
+                    dialogOverlay: document.getElementById('dialog-overlay'),
+                    dialogTitle: document.getElementById('dialog-title'),
+                    dialogMessage: document.getElementById('dialog-message'),
+                    dialogConfirmBtn: document.getElementById('dialog-confirm-btn')
                 };
+
+                window.addEventListener('resize', () => this.handleResize());
+            },
+
+            showDialog(title, message, buttonText = "CONTINUE", onConfirm = null) {
+                this.dialogCallback = onConfirm;
+                this.els.dialogTitle.innerText = title;
+                this.els.dialogMessage.innerText = message;
+                this.els.dialogConfirmBtn.innerText = buttonText;
+                this.els.dialogOverlay.style.display = 'flex';
+                void this.els.dialogOverlay.offsetWidth;
+                this.els.dialogOverlay.classList.add('visible');
+            },
+
+            closeDialog() {
+                this.els.dialogOverlay.classList.remove('visible');
+                setTimeout(() => {
+                    this.els.dialogOverlay.style.display = 'none';
+                    if (typeof this.dialogCallback === 'function') {
+                        const cb = this.dialogCallback;
+                        this.dialogCallback = null;
+                        cb();
+                    }
+                }, 200);
             },
 
             startGame(mode) {
@@ -381,24 +613,58 @@
                 this.state.wage = 50;
                 this.state.penalties = 0;
                 
-                this.els.menu.classList.remove('active-screen');
+                this.els.menu.style.display = 'none';
                 this.els.container.style.display = 'flex';
                 
-                if (mode === 'senior') {
-                    this.els.docBs.style.display = 'block';
-                } else {
-                    this.els.docBs.style.display = 'none';
-                }
-
+                this.handleResize();
                 this.updateHUD();
                 this.startClock();
                 this.nextCase();
             },
 
+            returnToMenu() {
+                clearInterval(this.clockTimer);
+                this.els.container.style.display = 'none';
+                this.els.menu.style.display = 'flex';
+            },
+
+            handleResize() {
+                const isSmall = window.innerWidth <= 768;
+                if (this.state.mode === 'senior') {
+                    if (isSmall) {
+                        this.els.docTabBar.style.display = 'flex';
+                        this.switchTab(this.state.activeTab);
+                    } else {
+                        this.els.docTabBar.style.display = 'none';
+                        this.els.docSci.style.display = 'block';
+                        this.els.docBs.style.display = 'block';
+                    }
+                } else {
+                    this.els.docTabBar.style.display = 'none';
+                    this.els.docSci.style.display = 'block';
+                    this.els.docBs.style.display = 'none';
+                }
+            },
+
+            switchTab(tab) {
+                this.state.activeTab = tab;
+                if (tab === 'sci') {
+                    this.els.tabSci.classList.add('active');
+                    this.els.tabBs.classList.remove('active');
+                    this.els.docSci.style.display = 'block';
+                    this.els.docBs.style.display = 'none';
+                } else {
+                    this.els.tabBs.classList.add('active');
+                    this.els.tabSci.classList.remove('active');
+                    this.els.docSci.style.display = 'none';
+                    this.els.docBs.style.display = 'block';
+                }
+            },
+
             startClock() {
                 clearInterval(this.clockTimer);
                 this.clockTimer = setInterval(() => {
-                    this.state.timeMinutes += 1; // 1 in-game minute per real second
+                    this.state.timeMinutes += 1;
                     this.updateHUD();
                     
                     if (this.state.timeMinutes >= 17 * 60) {
@@ -421,16 +687,24 @@
 
             endShift() {
                 clearInterval(this.clockTimer);
-                alert(`End of Shift. Day ${this.state.day} complete.\nTotal Wage: $${this.state.wage}`);
                 if (this.state.penalties >= this.state.maxPenalties) {
-                    alert("TERMINATED. Too many penalties.");
-                    location.reload();
+                    this.showDialog("TERMINATION DISPATCH", "You have accumulated maximum penalties. Clear your desk immediately.", "RESTART", () => {
+                        this.returnToMenu();
+                    });
                     return;
                 }
-                this.state.day++;
-                this.state.timeMinutes = 9 * 60;
-                this.startClock();
-                this.nextCase();
+
+                this.showDialog(
+                    `SHIFT COMPLETE - DAY ${this.state.day}`,
+                    `Your daily shift has concluded.\nTotal Wage Earned: $${this.state.wage}\nPenalties: ${this.state.penalties}/${this.state.maxPenalties}`,
+                    "NEXT SHIFT",
+                    () => {
+                        this.state.day++;
+                        this.state.timeMinutes = 9 * 60;
+                        this.startClock();
+                        this.nextCase();
+                    }
+                );
             },
 
             screenShake() {
@@ -443,11 +717,9 @@
             rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
 
             generateCompany() {
-                const names = ["Omnicorp Holdings", "Glove & Sons", "Cattle Snaffle Ltd", "Moosewear Manufacturing", "Apex Trading", "Vortex Heavy Industries", "Standard State Corp"];
+                const names = ["Omnicorp Holdings", "Glove & Sons", "Cattle Snaffle Ltd", "Moosewear Manufacturing", "Apex Trading", "Vortex Heavy Industries", "Standard State Corp", "Titan Logistics", "AeroDyn Global", "Helios Energy"];
                 const name = names[this.rnd(0, names.length-1)] + " " + this.rnd(100,999);
                 
-                // Determine flaw category
-                // 1: Healthy, 2: Deny (Loss/Insolvent), 3: Fraud (Math Error)
                 let category = this.rnd(1, 3);
                 
                 let sci = this.generateSCI(category);
@@ -479,7 +751,6 @@
                 let data = { rev, cos, gp, sell, admin, op, fin, pbt, tax, net_profit: np, fraudTarget: null, fraudExplanation: null, denyReason: null };
 
                 if (category === 2) {
-                    // Failing company -> Massive Cost of Sales causing Net Loss
                     data.cos = rev + this.rnd(5000, 20000);
                     data.gp = rev - data.cos;
                     data.op = data.gp - sell - admin;
@@ -489,19 +760,18 @@
                     data.denyReason = `Sustained Net Loss. Gross Profit was negative (${this.format(data.gp)}). Core operations are failing.`;
                 } 
                 else if (category === 3 && (this.state.mode === 'junior' || Math.random() > 0.5)) {
-                    // Math Fraud in SCI
                     let lieType = this.rnd(1, 3);
                     if (lieType === 1) {
                         let actualGP = data.gp;
-                        data.gp += this.rnd(2000, 8000); // Overstate GP
-                        data.op = data.gp - sell - admin; // Carries down
+                        data.gp += this.rnd(2000, 8000);
+                        data.op = data.gp - sell - admin;
                         data.pbt = data.op - fin;
                         data.net_profit = data.pbt - tax;
                         data.fraudTarget = 'row-gp';
                         data.fraudExplanation = `Gross Profit was falsified. Claimed ${this.format(data.gp)}, but ${this.format(rev)} (Rev) - ${this.format(cos)} (CoS) = ${this.format(actualGP)}.`;
                     } else if (lieType === 2) {
                         let actualOp = data.op;
-                        data.op = data.gp - sell; // Ignored admin costs
+                        data.op = data.gp - sell;
                         data.pbt = data.op - fin;
                         data.net_profit = data.pbt - tax;
                         data.fraudTarget = 'row-op';
@@ -537,17 +807,15 @@
 
                 let data = { nca, inv, rec, cash, ca, ta, pay, stb, cl, ncl, tl, na, sc, re, te, fraudTarget: null, fraudExplanation: null, denyReason: null };
 
-                // If SCI made a fraud choice, skip BS fraud to avoid double flaws
                 if (category === 3 && !this.currentCompany?.fraudTarget && this.state.mode === 'senior') {
                     let lieType = this.rnd(1, 2);
-                    if (lieType === 1) { // Total Assets Math Error
+                    if (lieType === 1) {
                         let actualTA = ta;
                         data.ta += this.rnd(5000, 15000);
-                        data.na = data.ta - data.tl; // Flows down
-                        // Equity stays the same, so Na != Te now! (Cross-check error)
+                        data.na = data.ta - data.tl;
                         data.fraudTarget = 'row-ta';
                         data.fraudExplanation = `Total Assets sum is false. ${this.format(nca)} (NCA) + ${this.format(ca)} (CA) = ${this.format(actualTA)}, not ${this.format(data.ta)}.`;
-                    } else { // Equity Mismatch (Net Assets != Total Equity)
+                    } else {
                         data.re += this.rnd(4000, 10000);
                         data.te = data.sc + data.re;
                         data.fraudTarget = 'row-te';
@@ -555,10 +823,9 @@
                     }
                 }
                 else if (category === 2 && !this.currentCompany?.denyReason) {
-                    // Insolvency: Current Liabilities > Current Assets (Negative Working Capital)
                     data.cash = 100;
                     data.ca = data.inv + data.rec + data.cash;
-                    data.stb = data.ca + this.rnd(10000, 20000); // Massive short term debt
+                    data.stb = data.ca + this.rnd(10000, 20000);
                     data.cl = data.pay + data.stb;
                     data.tl = data.cl + data.ncl;
                     data.na = data.ta - data.tl;
@@ -582,21 +849,19 @@
                 if(this.state.auditMode) this.toggleAuditMode();
                 document.querySelectorAll('.stamp-mark').forEach(el => {
                     el.classList.remove('visible');
-                    el.style.display = 'none'; // reset
+                    el.style.display = 'none';
                 });
 
-                // Animate out
                 this.els.docSci.classList.replace('in', 'out');
-                if(this.state.mode === 'senior') this.els.docBs.classList.replace('in', 'out');
+                this.els.docBs.classList.replace('in', 'out');
 
                 setTimeout(() => {
                     this.generateCompany();
                     this.renderTables();
 
-                    // Animate in
                     this.els.docSci.classList.replace('out', 'in');
-                    if(this.state.mode === 'senior') this.els.docBs.classList.replace('out', 'in');
-                }, 400);
+                    this.els.docBs.classList.replace('out', 'in');
+                }, 300);
             },
 
             renderTables() {
@@ -604,7 +869,6 @@
                 this.els.sciName.innerText = c.name;
                 this.els.bsName.innerText = c.name;
 
-                // Build SCI
                 let sciHTML = `
                     <tr id="row-rev" onclick="game.auditRow('row-rev')"><td>Revenue</td><td>${this.format(c.sci.rev)}</td></tr>
                     <tr id="row-cos" onclick="game.auditRow('row-cos')"><td>Cost of sales</td><td>(${this.format(c.sci.cos)})</td></tr>
@@ -619,7 +883,6 @@
                 `;
                 this.els.sciTable.innerHTML = sciHTML;
 
-                // Build BS
                 if (this.state.mode === 'senior') {
                     let bsHTML = `
                         <tr class="header"><td>Non-current assets</td><td></td></tr>
@@ -680,7 +943,7 @@
 
             stamp(type) {
                 this.screenShake();
-                document.querySelectorAll('.stamp-mark').forEach(el => el.style.display = 'none'); // clean up old
+                document.querySelectorAll('.stamp-mark').forEach(el => el.style.display = 'none');
                 
                 if (type === 'approve') {
                     const s1 = document.getElementById('stamp-sci-app');
@@ -702,7 +965,7 @@
             submitVerdict(verdict) {
                 if (this.state.auditMode) return;
                 this.stamp(verdict);
-                clearInterval(this.clockTimer); // Pause clock during memo
+                clearInterval(this.clockTimer);
 
                 setTimeout(() => {
                     const c = this.currentCompany;
@@ -728,18 +991,18 @@
                             correct = false;
                             reason = "You denied a perfectly healthy company. This halts economic growth.";
                         } else if (c.category === 3) {
-                            correct = false; // Fraud must be AUDITED, not just denied.
+                            correct = false;
                             reason = `You denied the company, but missed the fraud. They must be audited for falsifying records! ${c.fraudExplanation}`;
                         }
                     }
 
                     this.showMemo(correct, reason);
-                }, 800);
+                }, 700);
             },
 
             auditRow(rowId) {
                 if (!this.state.auditMode) return;
-                clearInterval(this.clockTimer); // Pause
+                clearInterval(this.clockTimer);
 
                 const c = this.currentCompany;
                 let correct = false;
@@ -747,9 +1010,9 @@
 
                 if (c.category === 3 && c.fraudTarget === rowId) {
                     correct = true;
-                    reason = `Fraud intercepted. ${c.fraudExplanation} The authorities have been notified.`;
-                    // Highlight the correct row permanently for effect
-                    document.getElementById(rowId).style.backgroundColor = "rgba(41, 109, 53, 0.4)";
+                    reason = `Fraud intercepted! ${c.fraudExplanation} The authorities have been notified.`;
+                    const elem = document.getElementById(rowId);
+                    if (elem) elem.style.backgroundColor = "rgba(41, 109, 53, 0.4)";
                 } else {
                     correct = false;
                     if (c.category === 3) {
@@ -766,7 +1029,6 @@
 
             showMemo(correct, reasonText) {
                 this.els.memoOverlay.style.display = 'flex';
-                // Trigger reflow
                 void this.els.memoOverlay.offsetWidth;
                 this.els.memoOverlay.classList.add('visible');
 
@@ -791,13 +1053,14 @@
                 setTimeout(() => {
                     this.els.memoOverlay.style.display = 'none';
                     if (this.state.penalties >= this.state.maxPenalties) {
-                        alert("TERMINATED. Please clear your desk.");
-                        location.reload();
+                        this.showDialog("TERMINATION DISPATCH", "You have accumulated maximum penalties. Clear your desk immediately.", "RESTART", () => {
+                            this.returnToMenu();
+                        });
                     } else {
                         this.startClock();
                         this.nextCase();
                     }
-                }, 300);
+                }, 200);
             }
         };
 
