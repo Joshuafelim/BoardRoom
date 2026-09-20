@@ -3,253 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Desk: Golden Parachute</title>
+    <title>Audit Desk: The Financial Inquisitor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=VT323&display=swap');
+
         :root {
-            --desk-color: #2b1704;
-            --paper: #f4f1ea;
-            --folder: #c8a063;
-            --red: #aa2222;
-            --green: #228833;
-            --blue: #2255aa;
-            --text: #111;
+            --desk-base: #3b423c;
+            --desk-texture: #2a2f2b;
+            --paper-main: #e2dfcc;
+            --paper-dark: #c9c5ac;
+            --ink: #1a1a1a;
+            --ink-red: #a42a2a;
+            --ink-green: #296d35;
+            --ui-bg: #1c1c1c;
+            --ui-border: #4d544e;
+            --ui-text: #a8b5a9;
         }
 
         * {
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-drag: none;
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #000;
-            color: #fff;
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
+            overflow: hidden; background-color: #000;
+            font-family: 'Courier Prime', monospace;
+            color: var(--ink);
         }
 
-        /* --- SCREENS --- */
-        .screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+        #game-container {
+            width: 100%; height: 100%; position: relative;
+            background-color: var(--desk-base);
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 20%, rgba(0,0,0,0.6) 100%),
+                repeating-linear-gradient(45deg, var(--desk-texture) 0, var(--desk-texture) 2px, transparent 2px, transparent 8px);
             display: none;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #111;
-            z-index: 100;
-        }
-        .active-screen { display: flex; }
-
-        /* --- MAIN GAME UI --- */
-        #game-screen {
-            background: radial-gradient(circle at 50% 50%, #3a2210 0%, #110802 100%);
-            position: relative;
-            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
-        }
-        
-        /* Desk Noise Overlay */
-        #game-screen::before {
-            content: "";
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 4px);
-            pointer-events: none;
-            z-index: 0;
         }
 
-        /* Top HUD */
+        .active-screen { display: flex !important; }
+
         #hud {
-            position: absolute; top: 0; left: 0; width: 100%;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            background: rgba(0,0,0,0.8);
-            border-bottom: 2px solid #555;
-            z-index: 10;
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .warning { color: #ff5555; font-weight: bold; }
-
-        /* The Window */
-        #window {
-            position: absolute; top: 60px; left: 20px;
-            width: 180px; height: 250px;
-            background: #111e25;
-            border: 12px solid #1a0f08;
-            border-bottom: 20px solid #1a0f08;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.8), inset 0 0 20px #000;
-            overflow: hidden;
-            z-index: 2;
-        }
-        .rain {
-            width: 200%; height: 200%;
-            background: repeating-linear-gradient(-45deg, transparent 0, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 12px);
-            animation: rainFall 0.5s linear infinite;
-        }
-        #pigeon {
-            position: absolute; bottom: -5px; right: 10px;
-            font-size: 2rem; display: none;
-            transform: scaleX(-1);
-        }
-
-        /* The Plant */
-        #plant {
-            position: absolute; top: 60px; right: 20px;
-            font-size: 4rem; cursor: pointer;
-            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.6));
-            z-index: 2;
-            transition: transform 0.1s;
-        }
-        #plant:active { transform: scale(0.9); }
-
-        /* Character */
-        #character-area {
-            position: absolute; top: 40px; left: 50%;
-            transform: translateX(-50%);
-            width: 150px; height: 180px;
-            z-index: 1;
-            display: flex; justify-content: center; align-items: flex-end;
-        }
-        #avatar {
-            font-size: 6rem;
-            animation: breathe 2s infinite alternate ease-in-out;
-            position: relative;
-            transform-origin: bottom center;
-        }
-        #sweat {
-            position: absolute; top: 10px; right: 0;
-            font-size: 2rem; display: none;
-            animation: drip 1s infinite;
-        }
-
-        /* Documents */
-        #desk-area {
-            position: absolute; top: 150px; left: 50%;
-            transform: translateX(-50%);
-            width: 800px; height: 500px;
-            z-index: 5;
-            display: flex; justify-content: center; gap: 20px;
+            width: 100%; height: 60px; background: var(--ui-bg);
+            border-bottom: 4px solid var(--ui-border);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; font-family: 'VT323', monospace; font-size: 1.8rem;
+            color: var(--ui-text); z-index: 50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         
-        .folder {
-            width: 380px; height: 480px;
-            background: var(--folder);
-            border-radius: 5px 15px 5px 5px;
-            box-shadow: 10px 10px 20px rgba(0,0,0,0.7), inset -5px -5px 10px rgba(0,0,0,0.2);
-            position: relative;
-            transition: transform 0.4s ease-out;
-            transform: translateY(100vh) rotate(-2deg);
+        .hud-stat { display: flex; align-items: center; gap: 15px; }
+        .hud-value { color: #d4e0d5; }
+        .hud-penalty { color: #ff5555; text-shadow: 0 0 5px red; }
+
+        #desk-surface {
+            flex-grow: 1; position: relative; overflow: hidden;
+            perspective: 1000px;
         }
-        .folder.in { transform: translateY(0) rotate(-2deg); }
-        .folder.out { transform: translateY(-100vh) rotate(5deg); }
-        
+
+        /* The Rulebook */
+        #rulebook {
+            position: absolute; bottom: -20px; left: -20px;
+            width: 250px; height: 350px; background: #5c3a21;
+            border: 2px solid #2b180a; border-radius: 5px;
+            box-shadow: 10px 10px 20px rgba(0,0,0,0.6);
+            transform: rotate(5deg); transition: transform 0.3s, bottom 0.3s;
+            z-index: 10; cursor: pointer; display: flex; justify-content: center; align-items: center;
+        }
+        #rulebook:hover { transform: rotate(8deg) translateY(-20px); }
+        #rulebook::after { content: "MINISTRY OF\nFINANCE\n\nGUIDELINES"; color: #d4a373; font-weight: bold; text-align: center; white-space: pre-wrap; font-size: 1.2rem; }
+
+        #rulebook-open {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 800px; height: 600px; background: var(--paper-main);
+            border-radius: 5px; box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            z-index: 100; display: none; padding: 40px;
+            font-size: 0.9rem; overflow-y: auto;
+        }
+        #rulebook-open h2 { border-bottom: 2px solid var(--ink); margin-bottom: 15px; }
+        .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+
+        .document-area {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: flex; gap: 20px; z-index: 5;
+        }
+
         .paper {
-            position: absolute; top: 10px; left: 10px;
-            width: 350px; height: 460px;
-            background: var(--paper);
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            color: var(--text);
-            padding: 20px;
-            font-size: 0.8rem;
-            transform: rotate(1.5deg);
-            background-image: repeating-linear-gradient(transparent 0, transparent 23px, rgba(0,100,200,0.1) 23px, rgba(0,100,200,0.1) 24px);
-            background-position: 0 4px;
+            width: 420px; height: 600px; background: var(--paper-main);
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.5), inset 0 0 50px rgba(0,0,0,0.05);
+            padding: 30px 20px; position: relative; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translateY(100vh) rotate(-5deg);
         }
-        .paper h2 { margin: 0 0 10px 0; font-size: 1rem; border-bottom: 2px solid #333; text-align: center; }
+        .paper::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: repeating-linear-gradient(transparent 0, transparent 24px, rgba(0,0,0,0.1) 24px, rgba(0,0,0,0.1) 25px);
+            pointer-events: none; z-index: 1;
+        }
+        .paper.in { transform: translateY(0) rotate(0deg); }
+        .paper.out { transform: translateY(-100vh) rotate(5deg); }
         
-        .doc-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        .doc-table td { padding: 3px 0; }
-        .doc-table tr { cursor: default; }
-        .doc-table td:nth-child(2) { text-align: right; }
-        .subtotal td { border-top: 1px solid #777; font-weight: bold; }
-        .total td { border-top: 2px double #111; font-weight: bold; font-size: 0.9rem; }
-        .indent td:first-child { padding-left: 10px; }
+        .doc-header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 10px; margin-bottom: 15px; position: relative; z-index: 2; }
+        .doc-header h1 { margin: 0; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; }
+        .doc-header p { margin: 5px 0 0 0; font-size: 0.8rem; }
 
-        /* Audit Mode */
-        body.audit-mode { cursor: crosshair; }
+        .doc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; position: relative; z-index: 2; }
+        .doc-table td { padding: 4px 2px; border-bottom: 1px dotted rgba(0,0,0,0.2); }
+        .doc-table td:last-child { text-align: right; }
+        .doc-table tr.subtotal td { border-top: 1px solid var(--ink); border-bottom: none; font-weight: bold; padding-top: 8px;}
+        .doc-table tr.total td { border-top: 3px double var(--ink); border-bottom: none; font-weight: bold; font-size: 0.95rem; padding-top: 8px;}
+        .doc-table tr.header td { font-weight: bold; padding-top: 15px; border-bottom: none;}
+        .indent td:first-child { padding-left: 15px; }
+
         body.audit-mode .doc-table tr:hover {
-            background-color: rgba(170, 34, 34, 0.3);
-            outline: 2px solid var(--red);
-            cursor: pointer;
-        }
-        .tooltip {
-            position: absolute; background: #222; color: #0f0; border: 1px solid #0f0;
-            padding: 5px; font-size: 0.8rem; pointer-events: none; display: none; z-index: 1000;
+            background-color: rgba(164, 42, 42, 0.2);
+            outline: 2px solid var(--ink-red);
+            cursor: crosshair;
         }
 
-        /* Stamps */
+        #tool-tray {
+            position: absolute; right: 20px; bottom: 20px;
+            background: #2a2a2a; border: 2px solid #111; border-radius: 10px;
+            padding: 15px; display: flex; flex-direction: column; gap: 15px;
+            box-shadow: inset 0 0 10px #000, 5px 5px 15px rgba(0,0,0,0.7);
+            z-index: 20;
+        }
+
+        .action-btn {
+            width: 140px; height: 50px; font-family: 'Courier Prime', monospace;
+            font-weight: bold; font-size: 1rem; color: #fff; cursor: pointer;
+            border: 2px solid #000; border-radius: 4px; text-transform: uppercase;
+            box-shadow: 0 4px 0 #000; transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .action-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #000; }
+        
+        #btn-approve { background: #3b6e3b; }
+        #btn-deny { background: #8c2a2a; }
+        #btn-audit { background: #4a5240; }
+        #btn-cancel { background: #d99121; display: none; color: #000; }
+
+        /* The Stamps */
         .stamp-mark {
             position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-15deg);
-            font-size: 3rem; font-weight: bolder; border: 5px solid; padding: 10px;
-            opacity: 0.8; z-index: 10; pointer-events: none; display: none;
-            text-shadow: 0 0 2px #fff;
+            transform: translate(-50%, -50%) rotate(-15deg) scale(2);
+            font-size: 3rem; font-weight: bolder; border: 6px solid; padding: 10px 20px;
+            opacity: 0; z-index: 10; pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'Courier Prime', monospace; text-transform: uppercase;
         }
-        .stamp-green { color: var(--green); border-color: var(--green); }
-        .stamp-red { color: var(--red); border-color: var(--red); transform: translate(-50%, -50%) rotate(10deg); }
+        .stamp-mark.visible { opacity: 0.85; transform: translate(-50%, -50%) rotate(-15deg) scale(1); }
+        .stamp-green { color: var(--ink-green); border-color: var(--ink-green); }
+        .stamp-red { color: var(--ink-red); border-color: var(--ink-red); transform: translate(-50%, -50%) rotate(10deg) scale(2); }
+        .stamp-red.visible { transform: translate(-50%, -50%) rotate(10deg) scale(1); }
 
-        /* Tools */
-        #tools {
-            position: absolute; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 30px; z-index: 10;
-        }
-        .tool-btn {
-            width: 120px; height: 120px;
-            border-radius: 10px;
-            border: 4px solid #111;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem; font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.3);
-            text-shadow: 1px 1px 2px #000; color: #fff;
-            transition: all 0.1s;
-        }
-        .tool-btn:active { transform: translateY(8px); box-shadow: 0 2px 5px rgba(0,0,0,0.8); }
-        #btn-approve { background: linear-gradient(#3a9, #173); }
-        #btn-deny { background: linear-gradient(#d55, #922); }
-        #btn-audit { background: linear-gradient(#57d, #248); }
-        #btn-cancel { background: linear-gradient(#777, #444); display: none; }
-
-        /* Events */
-        #event-overlay {
+        #memo-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 50;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .event-box {
-            background: #222; border: 2px solid #555; padding: 30px; text-align: center; max-width: 400px;
-            box-shadow: 0 0 30px #000;
-        }
-        .event-btn { padding: 15px 20px; margin: 10px; font-size: 1.2rem; cursor: pointer; background: #333; color: #fff; border: 1px solid #777; }
-        .event-btn:hover { background: #555; }
-        
-        #cat {
-            position: absolute; font-size: 15rem; z-index: 50; display: none;
-            left: 50%; top: 50%; transform: translate(-50%, -50%);
-            cursor: crosshair; user-select: none; filter: drop-shadow(0 20px 20px #000);
+            background: rgba(0,0,0,0.6); z-index: 200;
+            display: none; justify-content: center; align-items: center;
         }
         
-        #power-outage {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98); z-index: 60; display: none;
-            justify-content: center; align-items: center; flex-direction: column;
+        #supervisor-memo {
+            width: 500px; background: #e8e6d1;
+            border-left: 20px solid #2a2a2a; padding: 30px;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.8);
+            transform: translateY(-50px); opacity: 0;
+            transition: all 0.3s ease-out; font-size: 0.95rem;
         }
-        #breaker-btn {
-            background: red; color: white; width: 200px; height: 200px; border-radius: 50%;
-            font-size: 2rem; font-weight: bold; border: 10px solid darkred; cursor: pointer;
-            box-shadow: 0 0 50px red;
-        }
+        #memo-overlay.visible #supervisor-memo { transform: translateY(0); opacity: 1; }
+        
+        .memo-header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 5px; font-weight: bold;}
+        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;}
+        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px;}
+        .memo-reason { margin-bottom: 30px; line-height: 1.5; }
+        .memo-btn { background: #2a2a2a; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; float: right; }
 
-        /* Animations */
-        @keyframes rainFall { 0% { background-position: 0 0; } 100% { background-position: 20px 100px; } }
-        @keyframes breathe { 0% { transform: scaleY(1); } 100% { transform: scaleY(1.05) translateY(-5px); } }
-        @keyframes drip { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(20px); opacity: 0; } }
+        #main-menu {
+            width: 100%; height: 100%; background: #1a1c1a;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: #d4e0d5; text-align: center;
+        }
+        #main-menu h1 { font-family: 'VT323', monospace; font-size: 5rem; margin: 0 0 10px 0; letter-spacing: 5px; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        #main-menu p { max-width: 600px; margin-bottom: 40px; line-height: 1.6; font-size: 1.1rem;}
+        
+        .mode-btn {
+            background: #2a2f2b; border: 2px solid #4d544e; color: #d4e0d5;
+            padding: 20px 40px; font-size: 1.2rem; font-family: inherit; font-weight: bold;
+            cursor: pointer; margin: 10px; transition: all 0.2s; width: 400px;
+        }
+        .mode-btn:hover { background: #3b423c; border-color: #d4e0d5; transform: scale(1.05); }
+        .mode-desc { font-size: 0.8rem; font-weight: normal; color: #999; margin-top: 5px; display: block;}
+
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -263,441 +208,453 @@
             90% { transform: translate(1px, 2px) rotate(0deg); }
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
-        .shake-active { animation: shake 0.4s; }
-
-        /* UI Styling */
-        h1 { color: #d7b878; text-shadow: 2px 2px 4px #000; font-size: 3rem; margin-bottom: 10px; text-align: center; }
-        .menu-btn { padding: 15px 30px; font-size: 1.5rem; margin: 10px; background: #333; color: #fff; border: 2px solid #555; cursor: pointer; border-radius: 5px; font-family: inherit;}
-        .menu-btn:hover { background: #555; }
-        .input-box { padding: 10px; font-size: 1.2rem; width: 300px; text-align: center; margin-bottom: 10px; font-family: inherit; background: #222; color: #fff; border: 1px solid #555;}
-        
-        .shop-item { display: flex; justify-content: space-between; align-items: center; width: 400px; background: #222; padding: 15px; border: 1px solid #555; margin-bottom: 10px;}
-        .shop-item button { padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold;}
-        .shop-item button:disabled { background: #555; cursor: not-allowed; }
-
-        #code-display { background: #000; color: #0f0; padding: 15px; border: 1px solid #0f0; margin-top: 20px; word-wrap: break-word; max-width: 600px; text-align: center;}
+        .shake { animation: shake 0.3s; }
     </style>
 </head>
 <body>
 
-    <!-- Main Menu -->
-    <div id="screen-menu" class="screen active-screen">
-        <h1>AUDIT DESK:<br>GOLDEN PARACHUTE</h1>
-        <p>A procedural document-inspection simulator.</p>
-        <p style="color: #aaa; max-width: 600px; text-align: center; margin-bottom: 30px;">
-            Goal: Survive 10 Days & earn $5,000 to escape the city.<br>
-            - APPROVE healthy companies.<br>
-            - DENY bankrupt or illiquid companies.<br>
-            - AUDIT fraudulent companies (lies/math errors). Click the fake number.<br>
-            Watch the clock. Watch the plant. Trust no one.
+    <div id="main-menu" class="active-screen">
+        <h1>AUDIT DESK</h1>
+        <div style="font-size: 1.5rem; margin-bottom: 20px; letter-spacing: 2px;">THE FINANCIAL INQUISITOR</div>
+        <p>
+            Welcome to the Ministry of Finance. Your role is to inspect corporate financial statements to ensure compliance, stability, and truth.<br><br>
+            Approve healthy companies. Deny those risking insolvency. Audit those committing accounting fraud.
         </p>
-        <button class="menu-btn" onclick="app.startNewGame()">NEW GAME</button>
-        <div style="margin-top: 20px;">
-            <input type="text" id="load-code" class="input-box" placeholder="Paste Save Code Here"><br>
-            <button class="menu-btn" onclick="app.loadGame()">LOAD GAME</button>
-        </div>
-    </div>
-
-    <!-- Night / End of Day Screen -->
-    <div id="screen-night" class="screen">
-        <h1>END OF DAY <span id="night-day-display">1</span></h1>
-        <div style="font-size: 1.5rem; margin-bottom: 20px;">
-            <p>Cash earned: $<span id="night-earned">0</span></p>
-            <p style="color: #ff5555">Daily Expenses (Rent/Food): -$60</p>
-            <p>Total Cash: $<span id="night-cash">0</span> | Rep: <span id="night-rep">0</span></p>
-            <p id="night-warning" style="color: #ff5555; font-weight:bold;"></p>
-        </div>
         
-        <h2>UPGRADES</h2>
-        <div class="shop-item">
-            <div>Espresso Machine ($150)<br><small>+45s daily time</small></div>
-            <button id="buy-espresso" onclick="app.buyItem('espresso', 150)">BUY</button>
-        </div>
-        <div class="shop-item">
-            <div>The Red Marker ($300)<br><small>Allows 4 citations/day</small></div>
-            <button id="buy-marker" onclick="app.buyItem('redMarker', 300)">BUY</button>
-        </div>
-        <div class="shop-item">
-            <div>Auto-Calculator ($500)<br><small>Hover tooltip reveals real math</small></div>
-            <button id="buy-calc" onclick="app.buyItem('autoCalc', 500)">BUY</button>
-        </div>
-
-        <div style="margin-top: 30px; display: flex; gap: 20px;">
-            <button class="menu-btn" onclick="app.startDay()">START NEXT DAY</button>
-            <button class="menu-btn" onclick="app.saveGame()">SAVE GAME</button>
-        </div>
-        <div id="code-display" style="display: none;"></div>
+        <button class="mode-btn" onclick="game.startGame('junior')">
+            JUNIOR ANALYST
+            <span class="mode-desc">Inspect Statement of Comprehensive Income only.<br>Focus on Profitability & Expenses.</span>
+        </button>
+        
+        <button class="mode-btn" onclick="game.startGame('senior')">
+            SENIOR AUDITOR
+            <span class="mode-desc">Inspect SCI & Statement of Financial Position.<br>Cross-check Equity, Assets, and Liquidity.</span>
+        </button>
     </div>
 
-    <!-- Game Over Screen -->
-    <div id="screen-gameover" class="screen">
-        <h1 id="end-title" style="color: #ff3333;">FIRED.</h1>
-        <p id="end-desc" style="font-size: 1.5rem; max-width: 600px; text-align: center;">You made too many mistakes.</p>
-        <div id="victory-code-container" style="display:none; margin: 20px 0;">
-            <p style="color: gold;">Victory Code (Copy for Leaderboard):</p>
-            <div id="victory-code" style="background:#000; padding:10px; border:1px solid gold; color:gold;"></div>
-        </div>
-        <button class="menu-btn" onclick="location.reload()">RETURN TO MENU</button>
-    </div>
-
-    <!-- Main Game UI -->
-    <div id="game-screen" class="screen">
+    <div id="game-container">
         <div id="hud">
-            <div>DAY <span id="hud-day">1</span></div>
-            <div>TIME: <span id="hud-time">2:30</span></div>
-            <div>CASH: $<span id="hud-cash">100</span></div>
-            <div>REP: <span id="hud-rep">0</span></div>
-            <div class="warning">CITATIONS: <span id="hud-cit">0/3</span></div>
+            <div class="hud-stat">📅 DAY <span id="hud-day" class="hud-value">1</span></div>
+            <div class="hud-stat">🕒 <span id="hud-clock" class="hud-value">09:00</span></div>
+            <div class="hud-stat">💵 WAGE: $<span id="hud-wage" class="hud-value">50</span></div>
+            <div class="hud-stat">⚠️ PENALTIES: <span id="hud-penalties" class="hud-value">0/3</span></div>
         </div>
 
-        <div id="window">
-            <div class="rain"></div>
-            <div id="pigeon">🐦</div>
-        </div>
+        <div id="desk-surface">
+            <!-- Rulebook -->
+            <div id="rulebook" onclick="game.toggleRulebook()"></div>
 
-        <div id="plant" onclick="app.waterPlant()">🌵</div>
-
-        <div id="character-area">
-            <div id="avatar">👨‍💼</div>
-            <div id="sweat">💧</div>
-        </div>
-
-        <div id="desk-area">
-            <!-- SCI Folder -->
-            <div class="folder" id="folder-sci">
-                <div class="paper">
-                    <h2 id="doc-company-name">COMPANY NAME</h2>
-                    <div style="text-align: center; margin-bottom:10px; font-weight:bold;">Statement of Comprehensive Income<br>Year Ended 31 Dec 2026</div>
+            <!-- Document Area -->
+            <div class="document-area">
+                <!-- SCI Document -->
+                <div class="paper" id="doc-sci">
+                    <div class="doc-header">
+                        <h1 id="sci-company-name">COMPANY NAME</h1>
+                        <p>Statement of Comprehensive Income<br>Year Ended 31 Dec 2026</p>
+                    </div>
                     <table class="doc-table" id="sci-table">
-                        <!-- Populated by JS -->
+                        <!-- Injected via JS -->
                     </table>
                     <div class="stamp-mark stamp-green" id="stamp-sci-app">APPROVED</div>
                     <div class="stamp-mark stamp-red" id="stamp-sci-den">DENIED</div>
                 </div>
-            </div>
 
-            <!-- Balance Sheet Folder (Days 4+) -->
-            <div class="folder" id="folder-bs" style="display:none;">
-                <div class="paper">
-                    <h2>STATEMENT OF FINANCIAL POSITION</h2>
-                    <div style="text-align: center; margin-bottom:10px;">As at 31 Dec 2026</div>
+                <!-- Balance Sheet Document (Senior Mode) -->
+                <div class="paper" id="doc-bs" style="display:none;">
+                    <div class="doc-header">
+                        <h1 id="bs-company-name">COMPANY NAME</h1>
+                        <p>Statement of Financial Position<br>As at 31 Dec 2026</p>
+                    </div>
                     <table class="doc-table" id="bs-table">
-                         <!-- Populated by JS -->
+                         <!-- Injected via JS -->
                     </table>
                     <div class="stamp-mark stamp-green" id="stamp-bs-app">APPROVED</div>
                     <div class="stamp-mark stamp-red" id="stamp-bs-den">DENIED</div>
                 </div>
             </div>
-        </div>
 
-        <div id="tools">
-            <button class="tool-btn" id="btn-approve" onclick="app.submitVerdict('approve')">APPROVE<br>🟢</button>
-            <button class="tool-btn" id="btn-deny" onclick="app.submitVerdict('deny')">DENY<br>🔴</button>
-            <button class="tool-btn" id="btn-audit" onclick="app.toggleAuditMode()">AUDIT<br>🔍</button>
-            <button class="tool-btn" id="btn-cancel" onclick="app.toggleAuditMode()">CANCEL<br>✖️</button>
-        </div>
-
-        <!-- Overlays -->
-        <div id="event-overlay">
-            <div class="event-box" id="bribe-box">
-                <div style="font-size: 4rem;">✉️</div>
-                <h3>A Proposal</h3>
-                <p>The CEO slides an envelope across the desk. "Ignore the massive debt. Here is $400."</p>
-                <button class="event-btn" onclick="app.resolveBribe(true)">ACCEPT BRIBE</button>
-                <button class="event-btn" onclick="app.resolveBribe(false)">KICK OUT</button>
+            <!-- Tools -->
+            <div id="tool-tray">
+                <div style="color: #888; font-size: 0.8rem; text-align: center; margin-bottom: 5px;">STAMPS</div>
+                <button class="action-btn" id="btn-approve" onclick="game.submitVerdict('approve')">APPROVE</button>
+                <button class="action-btn" id="btn-deny" onclick="game.submitVerdict('deny')">DENY</button>
+                <div style="border-top: 1px solid #444; margin: 5px 0;"></div>
+                <div style="color: #888; font-size: 0.8rem; text-align: center; margin-bottom: 5px;">TOOLS</div>
+                <button class="action-btn" id="btn-audit" onclick="game.toggleAuditMode()">INSPECT</button>
+                <button class="action-btn" id="btn-cancel" onclick="game.toggleAuditMode()">CANCEL INSP.</button>
             </div>
         </div>
+    </div>
 
-        <div id="cat" onclick="app.shooCat()">🐈‍⬛</div>
-
-        <div id="power-outage">
-            <h1 style="color: red; animation: blink 1s infinite;">SYSTEM FAILURE</h1>
-            <button id="breaker-btn" onclick="app.clickBreaker()">RESET BREAKER</button>
-        </div>
+    <div id="rulebook-open">
+        <div class="close-btn" onclick="game.toggleRulebook()">✖</div>
+        <h2 style="font-family: 'VT323', monospace; font-size: 2rem;">MINISTRY DIRECTIVES</h2>
+        <p><strong>1. The Statement of Comprehensive Income (SCI)</strong> reveals operational profitability.</p>
+        <ul style="margin-bottom: 20px;">
+            <li><b>Gross Profit</b> = Revenue - Cost of Sales. <i>(The purest measure of trading efficiency).</i></li>
+            <li><b>Operating Profit (EBIT)</b> = Gross Profit - Selling Expenses - Admin Expenses.</li>
+            <li><b>Profit Before Tax</b> = Operating Profit - Finance Costs.</li>
+            <li><b>Net Profit (Profit for Year)</b> = Profit Before Tax - Taxation.</li>
+        </ul>
         
-        <div id="auto-calc-tooltip" class="tooltip"></div>
+        <p><strong>2. The Statement of Financial Position (Balance Sheet)</strong> reveals structural health and liquidity.</p>
+        <ul style="margin-bottom: 20px;">
+            <li><b>Total Assets</b> = Non-current Assets + Current Assets.</li>
+            <li><b>Total Liabilities</b> = Current Liabilities + Non-current Liabilities.</li>
+            <li><b>Net Assets</b> = Total Assets - Total Liabilities.</li>
+            <li><b>Total Equity</b> = Share Capital + Retained Earnings.</li>
+            <li><b>THE GOLDEN RULE:</b> Net Assets MUST exactly equal Total Equity.</li>
+        </ul>
+
+        <p><strong>3. Verdict Guidelines</strong></p>
+        <ul>
+            <li><b>APPROVE:</b> Company math is correct, profitable, and solvent (Current Assets > Current Liabilities).</li>
+            <li><b>DENY:</b> Company math is correct, but they are structurally failing (Sustained Net Loss) OR insolvent (Current Liabilities > Current Assets, creating Negative Working Capital).</li>
+            <li><b>INSPECT (AUDIT):</b> The company is lying. A calculation on the sheet is mathematically false. Activate Inspect mode and click the false row to report fraud.</li>
+        </ul>
+    </div>
+
+    <div id="memo-overlay">
+        <div id="supervisor-memo">
+            <div class="memo-header">
+                <span>MINISTRY OF FINANCE</span>
+                <span id="memo-date">12/08/1984</span>
+            </div>
+            <div style="font-size: 0.8rem; margin-bottom: 15px;">ATTN: INSPECTOR DESK 4</div>
+            
+            <div id="memo-status" class="memo-status-CORRECT">CORRECT VERDICT</div>
+            <div id="memo-reason" class="memo-reason">
+                You correctly identified the mathematical discrepancy in the Operating Profit. The company has been fined.
+            </div>
+            
+            <button class="memo-btn" onclick="game.closeMemo()">ACKNOWLEDGE</button>
+        </div>
     </div>
 
     <script>
-        const app = {
-            // --- STATE ---
+        const game = {
             state: {
+                mode: 'junior', // junior or senior
                 day: 1,
-                cash: 100,
-                rep: 0,
-                citations: 0,
-                maxCitations: 3,
-                items: { espresso: false, redMarker: false, autoCalc: false },
-                dayTime: 150, 
-                timeLeft: 150,
-                plantTime: 60,
-                gameState: 'menu', // menu, playing, night, end
+                timeMinutes: 9 * 60, // Starts at 09:00
+                wage: 50,
+                penalties: 0,
+                maxPenalties: 3,
                 auditMode: false,
-                catClicks: 0,
-                breakerClicks: 0
+                rulebookOpen: false
             },
-            
-            timers: { main: null },
-            currentCase: null,
+            currentCompany: null,
+            clockTimer: null,
 
-            // --- DOM ELEMENTS ---
+            // DOM Elements
             els: {},
 
             init() {
                 this.els = {
-                    menu: document.getElementById('screen-menu'),
-                    game: document.getElementById('game-screen'),
-                    night: document.getElementById('screen-night'),
-                    gameover: document.getElementById('screen-gameover'),
+                    menu: document.getElementById('main-menu'),
+                    container: document.getElementById('game-container'),
                     hudDay: document.getElementById('hud-day'),
-                    hudTime: document.getElementById('hud-time'),
-                    hudCash: document.getElementById('hud-cash'),
-                    hudRep: document.getElementById('hud-rep'),
-                    hudCit: document.getElementById('hud-cit'),
-                    plant: document.getElementById('plant'),
-                    pigeon: document.getElementById('pigeon'),
-                    avatar: document.getElementById('avatar'),
-                    sweat: document.getElementById('sweat'),
-                    sciFolder: document.getElementById('folder-sci'),
-                    bsFolder: document.getElementById('folder-bs'),
+                    hudClock: document.getElementById('hud-clock'),
+                    hudWage: document.getElementById('hud-wage'),
+                    hudPenalties: document.getElementById('hud-penalties'),
+                    docSci: document.getElementById('doc-sci'),
+                    docBs: document.getElementById('doc-bs'),
                     sciTable: document.getElementById('sci-table'),
                     bsTable: document.getElementById('bs-table'),
-                    btnApp: document.getElementById('btn-approve'),
+                    sciName: document.getElementById('sci-company-name'),
+                    bsName: document.getElementById('bs-company-name'),
+                    btnApprove: document.getElementById('btn-approve'),
                     btnDeny: document.getElementById('btn-deny'),
                     btnAudit: document.getElementById('btn-audit'),
                     btnCancel: document.getElementById('btn-cancel'),
-                    eventOverlay: document.getElementById('event-overlay'),
-                    bribeBox: document.getElementById('bribe-box'),
-                    cat: document.getElementById('cat'),
-                    powerOutage: document.getElementById('power-outage'),
-                    tooltip: document.getElementById('auto-calc-tooltip')
+                    rulebookOpen: document.getElementById('rulebook-open'),
+                    memoOverlay: document.getElementById('memo-overlay'),
+                    memoStatus: document.getElementById('memo-status'),
+                    memoReason: document.getElementById('memo-reason')
                 };
-
-                // Tooltip follow
-                document.addEventListener('mousemove', (e) => {
-                    if (this.state.items.autoCalc && this.state.auditMode) {
-                        this.els.tooltip.style.left = (e.pageX + 15) + 'px';
-                        this.els.tooltip.style.top = (e.pageY + 15) + 'px';
-                    }
-                });
             },
 
-            showScreen(id) {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-                document.getElementById(id).classList.add('active-screen');
-            },
-
-            // --- CORE LOOP ---
-            startNewGame() {
-                this.state = {
-                    day: 1, cash: 100, rep: 0, citations: 0, maxCitations: 3,
-                    items: { espresso: false, redMarker: false, autoCalc: false },
-                    dayTime: 150, timeLeft: 150, plantTime: 60, gameState: 'playing',
-                    auditMode: false, catClicks: 0, breakerClicks: 0
-                };
-                this.startDay();
-            },
-
-            startDay() {
-                if(this.state.day > 10) {
-                    this.triggerEnding();
-                    return;
+            startGame(mode) {
+                this.state.mode = mode;
+                this.state.day = 1;
+                this.state.timeMinutes = 9 * 60;
+                this.state.wage = 50;
+                this.state.penalties = 0;
+                
+                this.els.menu.classList.remove('active-screen');
+                this.els.container.style.display = 'flex';
+                
+                if (mode === 'senior') {
+                    this.els.docBs.style.display = 'block';
+                } else {
+                    this.els.docBs.style.display = 'none';
                 }
-                
-                this.state.gameState = 'playing';
-                this.state.citations = 0;
-                this.state.timeLeft = this.state.dayTime + (this.state.items.espresso ? 45 : 0);
-                this.state.plantTime = 60;
-                this.state.maxCitations = this.state.items.redMarker ? 4 : 3;
-                
-                this.els.plant.innerText = '🌵';
-                this.els.cat.style.display = 'none';
-                this.els.powerOutage.style.display = 'none';
-                this.els.eventOverlay.style.display = 'none';
+
                 this.updateHUD();
-                
-                this.showScreen('game-screen');
+                this.startClock();
                 this.nextCase();
-
-                clearInterval(this.timers.main);
-                this.timers.main = setInterval(() => this.tick(), 1000);
             },
 
-            tick() {
-                if (this.state.gameState !== 'playing') return;
-                
-                this.state.timeLeft--;
-                this.state.plantTime--;
-
-                // Plant Logic
-                if (this.state.plantTime <= 0 && this.els.plant.innerText === '🌵') {
-                    this.els.plant.innerText = '🥀';
-                }
-
-                // Window Logic
-                if (Math.random() < 0.05) {
-                    this.els.pigeon.style.display = Math.random() < 0.3 ? 'block' : 'none';
-                }
-
-                // Random Events
-                if (this.state.timeLeft > 10 && this.state.timeLeft < this.state.dayTime - 10) {
-                    if (Math.random() < 0.005 && this.els.cat.style.display === 'none') {
-                        this.triggerCat();
-                    } else if (Math.random() < 0.005 && this.els.powerOutage.style.display === 'none') {
-                        this.triggerPower();
+            startClock() {
+                clearInterval(this.clockTimer);
+                this.clockTimer = setInterval(() => {
+                    this.state.timeMinutes += 1; // 1 in-game minute per real second
+                    this.updateHUD();
+                    
+                    if (this.state.timeMinutes >= 17 * 60) {
+                        this.endShift();
                     }
-                }
-
-                this.updateHUD();
-
-                if (this.state.timeLeft <= 0) {
-                    this.endDay();
-                }
+                }, 1000);
             },
 
             updateHUD() {
-                const m = Math.floor(this.state.timeLeft / 60);
-                const s = this.state.timeLeft % 60;
-                this.els.hudTime.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-                this.els.hudCash.innerText = this.state.cash;
-                this.els.hudRep.innerText = this.state.rep;
-                this.els.hudCit.innerText = `${this.state.citations}/${this.state.maxCitations}`;
+                const hours = Math.floor(this.state.timeMinutes / 60);
+                const mins = this.state.timeMinutes % 60;
+                this.els.hudClock.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
                 this.els.hudDay.innerText = this.state.day;
+                this.els.hudWage.innerText = this.state.wage;
+                this.els.hudPenalties.innerText = `${this.state.penalties}/${this.state.maxPenalties}`;
+                
+                if (this.state.penalties > 0) this.els.hudPenalties.classList.add('hud-penalty');
+                else this.els.hudPenalties.classList.remove('hud-penalty');
             },
 
-            endDay() {
-                clearInterval(this.timers.main);
-                this.state.gameState = 'night';
-                this.state.cash -= 60; // Rent
-                
-                if (this.state.cash < 0) {
-                    this.triggerGameOver("Arrested for Debt.", "You couldn't pay your rent and basic living expenses. The enforcers have collected you.");
+            endShift() {
+                clearInterval(this.clockTimer);
+                alert(`End of Shift. Day ${this.state.day} complete.\nTotal Wage: $${this.state.wage}`);
+                if (this.state.penalties >= this.state.maxPenalties) {
+                    alert("TERMINATED. Too many penalties.");
+                    location.reload();
                     return;
                 }
-
-                document.getElementById('night-day-display').innerText = this.state.day;
-                document.getElementById('night-cash').innerText = this.state.cash;
-                document.getElementById('night-rep').innerText = this.state.rep;
-                document.getElementById('night-warning').innerText = "";
-                document.getElementById('code-display').style.display = 'none';
-                
-                // Update Shop UI
-                const btns = {
-                    'buy-espresso': { has: this.state.items.espresso, cost: 150 },
-                    'buy-marker': { has: this.state.items.redMarker, cost: 300 },
-                    'buy-calc': { has: this.state.items.autoCalc, cost: 500 }
-                };
-                
-                for(let id in btns) {
-                    const btn = document.getElementById(id);
-                    if(btns[id].has) {
-                        btn.innerText = "OWNED";
-                        btn.disabled = true;
-                    } else if(this.state.cash < btns[id].cost) {
-                        btn.disabled = true;
-                    } else {
-                        btn.disabled = false;
-                        btn.innerText = "BUY";
-                    }
-                }
-
                 this.state.day++;
-                this.showScreen('screen-night');
+                this.state.timeMinutes = 9 * 60;
+                this.startClock();
+                this.nextCase();
             },
 
-            buyItem(item, cost) {
-                if (this.state.cash >= cost && !this.state.items[item]) {
-                    this.state.cash -= cost;
-                    this.state.items[item] = true;
-                    document.getElementById('night-cash').innerText = this.state.cash;
-                    this.endDay(); // refresh shop UI
-                }
+            screenShake() {
+                document.body.classList.remove('shake');
+                void document.body.offsetWidth;
+                document.body.classList.add('shake');
             },
 
-            triggerGameOver(title, desc) {
-                clearInterval(this.timers.main);
-                this.state.gameState = 'end';
-                document.getElementById('end-title').innerText = title;
-                document.getElementById('end-desc').innerText = desc;
-                document.getElementById('victory-code-container').style.display = 'none';
-                this.showScreen('screen-gameover');
+            format(num) { return num.toLocaleString('en-US'); },
+            rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
+
+            generateCompany() {
+                const names = ["Omnicorp Holdings", "Glove & Sons", "Cattle Snaffle Ltd", "Moosewear Manufacturing", "Apex Trading", "Vortex Heavy Industries", "Standard State Corp"];
+                const name = names[this.rnd(0, names.length-1)] + " " + this.rnd(100,999);
+                
+                // Determine flaw category
+                // 1: Healthy, 2: Deny (Loss/Insolvent), 3: Fraud (Math Error)
+                let category = this.rnd(1, 3);
+                
+                let sci = this.generateSCI(category);
+                let bs = this.generateBS(category, sci.net_profit);
+
+                this.currentCompany = {
+                    name: name,
+                    category: category,
+                    sci: sci,
+                    bs: bs,
+                    fraudTarget: sci.fraudTarget || bs.fraudTarget,
+                    fraudExplanation: sci.fraudExplanation || bs.fraudExplanation,
+                    denyReason: sci.denyReason || bs.denyReason
+                };
             },
 
-            triggerEnding() {
-                clearInterval(this.timers.main);
-                this.state.gameState = 'end';
-                const vc = document.getElementById('victory-code-container');
-                const vctext = document.getElementById('victory-code');
+            generateSCI(category) {
+                let rev = this.rnd(10000, 90000);
+                let cos = this.rnd(3000, rev * 0.7);
+                let gp = rev - cos;
+                let sell = this.rnd(500, gp * 0.3);
+                let admin = this.rnd(500, gp * 0.3);
+                let op = gp - sell - admin;
+                let fin = this.rnd(100, op > 0 ? op * 0.2 : 500);
+                let pbt = op - fin;
+                let tax = pbt > 0 ? Math.floor(pbt * 0.2) : 0;
+                let np = pbt - tax;
 
-                if (this.state.cash >= 5000) {
-                    document.getElementById('end-title').innerText = "GOLDEN PARACHUTE ACTIVATED";
-                    document.getElementById('end-title').style.color = "gold";
-                    document.getElementById('end-desc').innerText = "You survived 10 days and earned enough to escape the city. The sunset looks beautiful from the helicopter.";
-                    vc.style.display = 'block';
-                    vctext.innerText = "ESCAPE-WIN-" + btoa(this.state.cash + ":" + this.state.rep);
-                } else if (this.state.rep >= 50) {
-                    document.getElementById('end-title').innerText = "PROMOTED TO HEAD INQUISITOR";
-                    document.getElementById('end-title').style.color = "#aaffaa";
-                    document.getElementById('end-desc').innerText = "You didn't make the $5000, but your flawless record caught the Commission's eye. You're trapped here, but in a nicer office.";
-                    vc.style.display = 'block';
-                    vctext.innerText = "PROMOTE-WIN-" + btoa(this.state.cash + ":" + this.state.rep);
-                } else {
-                    this.triggerGameOver("ARRESTED FOR DEBT", "You failed to earn $5,000 and didn't impress the Commission. The authorities are outside your door.");
-                    return; // already handled
-                }
-                this.showScreen('screen-gameover');
-            },
+                let data = { rev, cos, gp, sell, admin, op, fin, pbt, tax, net_profit: np, fraudTarget: null, fraudExplanation: null, denyReason: null };
 
-            // --- INTERACTIONS ---
-            waterPlant() {
-                if (this.els.plant.innerText === '🥀') {
-                    this.els.plant.innerText = '🌵';
-                    this.state.plantTime = 60;
-                }
-            },
-
-            shooCat() {
-                this.state.catClicks--;
-                if (this.state.catClicks <= 0) {
-                    this.els.cat.style.display = 'none';
-                } else {
-                    this.screenShake();
-                }
-            },
-
-            triggerCat() {
-                this.state.catClicks = 3;
-                this.els.cat.style.display = 'block';
-                this.screenShake();
-            },
-
-            clickBreaker() {
-                this.state.breakerClicks--;
-                if (this.state.breakerClicks <= 0) {
-                    this.els.powerOutage.style.display = 'none';
-                }
-            },
-
-            triggerPower() {
-                this.state.breakerClicks = 5;
-                this.els.powerOutage.style.display = 'flex';
-            },
-
-            triggerBribe() {
-                this.els.eventOverlay.style.display = 'flex';
-                this.els.bribeBox.style.display = 'block';
-            },
-
-            resolveBribe(accepted) {
-                this.els.eventOverlay.style.display = 'none';
-                if (accepted) {
-                    this.state.cash += 400;
-                    if (Math.random() < 0.3) {
-                        this.applyCitation("Accepted Bribe CAUGHT.");
+                if (category === 2) {
+                    // Failing company -> Massive Cost of Sales causing Net Loss
+                    data.cos = rev + this.rnd(5000, 20000);
+                    data.gp = rev - data.cos;
+                    data.op = data.gp - sell - admin;
+                    data.pbt = data.op - fin;
+                    data.tax = 0;
+                    data.net_profit = data.pbt;
+                    data.denyReason = `Sustained Net Loss. Gross Profit was negative (${this.format(data.gp)}). Core operations are failing.`;
+                } 
+                else if (category === 3 && (this.state.mode === 'junior' || Math.random() > 0.5)) {
+                    // Math Fraud in SCI
+                    let lieType = this.rnd(1, 3);
+                    if (lieType === 1) {
+                        let actualGP = data.gp;
+                        data.gp += this.rnd(2000, 8000); // Overstate GP
+                        data.op = data.gp - sell - admin; // Carries down
+                        data.pbt = data.op - fin;
+                        data.net_profit = data.pbt - tax;
+                        data.fraudTarget = 'row-gp';
+                        data.fraudExplanation = `Gross Profit was falsified. Claimed ${this.format(data.gp)}, but ${this.format(rev)} (Rev) - ${this.format(cos)} (CoS) = ${this.format(actualGP)}.`;
+                    } else if (lieType === 2) {
+                        let actualOp = data.op;
+                        data.op = data.gp - sell; // Ignored admin costs
+                        data.pbt = data.op - fin;
+                        data.net_profit = data.pbt - tax;
+                        data.fraudTarget = 'row-op';
+                        data.fraudExplanation = `Operating Profit was falsified. They omitted Admin Expenses. Real OP is ${this.format(actualOp)}.`;
+                    } else {
+                        let actualNP = data.net_profit;
+                        data.net_profit += this.rnd(1000, 5000);
+                        data.fraudTarget = 'row-np';
+                        data.fraudExplanation = `Net Profit was falsified. ${this.format(data.pbt)} (PBT) - ${this.format(tax)} (Tax) = ${this.format(actualNP)}.`;
                     }
                 }
-                this.updateHUD();
-                this.nextCase(); // Bribe dismisses current case
+                return data;
+            },
+
+            generateBS(category, netProfit) {
+                let nca = this.rnd(20000, 80000);
+                let inv = this.rnd(2000, 10000);
+                let rec = this.rnd(2000, 10000);
+                let cash = this.rnd(2000, 15000);
+                let ca = inv + rec + cash;
+                let ta = nca + ca;
+
+                let pay = this.rnd(2000, 10000);
+                let stb = this.rnd(500, 5000);
+                let cl = pay + stb;
+                let ncl = this.rnd(5000, 30000);
+                let tl = cl + ncl;
+
+                let na = ta - tl;
+                let sc = Math.floor(na * 0.6);
+                let re = na - sc; 
+                let te = sc + re;
+
+                let data = { nca, inv, rec, cash, ca, ta, pay, stb, cl, ncl, tl, na, sc, re, te, fraudTarget: null, fraudExplanation: null, denyReason: null };
+
+                // If SCI made a fraud choice, skip BS fraud to avoid double flaws
+                if (category === 3 && !this.currentCompany?.fraudTarget && this.state.mode === 'senior') {
+                    let lieType = this.rnd(1, 2);
+                    if (lieType === 1) { // Total Assets Math Error
+                        let actualTA = ta;
+                        data.ta += this.rnd(5000, 15000);
+                        data.na = data.ta - data.tl; // Flows down
+                        // Equity stays the same, so Na != Te now! (Cross-check error)
+                        data.fraudTarget = 'row-ta';
+                        data.fraudExplanation = `Total Assets sum is false. ${this.format(nca)} (NCA) + ${this.format(ca)} (CA) = ${this.format(actualTA)}, not ${this.format(data.ta)}.`;
+                    } else { // Equity Mismatch (Net Assets != Total Equity)
+                        data.re += this.rnd(4000, 10000);
+                        data.te = data.sc + data.re;
+                        data.fraudTarget = 'row-te';
+                        data.fraudExplanation = `Total Equity (${this.format(data.te)}) does not match Net Assets (${this.format(data.na)}). The Balance Sheet is unbalanced.`;
+                    }
+                }
+                else if (category === 2 && !this.currentCompany?.denyReason) {
+                    // Insolvency: Current Liabilities > Current Assets (Negative Working Capital)
+                    data.cash = 100;
+                    data.ca = data.inv + data.rec + data.cash;
+                    data.stb = data.ca + this.rnd(10000, 20000); // Massive short term debt
+                    data.cl = data.pay + data.stb;
+                    data.tl = data.cl + data.ncl;
+                    data.na = data.ta - data.tl;
+                    
+                    if(data.na < 0) {
+                        data.sc = 1000;
+                        data.re = data.na - data.sc; 
+                    } else {
+                        data.sc = Math.floor(data.na * 0.6);
+                        data.re = data.na - data.sc;
+                    }
+                    data.te = data.sc + data.re;
+
+                    data.denyReason = `Negative Working Capital. Current Liabilities (${this.format(data.cl)}) far exceed Current Assets (${this.format(data.ca)}). Immediate insolvency risk.`;
+                }
+
+                return data;
+            },
+
+            nextCase() {
+                if(this.state.auditMode) this.toggleAuditMode();
+                document.querySelectorAll('.stamp-mark').forEach(el => {
+                    el.classList.remove('visible');
+                    el.style.display = 'none'; // reset
+                });
+
+                // Animate out
+                this.els.docSci.classList.replace('in', 'out');
+                if(this.state.mode === 'senior') this.els.docBs.classList.replace('in', 'out');
+
+                setTimeout(() => {
+                    this.generateCompany();
+                    this.renderTables();
+
+                    // Animate in
+                    this.els.docSci.classList.replace('out', 'in');
+                    if(this.state.mode === 'senior') this.els.docBs.classList.replace('out', 'in');
+                }, 400);
+            },
+
+            renderTables() {
+                const c = this.currentCompany;
+                this.els.sciName.innerText = c.name;
+                this.els.bsName.innerText = c.name;
+
+                // Build SCI
+                let sciHTML = `
+                    <tr id="row-rev" onclick="game.auditRow('row-rev')"><td>Revenue</td><td>${this.format(c.sci.rev)}</td></tr>
+                    <tr id="row-cos" onclick="game.auditRow('row-cos')"><td>Cost of sales</td><td>(${this.format(c.sci.cos)})</td></tr>
+                    <tr id="row-gp" class="subtotal" onclick="game.auditRow('row-gp')"><td>Gross profit</td><td>${this.format(c.sci.gp)}</td></tr>
+                    <tr id="row-sell" onclick="game.auditRow('row-sell')"><td>Selling expenses</td><td>(${this.format(c.sci.sell)})</td></tr>
+                    <tr id="row-admin" onclick="game.auditRow('row-admin')"><td>Admin expenses</td><td>(${this.format(c.sci.admin)})</td></tr>
+                    <tr id="row-op" class="subtotal" onclick="game.auditRow('row-op')"><td>Operating profit</td><td>${this.format(c.sci.op)}</td></tr>
+                    <tr id="row-fin" onclick="game.auditRow('row-fin')"><td>Finance costs</td><td>(${this.format(c.sci.fin)})</td></tr>
+                    <tr id="row-pbt" class="subtotal" onclick="game.auditRow('row-pbt')"><td>Profit before tax</td><td>${this.format(c.sci.pbt)}</td></tr>
+                    <tr id="row-tax" onclick="game.auditRow('row-tax')"><td>Taxation</td><td>(${this.format(c.sci.tax)})</td></tr>
+                    <tr id="row-np" class="total" onclick="game.auditRow('row-np')"><td>Profit for the year</td><td>${this.format(c.sci.net_profit)}</td></tr>
+                `;
+                this.els.sciTable.innerHTML = sciHTML;
+
+                // Build BS
+                if (this.state.mode === 'senior') {
+                    let bsHTML = `
+                        <tr class="header"><td>Non-current assets</td><td></td></tr>
+                        <tr class="indent" id="row-nca" onclick="game.auditRow('row-nca')"><td>Property, plant & eq.</td><td>${this.format(c.bs.nca)}</td></tr>
+                        
+                        <tr class="header"><td>Current assets</td><td></td></tr>
+                        <tr class="indent" id="row-inv" onclick="game.auditRow('row-inv')"><td>Inventories</td><td>${this.format(c.bs.inv)}</td></tr>
+                        <tr class="indent" id="row-rec" onclick="game.auditRow('row-rec')"><td>Trade receivables</td><td>${this.format(c.bs.rec)}</td></tr>
+                        <tr class="indent" id="row-cash" onclick="game.auditRow('row-cash')"><td>Cash equivalents</td><td>${this.format(c.bs.cash)}</td></tr>
+                        <tr id="row-ca" class="subtotal" onclick="game.auditRow('row-ca')"><td>Total Current Assets</td><td>${this.format(c.bs.ca)}</td></tr>
+                        <tr id="row-ta" class="total" onclick="game.auditRow('row-ta')"><td>Total assets</td><td>${this.format(c.bs.ta)}</td></tr>
+                        
+                        <tr class="header"><td>Current liabilities</td><td></td></tr>
+                        <tr class="indent" id="row-pay" onclick="game.auditRow('row-pay')"><td>Trade payables</td><td>${this.format(c.bs.pay)}</td></tr>
+                        <tr class="indent" id="row-stb" onclick="game.auditRow('row-stb')"><td>Short-term borrowings</td><td>${this.format(c.bs.stb)}</td></tr>
+                        <tr id="row-cl" class="subtotal" onclick="game.auditRow('row-cl')"><td>Total Current Liab.</td><td>${this.format(c.bs.cl)}</td></tr>
+                        
+                        <tr class="header"><td>Non-current liabilities</td><td></td></tr>
+                        <tr class="indent" id="row-ncl" onclick="game.auditRow('row-ncl')"><td>Long-term borrowings</td><td>${this.format(c.bs.ncl)}</td></tr>
+                        <tr id="row-tl" class="total" onclick="game.auditRow('row-tl')"><td>Total liabilities</td><td>${this.format(c.bs.tl)}</td></tr>
+                        
+                        <tr id="row-na" class="total" style="border-bottom: 2px solid #000;" onclick="game.auditRow('row-na')"><td>NET ASSETS</td><td>${this.format(c.bs.na)}</td></tr>
+                        
+                        <tr class="header"><td>Shareholders' Equity</td><td></td></tr>
+                        <tr class="indent" id="row-sc" onclick="game.auditRow('row-sc')"><td>Share capital</td><td>${this.format(c.bs.sc)}</td></tr>
+                        <tr class="indent" id="row-re" onclick="game.auditRow('row-re')"><td>Retained earnings</td><td>${this.format(c.bs.re)}</td></tr>
+                        <tr id="row-te" class="total" onclick="game.auditRow('row-te')"><td>TOTAL EQUITY</td><td>${this.format(c.bs.te)}</td></tr>
+                    `;
+                    this.els.bsTable.innerHTML = bsHTML;
+                }
+            },
+
+            toggleRulebook() {
+                this.state.rulebookOpen = !this.state.rulebookOpen;
+                this.els.rulebookOpen.style.display = this.state.rulebookOpen ? 'block' : 'none';
             },
 
             toggleAuditMode() {
@@ -706,341 +663,145 @@
                     document.body.classList.add('audit-mode');
                     this.els.btnAudit.style.display = 'none';
                     this.els.btnCancel.style.display = 'block';
-                    this.els.btnApp.style.opacity = 0.5;
-                    this.els.btnDeny.style.opacity = 0.5;
-                    if(this.state.items.autoCalc) this.els.tooltip.style.display = 'block';
+                    this.els.btnApprove.style.opacity = 0.3;
+                    this.els.btnDeny.style.opacity = 0.3;
+                    this.els.btnApprove.disabled = true;
+                    this.els.btnDeny.disabled = true;
                 } else {
                     document.body.classList.remove('audit-mode');
                     this.els.btnAudit.style.display = 'block';
                     this.els.btnCancel.style.display = 'none';
-                    this.els.btnApp.style.opacity = 1;
+                    this.els.btnApprove.style.opacity = 1;
                     this.els.btnDeny.style.opacity = 1;
-                    this.els.tooltip.style.display = 'none';
+                    this.els.btnApprove.disabled = false;
+                    this.els.btnDeny.disabled = false;
                 }
             },
 
-            screenShake() {
-                document.body.classList.remove('shake-active');
-                void document.body.offsetWidth; // trigger reflow
-                document.body.classList.add('shake-active');
-            },
-
-            applyStamp(type) {
+            stamp(type) {
                 this.screenShake();
-                const marks = document.querySelectorAll('.stamp-mark');
-                marks.forEach(m => m.style.display = 'none');
+                document.querySelectorAll('.stamp-mark').forEach(el => el.style.display = 'none'); // clean up old
                 
                 if (type === 'approve') {
-                    document.getElementById('stamp-sci-app').style.display = 'block';
-                    if(this.state.day >= 4) document.getElementById('stamp-bs-app').style.display = 'block';
-                } else if (type === 'deny') {
-                    document.getElementById('stamp-sci-den').style.display = 'block';
-                    if(this.state.day >= 4) document.getElementById('stamp-bs-den').style.display = 'block';
-                }
-            },
-
-            applyCitation(reason) {
-                this.state.citations++;
-                this.state.cash -= 50;
-                this.els.hudCit.style.color = 'red';
-                setTimeout(() => this.els.hudCit.style.color = '', 500);
-                this.screenShake();
-                
-                if (this.state.citations >= this.state.maxCitations) {
-                    this.triggerGameOver("FIRED.", "Maximum citations reached today. You are escorted from the building.");
-                }
-            },
-
-            // --- GAMEPLAY LOGIC ---
-            nextCase() {
-                if (this.state.auditMode) this.toggleAuditMode();
-
-                // Clear stamps
-                document.querySelectorAll('.stamp-mark').forEach(m => m.style.display = 'none');
-
-                // Animate Out & In
-                this.els.sciFolder.classList.remove('in');
-                this.els.sciFolder.classList.add('out');
-                this.els.bsFolder.classList.remove('in');
-                this.els.bsFolder.classList.add('out');
-
-                setTimeout(() => {
-                    this.generateCompany();
-                    this.renderDocuments();
-                    
-                    this.els.sciFolder.classList.remove('out');
-                    this.els.sciFolder.classList.add('in');
-                    if (this.state.day >= 4) {
-                        this.els.bsFolder.style.display = 'block';
-                        this.els.bsFolder.classList.remove('out');
-                        this.els.bsFolder.classList.add('in');
-                    } else {
-                        this.els.bsFolder.style.display = 'none';
+                    const s1 = document.getElementById('stamp-sci-app');
+                    s1.style.display = 'block'; setTimeout(()=> s1.classList.add('visible'), 10);
+                    if(this.state.mode === 'senior') {
+                        const s2 = document.getElementById('stamp-bs-app');
+                        s2.style.display = 'block'; setTimeout(()=> s2.classList.add('visible'), 10);
                     }
-
-                    // Avatar
-                    const avatars = ['👨‍💼','👩‍💼','🧑‍💻','🦹‍♂️','🦹‍♀️','🕵️‍♂️','👔'];
-                    this.els.avatar.innerText = avatars[Math.floor(Math.random()*avatars.length)];
-                    this.els.sweat.style.display = this.currentCase.sweating ? 'block' : 'none';
-
-                    // Random Bribe on generation? (Rare)
-                    if (this.currentCase.type === 'fraud' && Math.random() < 0.15) {
-                        setTimeout(() => this.triggerBribe(), 1000);
+                } else {
+                    const s1 = document.getElementById('stamp-sci-den');
+                    s1.style.display = 'block'; setTimeout(()=> s1.classList.add('visible'), 10);
+                    if(this.state.mode === 'senior') {
+                        const s2 = document.getElementById('stamp-bs-den');
+                        s2.style.display = 'block'; setTimeout(()=> s2.classList.add('visible'), 10);
                     }
-
-                }, 400);
+                }
             },
 
             submitVerdict(verdict) {
                 if (this.state.auditMode) return;
-                this.applyStamp(verdict);
-                
-                let correct = false;
-                if (verdict === 'approve' && this.currentCase.type === 'healthy') correct = true;
-                if (verdict === 'deny' && this.currentCase.type === 'bad') correct = true;
+                this.stamp(verdict);
+                clearInterval(this.clockTimer); // Pause clock during memo
 
                 setTimeout(() => {
-                    if (correct) {
-                        this.state.cash += 50;
-                        this.state.rep += 5;
-                    } else {
-                        this.applyCitation("Incorrect verdict.");
-                        this.state.rep -= 5;
+                    const c = this.currentCompany;
+                    let correct = false;
+                    let reason = "";
+
+                    if (verdict === 'approve') {
+                        if (c.category === 1) {
+                            correct = true;
+                            reason = "Company is mathematically sound and structurally stable. Good work.";
+                        } else if (c.category === 2) {
+                            correct = false;
+                            reason = `You approved a failing company. ${c.denyReason}`;
+                        } else if (c.category === 3) {
+                            correct = false;
+                            reason = `You approved a fraudulent company. ${c.fraudExplanation}`;
+                        }
+                    } else if (verdict === 'deny') {
+                        if (c.category === 2) {
+                            correct = true;
+                            reason = `Correctly denied. ${c.denyReason}`;
+                        } else if (c.category === 1) {
+                            correct = false;
+                            reason = "You denied a perfectly healthy company. This halts economic growth.";
+                        } else if (c.category === 3) {
+                            correct = false; // Fraud must be AUDITED, not just denied.
+                            reason = `You denied the company, but missed the fraud. They must be audited for falsifying records! ${c.fraudExplanation}`;
+                        }
                     }
-                    this.updateHUD();
-                    this.nextCase();
+
+                    this.showMemo(correct, reason);
                 }, 800);
             },
 
-            auditRow(id) {
+            auditRow(rowId) {
                 if (!this.state.auditMode) return;
-                
-                if (this.currentCase.type === 'fraud' && this.currentCase.fraudTarget === id) {
-                    // Success
-                    this.screenShake();
-                    document.getElementById(`row-${id}`).style.backgroundColor = 'rgba(0,255,0,0.5)';
-                    setTimeout(() => {
-                        this.state.cash += 100;
-                        this.state.rep += 10;
-                        this.updateHUD();
-                        this.nextCase();
-                    }, 800);
+                clearInterval(this.clockTimer); // Pause
+
+                const c = this.currentCompany;
+                let correct = false;
+                let reason = "";
+
+                if (c.category === 3 && c.fraudTarget === rowId) {
+                    correct = true;
+                    reason = `Fraud intercepted. ${c.fraudExplanation} The authorities have been notified.`;
+                    // Highlight the correct row permanently for effect
+                    document.getElementById(rowId).style.backgroundColor = "rgba(41, 109, 53, 0.4)";
                 } else {
-                    // Mistake
-                    this.applyCitation("Invalid Audit Target.");
-                    this.toggleAuditMode();
-                }
-            },
-
-            showRowTooltip(id) {
-                if (!this.state.auditMode || !this.state.items.autoCalc) return;
-                const c = this.currentCase;
-                let text = "";
-                
-                // Real math helper
-                if(id === 'gp') text = `Gross = Rev (${c.sci.rev}) - CoS (${c.sci.cos}) = ${c.sci.rev - c.sci.cos}`;
-                if(id === 'op') text = `Op = GP - Sell - Admin = ${c.sci.gp_real - c.sci.sell - c.sci.admin}`;
-                if(id === 'np') text = `NP = PBT - Tax = ${c.sci.pbt_real - c.sci.tax}`;
-                if(id === 'ta') text = `Total Assets = NCA + CA = ${c.bs.nca + c.bs.ca_real}`;
-                if(id === 'tl') text = `Total Liabilities = CL + NCL = ${c.bs.cl_real + c.bs.ncl}`;
-                if(id === 'na') text = `Net Assets = TA - TL = ${c.bs.ta_real - c.bs.tl_real}`;
-                if(id === 'te') text = `Total Equity = Share + Retained = ${c.bs.sc + c.bs.re}`;
-
-                if (text) {
-                    this.els.tooltip.innerText = text;
-                } else {
-                    this.els.tooltip.innerText = "No auto-calc data.";
-                }
-            },
-
-            // --- FINANCIAL GENERATOR (EDEXCEL) ---
-            rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
-
-            generateCompany() {
-                const names = ["Omnicorp","Glove & Sons","Cattle Snaffle Ltd","Moosewear","Hassani Ltd","NuVan","File & Co","Apex Trading","Vortex Heavy"];
-                let cname = names[this.rnd(0, names.length-1)] + " " + this.rnd(10,99);
-                
-                let typeSeed = Math.random();
-                let type = 'healthy';
-                if (typeSeed < 0.3) type = 'bad';
-                else if (typeSeed < 0.6) type = 'fraud';
-
-                let sweating = (type === 'fraud' && Math.random() < 0.5);
-
-                // Base Maths
-                let rev = this.rnd(5000, 50000);
-                let cos = this.rnd(1000, rev * 0.6);
-                let gp = rev - cos;
-                let sell = this.rnd(100, gp * 0.2);
-                let admin = this.rnd(100, gp * 0.2);
-                let op = gp - sell - admin;
-                let fin = this.rnd(50, op * 0.1);
-                let pbt = op - fin;
-                let tax = pbt > 0 ? Math.floor(pbt * 0.2) : 0;
-                let np = pbt - tax;
-
-                let nca = this.rnd(10000, 50000);
-                let inv = this.rnd(500, 5000);
-                let rec = this.rnd(500, 5000);
-                let cash = this.rnd(1000, 10000);
-                let ca = inv + rec + cash;
-                let ta = nca + ca;
-
-                let pay = this.rnd(500, 5000);
-                let stb = this.rnd(0, 1000);
-                let cl = pay + stb + tax;
-                let ncl = this.rnd(1000, 15000);
-                let tl = cl + ncl;
-
-                let na = ta - tl;
-                let sc = Math.floor(na * 0.6);
-                let re = na - sc;
-
-                let caseData = {
-                    name: cname, type: type, sweating: sweating, fraudTarget: null,
-                    sci: { rev, cos, gp, sell, admin, op, fin, pbt, tax, np, gp_real:gp, op_real:op, pbt_real:pbt, np_real:np },
-                    bs: { nca, inv, rec, cash, ca, ta, pay, stb, tax, cl, ncl, tl, na, sc, re, ca_real:ca, ta_real:ta, cl_real:cl, tl_real:tl, na_real:na, te_real:sc+re }
-                };
-
-                if (type === 'bad') {
-                    // Massive loss OR Liquidity crisis
-                    if (Math.random() < 0.5) {
-                        // Loss
-                        caseData.sci.cos = rev + this.rnd(1000, 5000);
-                        caseData.sci.gp = rev - caseData.sci.cos;
-                        caseData.sci.op = caseData.sci.gp - sell - admin;
-                        caseData.sci.pbt = caseData.sci.op - fin;
-                        caseData.sci.tax = 0;
-                        caseData.sci.np = caseData.sci.pbt;
+                    correct = false;
+                    if (c.category === 3) {
+                        reason = `Invalid inspection target. The true fraud was elsewhere: ${c.fraudExplanation}`;
+                    } else if (c.category === 2) {
+                        reason = `Invalid inspection. The math is correct, the company is just failing financially. You should have DENIED them.`;
                     } else {
-                        // Liquidity (Massive STB, zero cash)
-                        caseData.bs.cash = 10;
-                        caseData.bs.ca = caseData.bs.inv + caseData.bs.rec + 10;
-                        caseData.bs.stb = caseData.bs.ca + this.rnd(5000, 20000);
-                        caseData.bs.cl = pay + caseData.bs.stb + tax;
-                        caseData.bs.tl = caseData.bs.cl + ncl;
-                        caseData.bs.na = (nca + caseData.bs.ca) - caseData.bs.tl;
-                        caseData.bs.re = caseData.bs.na - sc; // adjust equity to balance
-                    }
-                } 
-                else if (type === 'fraud') {
-                    let lie = this.rnd(1, 4);
-                    // Only do BS lies if day >= 4
-                    if (this.state.day < 4 && lie > 2) lie = this.rnd(1,2); 
-
-                    if (lie === 1) { // GP Math Error
-                        caseData.sci.gp += this.rnd(1000, 5000);
-                        caseData.sci.op = caseData.sci.gp - sell - admin; // carries down
-                        caseData.sci.pbt = caseData.sci.op - fin;
-                        caseData.sci.np = caseData.sci.pbt - tax;
-                        caseData.fraudTarget = 'gp';
-                    } 
-                    else if (lie === 2) { // Exclude admin from OP
-                        caseData.sci.op = caseData.sci.gp - sell; // missed admin
-                        caseData.sci.pbt = caseData.sci.op - fin;
-                        caseData.sci.np = caseData.sci.pbt - tax;
-                        caseData.fraudTarget = 'op';
-                    }
-                    else if (lie === 3) { // BS Total Assets math error
-                        caseData.bs.ta += this.rnd(2000, 10000);
-                        caseData.fraudTarget = 'ta';
-                    }
-                    else if (lie === 4) { // Categorization (NCL as an asset)
-                        caseData.bs.ca += caseData.bs.ncl; // added borrowing to assets!
-                        caseData.bs.ta = caseData.bs.nca + caseData.bs.ca;
-                        caseData.fraudTarget = 'ca'; // CA row is fraudulent
+                        reason = `Invalid inspection. The company records are perfectly accurate. You are wasting Ministry time.`;
                     }
                 }
 
-                this.currentCase = caseData;
+                this.showMemo(correct, reason);
             },
 
-            formatMoney(num) {
-                return num.toLocaleString();
-            },
+            showMemo(correct, reasonText) {
+                this.els.memoOverlay.style.display = 'flex';
+                // Trigger reflow
+                void this.els.memoOverlay.offsetWidth;
+                this.els.memoOverlay.classList.add('visible');
 
-            renderDocuments() {
-                const c = this.currentCase;
-                document.getElementById('doc-company-name').innerText = c.name;
-
-                // Render SCI
-                let sciHTML = `
-                    <tr id="row-rev" onclick="app.auditRow('rev')" onmouseenter="app.showRowTooltip('rev')"><td>Revenue</td><td>${this.formatMoney(c.sci.rev)}</td></tr>
-                    <tr id="row-cos" onclick="app.auditRow('cos')" onmouseenter="app.showRowTooltip('cos')"><td>Cost of sales</td><td>(${this.formatMoney(c.sci.cos)})</td></tr>
-                    <tr id="row-gp" class="subtotal" onclick="app.auditRow('gp')" onmouseenter="app.showRowTooltip('gp')"><td>Gross profit</td><td>${this.formatMoney(c.sci.gp)}</td></tr>
-                    <tr id="row-sell" onclick="app.auditRow('sell')" onmouseenter="app.showRowTooltip('sell')"><td>Selling expenses</td><td>(${this.formatMoney(c.sci.sell)})</td></tr>
-                    <tr id="row-admin" onclick="app.auditRow('admin')" onmouseenter="app.showRowTooltip('admin')"><td>Admin expenses</td><td>(${this.formatMoney(c.sci.admin)})</td></tr>
-                    <tr id="row-op" class="subtotal" onclick="app.auditRow('op')" onmouseenter="app.showRowTooltip('op')"><td>Operating profit</td><td>${this.formatMoney(c.sci.op)}</td></tr>
-                    <tr id="row-fin" onclick="app.auditRow('fin')" onmouseenter="app.showRowTooltip('fin')"><td>Finance costs</td><td>(${this.formatMoney(c.sci.fin)})</td></tr>
-                    <tr id="row-pbt" class="subtotal" onclick="app.auditRow('pbt')" onmouseenter="app.showRowTooltip('pbt')"><td>Profit before tax</td><td>${this.formatMoney(c.sci.pbt)}</td></tr>
-                    <tr id="row-tax" onclick="app.auditRow('tax')" onmouseenter="app.showRowTooltip('tax')"><td>Taxation</td><td>(${this.formatMoney(c.sci.tax)})</td></tr>
-                    <tr id="row-np" class="total" onclick="app.auditRow('np')" onmouseenter="app.showRowTooltip('np')"><td>Profit for the year</td><td>${this.formatMoney(c.sci.np)}</td></tr>
-                `;
-                this.els.sciTable.innerHTML = sciHTML;
-
-                // Render BS
-                let bsHTML = `
-                    <tr id="row-nca" onclick="app.auditRow('nca')" onmouseenter="app.showRowTooltip('nca')"><td colspan="2"><b>Non-current assets</b></td></tr>
-                    <tr class="indent" id="row-nca-val" onclick="app.auditRow('nca-val')" onmouseenter="app.showRowTooltip('nca-val')"><td>Property & Equip</td><td>${this.formatMoney(c.bs.nca)}</td></tr>
-                    <tr id="row-ca" onclick="app.auditRow('ca')" onmouseenter="app.showRowTooltip('ca')"><td colspan="2"><b>Current assets</b></td></tr>
-                    <tr class="indent" id="row-inv" onclick="app.auditRow('inv')" onmouseenter="app.showRowTooltip('inv')"><td>Inventories</td><td>${this.formatMoney(c.bs.inv)}</td></tr>
-                    <tr class="indent" id="row-rec" onclick="app.auditRow('rec')" onmouseenter="app.showRowTooltip('rec')"><td>Trade receivables</td><td>${this.formatMoney(c.bs.rec)}</td></tr>
-                    <tr class="indent" id="row-cash" onclick="app.auditRow('cash')" onmouseenter="app.showRowTooltip('cash')"><td>Cash & equivalents</td><td>${this.formatMoney(c.bs.cash)}</td></tr>
-                    <tr id="row-ta" class="total" onclick="app.auditRow('ta')" onmouseenter="app.showRowTooltip('ta')"><td>Total assets</td><td>${this.formatMoney(c.bs.ta)}</td></tr>
-                    <tr><td colspan="2">&nbsp;</td></tr>
-                    <tr id="row-cl" onclick="app.auditRow('cl')" onmouseenter="app.showRowTooltip('cl')"><td colspan="2"><b>Current liabilities</b></td></tr>
-                    <tr class="indent" id="row-pay" onclick="app.auditRow('pay')" onmouseenter="app.showRowTooltip('pay')"><td>Trade payables</td><td>${this.formatMoney(c.bs.pay)}</td></tr>
-                    <tr class="indent" id="row-stb" onclick="app.auditRow('stb')" onmouseenter="app.showRowTooltip('stb')"><td>Short-term borrowings</td><td>${this.formatMoney(c.bs.stb)}</td></tr>
-                    <tr id="row-ncl" onclick="app.auditRow('ncl')" onmouseenter="app.showRowTooltip('ncl')"><td colspan="2"><b>Non-current liabilities</b></td></tr>
-                    <tr class="indent" id="row-ltb" onclick="app.auditRow('ltb')" onmouseenter="app.showRowTooltip('ltb')"><td>Long-term borrowings</td><td>${this.formatMoney(c.bs.ncl)}</td></tr>
-                    <tr id="row-tl" class="total" onclick="app.auditRow('tl')" onmouseenter="app.showRowTooltip('tl')"><td>Total liabilities</td><td>${this.formatMoney(c.bs.tl)}</td></tr>
-                    <tr id="row-na" class="total" onclick="app.auditRow('na')" onmouseenter="app.showRowTooltip('na')"><td>Net assets</td><td>${this.formatMoney(c.bs.na)}</td></tr>
-                    <tr><td colspan="2">&nbsp;</td></tr>
-                    <tr id="row-eq" onclick="app.auditRow('eq')" onmouseenter="app.showRowTooltip('eq')"><td colspan="2"><b>Shareholders' equity</b></td></tr>
-                    <tr class="indent" id="row-sc" onclick="app.auditRow('sc')" onmouseenter="app.showRowTooltip('sc')"><td>Share capital</td><td>${this.formatMoney(c.bs.sc)}</td></tr>
-                    <tr class="indent" id="row-re" onclick="app.auditRow('re')" onmouseenter="app.showRowTooltip('re')"><td>Retained earnings</td><td>${this.formatMoney(c.bs.re)}</td></tr>
-                    <tr id="row-te" class="total" onclick="app.auditRow('te')" onmouseenter="app.showRowTooltip('te')"><td>Total equity</td><td>${this.formatMoney(c.bs.sc + c.bs.re)}</td></tr>
-                `;
-                this.els.bsTable.innerHTML = bsHTML;
-            },
-
-            // --- SAVE / LOAD ---
-            saveGame() {
-                const saveObj = {
-                    day: this.state.day,
-                    cash: this.state.cash,
-                    rep: this.state.rep,
-                    items: this.state.items
-                };
-                const code = btoa(JSON.stringify(saveObj));
-                const cd = document.getElementById('code-display');
-                cd.style.display = 'block';
-                cd.innerText = code;
-            },
-
-            loadGame() {
-                const code = document.getElementById('load-code').value.trim();
-                if(!code) return;
-                try {
-                    const saveObj = JSON.parse(atob(code));
-                    if(saveObj.day && saveObj.cash !== undefined) {
-                        this.state = {
-                            day: saveObj.day, cash: saveObj.cash, rep: saveObj.rep, citations: 0, maxCitations: 3,
-                            items: saveObj.items || { espresso: false, redMarker: false, autoCalc: false },
-                            dayTime: 150, timeLeft: 150, plantTime: 60, gameState: 'menu',
-                            auditMode: false, catClicks: 0, breakerClicks: 0
-                        };
-                        this.endDay(); // Go to night screen to prep next day
-                    }
-                } catch(e) {
-                    alert("Invalid Save Code");
+                if (correct) {
+                    this.els.memoStatus.innerText = "VERDICT: CORRECT";
+                    this.els.memoStatus.className = "memo-status-CORRECT";
+                    this.state.wage += 10;
+                } else {
+                    this.els.memoStatus.innerText = "VERDICT: INCORRECT";
+                    this.els.memoStatus.className = "memo-status-INCORRECT";
+                    this.state.penalties++;
+                    this.state.wage -= 15;
+                    this.screenShake();
                 }
+                
+                this.els.memoReason.innerText = reasonText;
+                this.updateHUD();
+            },
+
+            closeMemo() {
+                this.els.memoOverlay.classList.remove('visible');
+                setTimeout(() => {
+                    this.els.memoOverlay.style.display = 'none';
+                    if (this.state.penalties >= this.state.maxPenalties) {
+                        alert("TERMINATED. Please clear your desk.");
+                        location.reload();
+                    } else {
+                        this.startClock();
+                        this.nextCase();
+                    }
+                }, 300);
             }
         };
 
-        // Initialize on load
-        window.onload = () => app.init();
-
+        window.onload = () => game.init();
     </script>
 </body>
 </html>
