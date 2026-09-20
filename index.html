@@ -5,6 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Audit Desk: The Financial Inquisitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase Module Setup -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'audit-desk-game';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.appId = appId;
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth initialization error, running in local fallback mode:", err);
+            }
+        }
+        initAuth();
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=VT323&display=swap');
 
@@ -355,6 +388,23 @@
         .memo-reason { margin-bottom: 25px; line-height: 1.5; font-size: 0.9rem; }
         .memo-btn { background: #2a2a2a; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-family: inherit; font-weight: bold; float: right; }
 
+        /* Leaderboard Modal Styling */
+        .leaderboard-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 250;
+            display: none; justify-content: center; align-items: center; padding: 15px;
+        }
+        .leaderboard-content {
+            background: #1e221f; border: 2px solid #4d544e; border-radius: 8px;
+            width: 100%; max-width: 550px; padding: 25px; color: #d4e0d5;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+        }
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        .leaderboard-table th { border-bottom: 2px solid #4d544e; text-align: left; padding: 6px; color: #a8b5a9; }
+        .leaderboard-table td { padding: 6px; border-bottom: 1px dashed #333; }
+        .badge-fraud { background: #a42a2a; color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; }
+        .anomaly-seal { position: absolute; top: 10px; right: 10px; border: 2px dashed #a42a2a; color: #a42a2a; font-size: 0.65rem; padding: 4px; transform: rotate(12deg); font-weight: bold; pointer-events: auto; cursor: pointer; }
+
         .mode-btn {
             background: #2a2f2b; 
             border: 2px solid #4d544e; 
@@ -395,19 +445,23 @@
     <div id="main-menu" class="active-screen">
         <h1>AUDIT DESK</h1>
         <div style="font-size: clamp(1rem, 3vw, 1.4rem); margin-bottom: 20px; letter-spacing: 2px; color: #a8b5a9;">THE FINANCIAL INQUISITOR</div>
-        <p style="max-width: 600px; margin-bottom: 30px; line-height: 1.6; font-size: 0.95rem;">
-            Welcome to the Ministry of Finance. Your role is to inspect corporate financial statements to ensure compliance, stability, and truth.<br><br>
-            Approve healthy companies. Deny those risking insolvency. Audit those committing accounting fraud.
+        <p style="max-width: 600px; margin-bottom: 25px; line-height: 1.6; font-size: 0.95rem;">
+            Welcome to the Ministry of Finance. Inspect corporate financial statements to ensure compliance, stability, and truth.<br><br>
+            Approve healthy companies. Deny insolvent ones. Inspect and report accounting frauds, omitted records, sign swaps, and identity mismatches.
         </p>
         
         <button class="mode-btn" onclick="game.startGame('junior')">
             JUNIOR ANALYST
-            <span class="mode-desc">Inspect Statement of Comprehensive Income only.<br>Focus on Profitability & Expenses.</span>
+            <span class="mode-desc">Inspect Statement of Comprehensive Income only.<br>Focus on Profitability, Expenses & Anomalies.</span>
         </button>
         
         <button class="mode-btn" onclick="game.startGame('senior')">
             SENIOR AUDITOR
-            <span class="mode-desc">Inspect SCI & Statement of Financial Position.<br>Cross-check Equity, Assets, and Liquidity.</span>
+            <span class="mode-desc">Inspect SCI & Statement of Financial Position.<br>Cross-check Equity, Identity Mismatches & Liquidity.</span>
+        </button>
+
+        <button onclick="game.openLeaderboard()" style="margin-top: 15px; background: transparent; border: 1px solid #4d544e; color: #d4e0d5; padding: 8px 20px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.9rem;">
+            🏆 LEADERBOARD / HIGH SCORES
         </button>
     </div>
 
@@ -415,9 +469,10 @@
         <div id="hud">
             <div class="hud-stat">📅 DAY <span id="hud-day" class="hud-value">1</span></div>
             <div class="hud-stat">🕒 <span id="hud-clock" class="hud-value">09:00</span></div>
+            <div class="hud-stat" style="color: #f39c12;">⏳ SHIFT: <span id="hud-timer" class="hud-value" style="color:#f39c12;">03:30</span></div>
             <div class="hud-stat">💵 WAGE: $<span id="hud-wage" class="hud-value">50</span></div>
             <div class="hud-stat">⚠️ PENALTIES: <span id="hud-penalties" class="hud-value">0/3</span></div>
-            <button onclick="game.returnToMenu()" style="background:#2a2f2b; color:#a8b5a9; border:1px solid #4d544e; border-radius:4px; padding:2px 10px; cursor:pointer; font-family:inherit; font-size:0.9rem;">MAIN MENU</button>
+            <button onclick="game.confirmReturnToMenu()" style="background:#2a2f2b; color:#a8b5a9; border:1px solid #4d544e; border-radius:4px; padding:4px 12px; cursor:pointer; font-family:inherit; font-size:0.9rem;">MAIN MENU</button>
         </div>
 
         <div id="desk-surface">
@@ -434,10 +489,11 @@
             <div class="document-area">
                 <!-- SCI Document -->
                 <div class="paper in" id="doc-sci">
-                    <div class="doc-header">
+                    <div class="doc-header" id="sci-header" onclick="game.auditRow('sci-header')">
                         <h1 id="sci-company-name">COMPANY NAME</h1>
                         <p>Statement of Comprehensive Income<br>Year Ended 31 Dec 2026</p>
                     </div>
+                    <div id="sci-seal-container"></div>
                     <table class="doc-table" id="sci-table">
                         <!-- Injected via JS -->
                     </table>
@@ -447,10 +503,11 @@
 
                 <!-- Balance Sheet Document (Senior Mode) -->
                 <div class="paper in" id="doc-bs" style="display:none;">
-                    <div class="doc-header">
+                    <div class="doc-header" id="bs-header" onclick="game.auditRow('bs-header')">
                         <h1 id="bs-company-name">COMPANY NAME</h1>
                         <p>Statement of Financial Position<br>As at 31 Dec 2026</p>
                     </div>
+                    <div id="bs-seal-container"></div>
                     <table class="doc-table" id="bs-table">
                          <!-- Injected via JS -->
                     </table>
@@ -458,20 +515,7 @@
                     <div class="stamp-mark stamp-red" id="stamp-bs-den">DENIED</div>
                 </div>
             </div>
-
-            <!-- Tools Tray -->
-            <div id="tool-tray">
-                <div class="tool-label" style="color: #888; font-size: 0.75rem; text-align: center; margin-bottom: 2px;">STAMPS</div>
-                <button class="action-btn" id="btn-approve" onclick="game.submitVerdict('approve')">APPROVE</button>
-                <button class="action-btn" id="btn-deny" onclick="game.submitVerdict('deny')">DENY</button>
-                <div class="tool-label" style="border-top: 1px solid #444; margin: 2px 0;"></div>
-                <div class="tool-label" style="color: #888; font-size: 0.75rem; text-align: center; margin-bottom: 2px;">TOOLS</div>
-                <button class="action-btn" id="btn-audit" onclick="game.toggleAuditMode()">INSPECT</button>
-                <button class="action-btn" id="btn-cancel" onclick="game.toggleAuditMode()">CANCEL</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Rulebook Modal -->
     <div id="rulebook-open">
         <div class="close-btn" onclick="game.toggleRulebook()">✖</div>
         <h2 style="font-family: 'VT323', monospace; font-size: 2rem;">MINISTRY DIRECTIVES</h2>
@@ -479,25 +523,44 @@
         <ul style="margin-bottom: 15px; padding-left: 20px; list-style-type: disc;">
             <li><b>Gross Profit</b> = Revenue - Cost of Sales.</li>
             <li><b>Operating Profit (EBIT)</b> = Gross Profit - Selling Expenses - Admin Expenses.</li>
-            <li><b>Profit Before Tax</b> = Operating Profit - Finance Costs.</li>
-            <li><b>Net Profit (Profit for Year)</b> = Profit Before Tax - Taxation.</li>
+            <li><b>Net Profit</b> = Operating Profit - Finance Costs - Taxation.</li>
         </ul>
         
-        <p><strong>2. The Statement of Financial Position (Balance Sheet)</strong> reveals structural health and liquidity.</p>
+        <p><strong>2. Statement of Financial Position (Balance Sheet)</strong> reveals structural health & integrity.</p>
         <ul style="margin-bottom: 15px; padding-left: 20px; list-style-type: disc;">
             <li><b>Total Assets</b> = Non-current Assets + Current Assets.</li>
             <li><b>Total Liabilities</b> = Current Liabilities + Non-current Liabilities.</li>
-            <li><b>Net Assets</b> = Total Assets - Total Liabilities.</li>
-            <li><b>Total Equity</b> = Share Capital + Retained Earnings.</li>
-            <li><b>THE GOLDEN RULE:</b> Net Assets MUST exactly equal Total Equity.</li>
+            <li><b>THE GOLDEN RULE:</b> Net Assets (Assets - Liabilities) MUST equal Total Equity.</li>
+            <li><b>IDENTITY RULE:</b> Company names and registrations must match across documents!</li>
         </ul>
 
-        <p><strong>3. Verdict Guidelines</strong></p>
+        <p><strong>3. Verdict Guidelines & Fraud Types</strong></p>
         <ul style="padding-left: 20px; list-style-type: disc;">
-            <li><b>APPROVE:</b> Company math is correct, profitable, and solvent (Current Assets > Current Liabilities).</li>
-            <li><b>DENY:</b> Company math is correct, but they are structurally failing (Sustained Net Loss) OR insolvent (Current Liabilities > Current Assets).</li>
-            <li><b>INSPECT (AUDIT):</b> The company is lying! A line item on the sheet is mathematically false. Activate Inspect mode and tap the corrupted line to report fraud.</li>
+            <li><b>APPROVE:</b> Math is correct, company is profitable, solvent, and records match.</li>
+            <li><b>DENY:</b> Math is genuine, but company is insolvent (Current Liabilities > Current Assets) or has sustained losses.</li>
+            <li><b>INSPECT (AUDIT):</b> Fraud detected! Look out for math errors, omitted required line items, inverted signs (e.g. adding costs), name mismatches across statements, or unauthorized offshore stamps. Tap the suspect row/header in Inspect mode!</li>
         </ul>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="leaderboard-modal">
+        <div class="leaderboard-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #4d544e; padding-bottom:10px;">
+                <h2 style="font-family:'VT323', monospace; font-size: 2rem; margin:0;">MINISTRY AUDITOR HALL OF FAME</h2>
+                <span onclick="game.closeLeaderboard()" style="cursor:pointer; font-weight:bold; font-size:1.5rem;">✖</span>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin: 15px 0 10px 0;">
+                <button id="lead-tab-junior" class="doc-tab active" onclick="game.switchLeaderboardTab('junior')">JUNIOR ANALYST</button>
+                <button id="lead-tab-senior" class="doc-tab" onclick="game.switchLeaderboardTab('senior')">SENIOR AUDITOR</button>
+            </div>
+
+            <div id="leaderboard-list" style="max-height: 300px; overflow-y: auto;">
+                <p style="text-align:center; color:#888;">Loading high scores...</p>
+            </div>
+
+            <button class="memo-btn" style="margin-top:20px; float:none; width:100%;" onclick="game.closeLeaderboard()">CLOSE</button>
+        </div>
     </div>
 
     <!-- Supervisor Memo Overlay -->
@@ -533,21 +596,21 @@
     <script>
         const game = {
             state: {
-                mode: 'junior', // junior or senior
+                mode: 'junior',
                 day: 1,
-                timeMinutes: 9 * 60, // Starts at 09:00
+                shiftDurationSec: 210, // 3 minutes 30 seconds
+                secondsRemaining: 210,
                 wage: 50,
                 penalties: 0,
                 maxPenalties: 3,
                 auditMode: false,
                 rulebookOpen: false,
-                activeTab: 'sci'
+                activeTab: 'sci',
+                leaderboardTab: 'junior'
             },
             currentCompany: null,
             clockTimer: null,
             dialogCallback: null,
-
-            // DOM Elements
             els: {},
 
             init() {
@@ -556,6 +619,7 @@
                     container: document.getElementById('game-container'),
                     hudDay: document.getElementById('hud-day'),
                     hudClock: document.getElementById('hud-clock'),
+                    hudTimer: document.getElementById('hud-timer'),
                     hudWage: document.getElementById('hud-wage'),
                     hudPenalties: document.getElementById('hud-penalties'),
                     docSci: document.getElementById('doc-sci'),
@@ -564,6 +628,8 @@
                     bsTable: document.getElementById('bs-table'),
                     sciName: document.getElementById('sci-company-name'),
                     bsName: document.getElementById('bs-company-name'),
+                    sciSealContainer: document.getElementById('sci-seal-container'),
+                    bsSealContainer: document.getElementById('bs-seal-container'),
                     btnApprove: document.getElementById('btn-approve'),
                     btnDeny: document.getElementById('btn-deny'),
                     btnAudit: document.getElementById('btn-audit'),
@@ -578,17 +644,40 @@
                     dialogOverlay: document.getElementById('dialog-overlay'),
                     dialogTitle: document.getElementById('dialog-title'),
                     dialogMessage: document.getElementById('dialog-message'),
-                    dialogConfirmBtn: document.getElementById('dialog-confirm-btn')
+                    dialogConfirmBtn: document.getElementById('dialog-confirm-btn'),
+                    leaderboardModal: document.getElementById('leaderboard-modal'),
+                    leaderboardList: document.getElementById('leaderboard-list'),
+                    leadTabJunior: document.getElementById('lead-tab-junior'),
+                    leadTabSenior: document.getElementById('lead-tab-senior')
                 };
 
                 window.addEventListener('resize', () => this.handleResize());
             },
 
-            showDialog(title, message, buttonText = "CONTINUE", onConfirm = null) {
+            showDialog(title, message, buttonText = "CONTINUE", onConfirm = null, showCancel = false) {
                 this.dialogCallback = onConfirm;
                 this.els.dialogTitle.innerText = title;
                 this.els.dialogMessage.innerText = message;
                 this.els.dialogConfirmBtn.innerText = buttonText;
+                
+                // Remove existing secondary buttons if any
+                const oldCancel = document.getElementById('dialog-cancel-btn');
+                if (oldCancel) oldCancel.remove();
+
+                if (showCancel) {
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.id = 'dialog-cancel-btn';
+                    cancelBtn.className = 'memo-btn';
+                    cancelBtn.style.background = '#666';
+                    cancelBtn.style.marginRight = '10px';
+                    cancelBtn.innerText = "CANCEL";
+                    cancelBtn.onclick = () => {
+                        this.els.dialogOverlay.classList.remove('visible');
+                        setTimeout(() => this.els.dialogOverlay.style.display = 'none', 200);
+                    };
+                    this.els.dialogConfirmBtn.parentNode.insertBefore(cancelBtn, this.els.dialogConfirmBtn);
+                }
+
                 this.els.dialogOverlay.style.display = 'flex';
                 void this.els.dialogOverlay.offsetWidth;
                 this.els.dialogOverlay.classList.add('visible');
@@ -606,10 +695,21 @@
                 }, 200);
             },
 
+            confirmReturnToMenu() {
+                clearInterval(this.clockTimer);
+                this.showDialog(
+                    "ABANDON SHIFT?",
+                    "Are you sure you want to return to the main menu? Unsaved progress for the current day will be lost.",
+                    "LEAVE GAME",
+                    () => this.returnToMenu(),
+                    true
+                );
+            },
+
             startGame(mode) {
                 this.state.mode = mode;
                 this.state.day = 1;
-                this.state.timeMinutes = 9 * 60;
+                this.state.secondsRemaining = this.state.shiftDurationSec;
                 this.state.wage = 50;
                 this.state.penalties = 0;
                 
@@ -664,19 +764,28 @@
             startClock() {
                 clearInterval(this.clockTimer);
                 this.clockTimer = setInterval(() => {
-                    this.state.timeMinutes += 1;
+                    this.state.secondsRemaining--;
                     this.updateHUD();
                     
-                    if (this.state.timeMinutes >= 17 * 60) {
+                    if (this.state.secondsRemaining <= 0) {
                         this.endShift();
                     }
                 }, 1000);
             },
 
             updateHUD() {
-                const hours = Math.floor(this.state.timeMinutes / 60);
-                const mins = this.state.timeMinutes % 60;
-                this.els.hudClock.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+                // Compute shift countdown MM:SS
+                const m = Math.floor(this.state.secondsRemaining / 60);
+                const s = this.state.secondsRemaining % 60;
+                this.els.hudTimer.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+                // Map 210s shift duration to 09:00 - 17:00 office hours (8 hours = 480 mins)
+                const elapsedSec = this.state.shiftDurationSec - this.state.secondsRemaining;
+                const officeMinsTotal = Math.floor((elapsedSec / this.state.shiftDurationSec) * 8 * 60);
+                const hrs = 9 + Math.floor(officeMinsTotal / 60);
+                const mins = officeMinsTotal % 60;
+
+                this.els.hudClock.innerText = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
                 this.els.hudDay.innerText = this.state.day;
                 this.els.hudWage.innerText = this.state.wage;
                 this.els.hudPenalties.innerText = `${this.state.penalties}/${this.state.maxPenalties}`;
@@ -685,7 +794,7 @@
                 else this.els.hudPenalties.classList.remove('hud-penalty');
             },
 
-            endShift() {
+            async endShift() {
                 clearInterval(this.clockTimer);
                 if (this.state.penalties >= this.state.maxPenalties) {
                     this.showDialog("TERMINATION DISPATCH", "You have accumulated maximum penalties. Clear your desk immediately.", "RESTART", () => {
@@ -694,13 +803,19 @@
                     return;
                 }
 
+                // Prompt score save if shift ended cleanly
+                const playerName = prompt(`Shift ${this.state.day} Complete!\nEarned: $${this.state.wage}\nEnter your name for the Ministry Leaderboard:`, "Auditor");
+                if (playerName && playerName.trim()) {
+                    await this.saveHighScore(playerName.trim(), this.state.wage, this.state.day, this.state.mode);
+                }
+
                 this.showDialog(
                     `SHIFT COMPLETE - DAY ${this.state.day}`,
                     `Your daily shift has concluded.\nTotal Wage Earned: $${this.state.wage}\nPenalties: ${this.state.penalties}/${this.state.maxPenalties}`,
                     "NEXT SHIFT",
                     () => {
                         this.state.day++;
-                        this.state.timeMinutes = 9 * 60;
+                        this.state.secondsRemaining = this.state.shiftDurationSec;
                         this.startClock();
                         this.nextCase();
                     }
@@ -713,17 +828,18 @@
                 document.body.classList.add('shake');
             },
 
-            format(num) { return num.toLocaleString('en-US'); },
+            format(num) { return typeof num === 'number' ? num.toLocaleString('en-US') : num; },
             rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
 
             generateCompany() {
-                const names = ["Omnicorp Holdings", "Glove & Sons", "Cattle Snaffle Ltd", "Moosewear Manufacturing", "Apex Trading", "Vortex Heavy Industries", "Standard State Corp", "Titan Logistics", "AeroDyn Global", "Helios Energy"];
+                const names = ["Omnicorp Holdings", "Glove & Sons", "Cattle Snaffle Ltd", "Moosewear Mfg", "Apex Trading", "Vortex Heavy Ind", "Standard State Corp", "Titan Logistics", "AeroDyn Global", "Helios Energy"];
                 const name = names[this.rnd(0, names.length-1)] + " " + this.rnd(100,999);
                 
+                // Balanced ratios: 1 = Approve, 2 = Deny (Insolvent/Loss), 3 = Fraud (Inspect)
                 let category = this.rnd(1, 3);
                 
                 let sci = this.generateSCI(category);
-                let bs = this.generateBS(category, sci.net_profit);
+                let bs = this.generateBS(category, sci, name);
 
                 this.currentCompany = {
                     name: name,
@@ -748,7 +864,7 @@
                 let tax = pbt > 0 ? Math.floor(pbt * 0.2) : 0;
                 let np = pbt - tax;
 
-                let data = { rev, cos, gp, sell, admin, op, fin, pbt, tax, net_profit: np, fraudTarget: null, fraudExplanation: null, denyReason: null };
+                let data = { rev, cos, gp, sell, admin, op, fin, pbt, tax, net_profit: np, omitTax: false, seal: null, fraudTarget: null, fraudExplanation: null, denyReason: null };
 
                 if (category === 2) {
                     data.cos = rev + this.rnd(5000, 20000);
@@ -759,34 +875,37 @@
                     data.net_profit = data.pbt;
                     data.denyReason = `Sustained Net Loss. Gross Profit was negative (${this.format(data.gp)}). Core operations are failing.`;
                 } 
-                else if (category === 3 && (this.state.mode === 'junior' || Math.random() > 0.5)) {
-                    let lieType = this.rnd(1, 3);
-                    if (lieType === 1) {
-                        let actualGP = data.gp;
-                        data.gp += this.rnd(2000, 8000);
-                        data.op = data.gp - sell - admin;
-                        data.pbt = data.op - fin;
-                        data.net_profit = data.pbt - tax;
+                else if (category === 3 && (this.state.mode === 'junior' || Math.random() > 0.4)) {
+                    // Pick from varied Fraud Types
+                    let fraudType = this.rnd(1, 4);
+
+                    if (fraudType === 1) { // Arithmetic Lie
+                        data.gp += this.rnd(3000, 9000);
                         data.fraudTarget = 'row-gp';
-                        data.fraudExplanation = `Gross Profit was falsified. Claimed ${this.format(data.gp)}, but ${this.format(rev)} (Rev) - ${this.format(cos)} (CoS) = ${this.format(actualGP)}.`;
-                    } else if (lieType === 2) {
-                        let actualOp = data.op;
-                        data.op = data.gp - sell;
-                        data.pbt = data.op - fin;
-                        data.net_profit = data.pbt - tax;
-                        data.fraudTarget = 'row-op';
-                        data.fraudExplanation = `Operating Profit was falsified. They omitted Admin Expenses. Real OP is ${this.format(actualOp)}.`;
-                    } else {
-                        let actualNP = data.net_profit;
-                        data.net_profit += this.rnd(1000, 5000);
-                        data.fraudTarget = 'row-np';
-                        data.fraudExplanation = `Net Profit was falsified. ${this.format(data.pbt)} (PBT) - ${this.format(tax)} (Tax) = ${this.format(actualNP)}.`;
+                        data.fraudExplanation = `Falsified Gross Profit! Revenue (${this.format(rev)}) - Cost of Sales (${this.format(cos)}) equals ${this.format(rev - cos)}, not ${this.format(data.gp)}.`;
+                    } 
+                    else if (fraudType === 2) { // Inverted Math (Cost added instead of subtracted)
+                        data.gp = rev + cos;
+                        data.fraudTarget = 'row-gp';
+                        data.fraudExplanation = `Sign Swap Fraud! They ADDED Cost of Sales (${this.format(cos)}) to Revenue instead of subtracting it!`;
+                    } 
+                    else if (fraudType === 3) { // Omitted Required Line (Taxation hidden)
+                        data.tax = 0;
+                        data.net_profit = data.pbt;
+                        data.omitTax = true;
+                        data.fraudTarget = 'row-tax';
+                        data.fraudExplanation = `Tax Evasion! Corporate taxation was completely omitted despite positive Profit Before Tax (${this.format(data.pbt)}).`;
+                    } 
+                    else if (fraudType === 4) { // Suspicious Offshore Stamp
+                        data.seal = "UNAPPROVED OFFSHORE SHELL CO";
+                        data.fraudTarget = 'sci-seal';
+                        data.fraudExplanation = `Illegal Offshore Stamp! Financial statement bears an unapproved offshore shell company verification seal.`;
                     }
                 }
                 return data;
             },
 
-            generateBS(category, netProfit) {
+            generateBS(category, sci, companyName) {
                 let nca = this.rnd(20000, 80000);
                 let inv = this.rnd(2000, 10000);
                 let rec = this.rnd(2000, 10000);
@@ -805,24 +924,27 @@
                 let re = na - sc; 
                 let te = sc + re;
 
-                let data = { nca, inv, rec, cash, ca, ta, pay, stb, cl, ncl, tl, na, sc, re, te, fraudTarget: null, fraudExplanation: null, denyReason: null };
+                let data = { nca, inv, rec, cash, ca, ta, pay, stb, cl, ncl, tl, na, sc, re, te, bsName: companyName, fraudTarget: null, fraudExplanation: null, denyReason: null };
 
-                if (category === 3 && !this.currentCompany?.fraudTarget && this.state.mode === 'senior') {
-                    let lieType = this.rnd(1, 2);
-                    if (lieType === 1) {
-                        let actualTA = ta;
-                        data.ta += this.rnd(5000, 15000);
-                        data.na = data.ta - data.tl;
-                        data.fraudTarget = 'row-ta';
-                        data.fraudExplanation = `Total Assets sum is false. ${this.format(nca)} (NCA) + ${this.format(ca)} (CA) = ${this.format(actualTA)}, not ${this.format(data.ta)}.`;
-                    } else {
-                        data.re += this.rnd(4000, 10000);
-                        data.te = data.sc + data.re;
+                if (category === 3 && !sci.fraudTarget && this.state.mode === 'senior') {
+                    let fraudType = this.rnd(1, 3);
+                    if (fraudType === 1) { // Mismatched Company Name across documents
+                        data.bsName = companyName.replace(/\d+/, this.rnd(100, 999));
+                        data.fraudTarget = 'bs-header';
+                        data.fraudExplanation = `Identity Mismatch! Balance Sheet company name (${data.bsName}) does not match Income Statement (${companyName}).`;
+                    } 
+                    else if (fraudType === 2) { // Unbalanced Equity / Net Assets
+                        data.te += this.rnd(5000, 15000);
                         data.fraudTarget = 'row-te';
-                        data.fraudExplanation = `Total Equity (${this.format(data.te)}) does not match Net Assets (${this.format(data.na)}). The Balance Sheet is unbalanced.`;
+                        data.fraudExplanation = `Unbalanced Sheet! Total Equity (${this.format(data.te)}) does not equal Net Assets (${this.format(data.na)}).`;
+                    }
+                    else if (fraudType === 3) { // Total Assets Math Error
+                        data.ta += this.rnd(4000, 12000);
+                        data.fraudTarget = 'row-ta';
+                        data.fraudExplanation = `Total Assets overstated! Non-current (${this.format(nca)}) + Current (${this.format(ca)}) equals ${this.format(nca + ca)}, not ${this.format(data.ta)}.`;
                     }
                 }
-                else if (category === 2 && !this.currentCompany?.denyReason) {
+                else if (category === 2 && !sci.denyReason) {
                     data.cash = 100;
                     data.ca = data.inv + data.rec + data.cash;
                     data.stb = data.ca + this.rnd(10000, 20000);
@@ -839,7 +961,7 @@
                     }
                     data.te = data.sc + data.re;
 
-                    data.denyReason = `Negative Working Capital. Current Liabilities (${this.format(data.cl)}) far exceed Current Assets (${this.format(data.ca)}). Immediate insolvency risk.`;
+                    data.denyReason = `Insolvent / Liquidity Crisis. Current Liabilities (${this.format(data.cl)}) far exceed Current Assets (${this.format(data.ca)}).`;
                 }
 
                 return data;
@@ -867,7 +989,11 @@
             renderTables() {
                 const c = this.currentCompany;
                 this.els.sciName.innerText = c.name;
-                this.els.bsName.innerText = c.name;
+                this.els.bsName.innerText = c.bs.bsName;
+
+                // Offshore seal rendering
+                this.els.sciSealContainer.innerHTML = c.sci.seal ? `<div id="sci-seal" class="anomaly-seal" onclick="game.auditRow('sci-seal')">⚠️ ${c.sci.seal}</div>` : '';
+                this.els.bsSealContainer.innerHTML = '';
 
                 let sciHTML = `
                     <tr id="row-rev" onclick="game.auditRow('row-rev')"><td>Revenue</td><td>${this.format(c.sci.rev)}</td></tr>
@@ -878,7 +1004,7 @@
                     <tr id="row-op" class="subtotal" onclick="game.auditRow('row-op')"><td>Operating profit</td><td>${this.format(c.sci.op)}</td></tr>
                     <tr id="row-fin" onclick="game.auditRow('row-fin')"><td>Finance costs</td><td>(${this.format(c.sci.fin)})</td></tr>
                     <tr id="row-pbt" class="subtotal" onclick="game.auditRow('row-pbt')"><td>Profit before tax</td><td>${this.format(c.sci.pbt)}</td></tr>
-                    <tr id="row-tax" onclick="game.auditRow('row-tax')"><td>Taxation</td><td>(${this.format(c.sci.tax)})</td></tr>
+                    <tr id="row-tax" onclick="game.auditRow('row-tax')"><td>Taxation</td><td>${c.sci.omitTax ? '<span style="color:red; font-weight:bold;">[OMITTED / ZERO]</span>' : `(${this.format(c.sci.tax)})`}</td></tr>
                     <tr id="row-np" class="total" onclick="game.auditRow('row-np')"><td>Profit for the year</td><td>${this.format(c.sci.net_profit)}</td></tr>
                 `;
                 this.els.sciTable.innerHTML = sciHTML;
@@ -992,7 +1118,7 @@
                             reason = "You denied a perfectly healthy company. This halts economic growth.";
                         } else if (c.category === 3) {
                             correct = false;
-                            reason = `You denied the company, but missed the fraud. They must be audited for falsifying records! ${c.fraudExplanation}`;
+                            reason = `You denied the company, but missed the fraud! They must be AUDITED and reported for falsification! ${c.fraudExplanation}`;
                         }
                     }
 
@@ -1010,17 +1136,17 @@
 
                 if (c.category === 3 && c.fraudTarget === rowId) {
                     correct = true;
-                    reason = `Fraud intercepted! ${c.fraudExplanation} The authorities have been notified.`;
+                    reason = `Fraud Intercepted! ${c.fraudExplanation} The Ministry corrupt practices unit has been dispatched.`;
                     const elem = document.getElementById(rowId);
                     if (elem) elem.style.backgroundColor = "rgba(41, 109, 53, 0.4)";
                 } else {
                     correct = false;
                     if (c.category === 3) {
-                        reason = `Invalid inspection target. The true fraud was elsewhere: ${c.fraudExplanation}`;
+                        reason = `Invalid inspection target. The actual fraud was elsewhere: ${c.fraudExplanation}`;
                     } else if (c.category === 2) {
-                        reason = `Invalid inspection. The math is correct, the company is just failing financially. You should have DENIED them.`;
+                        reason = `Invalid inspection. The numbers are accurate, but the company is in financial collapse. You should have DENIED them.`;
                     } else {
-                        reason = `Invalid inspection. The company records are perfectly accurate. You are wasting Ministry time.`;
+                        reason = `Invalid inspection. This company's records are completely legal. You wasted Ministry time.`;
                     }
                 }
 
@@ -1035,7 +1161,7 @@
                 if (correct) {
                     this.els.memoStatus.innerText = "VERDICT: CORRECT";
                     this.els.memoStatus.className = "memo-status-CORRECT";
-                    this.state.wage += 10;
+                    this.state.wage += 15;
                 } else {
                     this.els.memoStatus.innerText = "VERDICT: INCORRECT";
                     this.els.memoStatus.className = "memo-status-INCORRECT";
@@ -1061,6 +1187,107 @@
                         this.nextCase();
                     }
                 }, 200);
+            },
+
+            // Cloud Save and Leaderboard System
+            async saveHighScore(name, wage, day, mode) {
+                if (!window.db) return;
+                try {
+                    const colRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'leaderboard');
+                    await addDoc(colRef, {
+                        name: name,
+                        wage: wage,
+                        day: day,
+                        mode: mode,
+                        timestamp: Date.now()
+                    });
+                } catch (err) {
+                    console.warn("Failed to save high score:", err);
+                }
+            },
+
+            async openLeaderboard() {
+                this.els.leaderboardModal.style.display = 'flex';
+                this.renderLeaderboard(this.state.leaderboardTab);
+            },
+
+            closeLeaderboard() {
+                this.els.leaderboardModal.style.display = 'none';
+            },
+
+            switchLeaderboardTab(tab) {
+                this.state.leaderboardTab = tab;
+                if (tab === 'junior') {
+                    this.els.leadTabJunior.classList.add('active');
+                    this.els.leadTabSenior.classList.remove('active');
+                } else {
+                    this.els.leadTabSenior.classList.add('active');
+                    this.els.leadTabJunior.classList.remove('active');
+                }
+                this.renderLeaderboard(tab);
+            },
+
+            async renderLeaderboard(mode) {
+                this.els.leaderboardList.innerHTML = `<p style="text-align:center; color:#888;">Fetching rankings...</p>`;
+                
+                if (!window.db) {
+                    this.els.leaderboardList.innerHTML = `<p style="text-align:center; color:#ff5555;">Cloud leaderboard unavailable offline.</p>`;
+                    return;
+                }
+
+                try {
+                    const colRef = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'leaderboard');
+                    const snapshot = await getDocs(colRef);
+                    let items = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.mode === mode) items.push(data);
+                    });
+
+                    // Sort in memory (Rule 2 compliant)
+                    items.sort((a, b) => b.wage - a.wage);
+
+                    if (items.length === 0) {
+                        this.els.leaderboardList.innerHTML = `<p style="text-align:center; color:#aaa;">No high scores recorded yet for ${mode.toUpperCase()} mode!</p>`;
+                        return;
+                    }
+
+                    let tableHTML = `
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>RANK</th>
+                                    <th>AUDITOR</th>
+                                    <th>DAYS</th>
+                                    <th>WAGE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    items.slice(0, 10).forEach((item, index) => {
+                        tableHTML += `
+                            <tr>
+                                <td>#${index + 1}</td>
+                                <td style="font-weight:bold; color:#fff;">${this.escapeHTML(item.name)}</td>
+                                <td>Day ${item.day}</td>
+                                <td style="color:#296d35; font-weight:bold;">$${item.wage}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += `</tbody></table>`;
+                    this.els.leaderboardList.innerHTML = tableHTML;
+                } catch (err) {
+                    console.warn("Error fetching leaderboard:", err);
+                    this.els.leaderboardList.innerHTML = `<p style="text-align:center; color:#ff5555;">Could not load leaderboard.</p>`;
+                }
+            },
+
+            escapeHTML(str) {
+                return str ? str.replace(/[&<>'"]/g, 
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                ) : '';
             }
         };
 
