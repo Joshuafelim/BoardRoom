@@ -176,12 +176,12 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
 
-        /* Desk Surface & Layout - FIXED PADDING TO PREVENT OVERLAP */
+        /* Desk Surface & Layout */
         #desk-surface {
             flex-grow: 1; 
             position: relative; 
             overflow-y: auto;
-            padding: 15px 12px 180px 12px; /* Generous bottom padding so report content scrolls well clear of decision tray */
+            padding: 15px 12px 180px 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -374,7 +374,7 @@
             outline: 2px solid var(--ink-red) !important;
         }
 
-        /* RE-ENGINEERED DOCK / TOOL TRAY TO FIX REPORT OVERLAP */
+        /* Tool Tray / Dock */
         #tool-tray {
             position: fixed; 
             bottom: 16px; 
@@ -669,7 +669,7 @@
 
             <div style="font-size: 0.8rem; color: #4b5563; margin-bottom: 14px; line-height: 1.4;">
                 • <strong>Approve</strong> sound deals.<br>
-                • <strong>Reject</strong> weak deals (pick the main failure reason).<br>
+                • <strong>Reject</strong> weak deals (pick any valid rejection reason).<br>
                 • <strong>Audit Mode</strong> to isolate fraud or identity mismatches for full bounty.
             </div>
 
@@ -761,7 +761,7 @@
                 </div>
             </div>
 
-            <!-- ACTION TOOL TRAY (RE-POSITIONED DOCK DOCK AT BOTTOM) -->
+            <!-- ACTION TOOL TRAY -->
             <div id="tool-tray">
                 <button id="btn-approve" class="action-btn" onclick="game.submitApprove()">APPROVE</button>
                 <button id="btn-reject" class="action-btn" onclick="game.openRejectModal()">REJECT</button>
@@ -811,7 +811,7 @@
         </div>
     </div>
 
-    <!-- SUPERVISOR / INTERNAL REVIEW MEMO (DECISION POPUP FIXED) -->
+    <!-- SUPERVISOR / INTERNAL REVIEW MEMO -->
     <div id="memo-overlay" class="modal-overlay">
         <div class="modal-card" id="memo-card">
             <div class="memo-header">
@@ -851,7 +851,7 @@
                     <div id="memo-implication" style="font-size: 0.82rem; color: #374151; font-style: italic;">Overstated margins obscure real operational losses.</div>
                 </div>
 
-                <div class="feedback-section correct-border" style="display:flex; justify-space-around; align-items:center; padding:6px 10px;">
+                <div class="feedback-section correct-border" style="display:flex; justify-content:space-around; align-items:center; padding:6px 10px;">
                     <div id="memo-delta-pay" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">PAY: +$50</div>
                     <div id="memo-delta-rep" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">REP: +5</div>
                     <div id="memo-delta-cit" style="font-weight:bold; color:#b91c1c; font-size: 0.85rem; display:none;">CITATIONS: +1</div>
@@ -959,7 +959,7 @@
                 <div><strong>Target Healthy Share Band:</strong> <span style="color:#f59e0b;">32% – 35%</span></div>
                 <hr style="border-color:#374151; margin:6px 0;">
                 <div><strong>Current Pack Expected Verdict:</strong> <span id="tp-action" style="color:#f59e0b;">-</span></div>
-                <div><strong>Expected Reject Reason Bucket:</strong> <span id="tp-reason" style="color:#f87171;">-</span></div>
+                <div><strong>Expected Reject Reason Buckets:</strong> <span id="tp-reason" style="color:#f87171;">-</span></div>
                 <div><strong>Math Fraud Status:</strong> <span id="tp-math">-</span></div>
                 <div><strong>Info Mismatch Target:</strong> <span id="tp-info">-</span></div>
                 <div><strong>Active Rule Text:</strong> <span id="tp-rule">-</span></div>
@@ -983,7 +983,7 @@
         </div>
     </div>
 
-    <!-- LEADERBOARD / SAVE CODE MODAL -->
+    <!-- SAVE CODE MODAL -->
     <div id="savecode-overlay" class="modal-overlay">
         <div class="modal-card">
             <div class="memo-header">
@@ -1702,29 +1702,62 @@
             }
 
             getExpectedVerdict(d) {
-                if (d.isFraudMath) return { action: 'audit', reason: 'fraud_math' };
-                if (d.isInfoMismatch) return { action: 'audit', reason: 'info_mismatch' };
+                if (d.isFraudMath) return { action: 'audit', reason: 'fraud_math', validReasons: ['fraud_math'] };
+                if (d.isInfoMismatch) return { action: 'audit', reason: 'info_mismatch', validReasons: ['info_mismatch'] };
 
                 if (this.activeNote && this.activeNote.forceApproveName === d.card.name) {
-                    return { action: 'approve', reason: 'vip_note' };
+                    return { action: 'approve', reason: 'vip_note', validReasons: [] };
                 }
 
                 if (this.activeNote && this.activeNote.approveStartups && d.card.founded >= 2024 && d.sci26.pat <= 0) {
-                    return { action: 'approve', reason: 'startup_pilot' };
+                    return { action: 'approve', reason: 'startup_pilot', validReasons: [] };
                 }
 
+                const validReasonsSet = new Set();
+
+                // 1. Check Active Daily Rule
                 if (this.activeRule && this.activeRule.test) {
-                    const ruleFailed = this.activeRule.test(d);
-                    if (ruleFailed) {
-                        return { action: 'reject', reason: this.activeRule.rejectReason || 'rule_violation' };
+                    if (this.activeRule.test(d)) {
+                        validReasonsSet.add(this.activeRule.rejectReason || 'rule_violation');
                     }
                 }
 
-                if (d.packType === 'weak_margins') return { action: 'reject', reason: 'weak_margins' };
-                if (d.packType === 'loss') return { action: 'reject', reason: 'loss_unprotected' };
-                if (d.packType === 'bs_risk') return { action: 'reject', reason: 'bs_risk' };
+                // 2. Check dossier pack type
+                if (d.packType === 'weak_margins') validReasonsSet.add('weak_margins');
+                if (d.packType === 'loss') validReasonsSet.add('loss_unprotected');
+                if (d.packType === 'bs_risk') validReasonsSet.add('bs_risk');
+                if (d.packType === 'collapse_yoy') validReasonsSet.add('worse_yoy');
 
-                return { action: 'approve', reason: 'healthy' };
+                // 3. Evaluate multi-factor underlying financial conditions
+                if (d.sci26 && d.sci26.rev > 0) {
+                    if ((d.sci26.gp / d.sci26.rev < 0.20) || (d.sci26.pat > 0 && d.sci26.pat / d.sci26.rev < 0.05) || (d.sci26.admin / d.sci26.rev > 0.25)) {
+                        validReasonsSet.add('weak_margins');
+                    }
+                }
+                if (d.sci25 && d.sci26) {
+                    if ((d.sci25.pat > 0 && d.sci26.pat < d.sci25.pat * 0.60) || (d.sci26.rev > d.sci25.rev && d.sci26.pat < d.sci25.pat)) {
+                        validReasonsSet.add('worse_yoy');
+                    }
+                }
+                if (d.sci26 && d.sci26.pat <= 0 && d.card.founded < 2024) {
+                    validReasonsSet.add('loss_unprotected');
+                }
+                if (d.bs26) {
+                    if (d.bs26.ca_total < d.bs26.cl_total || d.bs26.cash < 10 || d.bs26.ncl_total > d.bs26.equity_total || d.bs26.receivables > d.sci26.rev) {
+                        validReasonsSet.add('bs_risk');
+                    }
+                }
+
+                if (validReasonsSet.size > 0) {
+                    const reasonsArray = Array.from(validReasonsSet);
+                    return {
+                        action: 'reject',
+                        reason: reasonsArray[0],
+                        validReasons: reasonsArray
+                    };
+                }
+
+                return { action: 'approve', reason: 'healthy', validReasons: [] };
             }
 
             submitApprove() {
@@ -1739,7 +1772,8 @@
                 } else {
                     document.getElementById('stamp-sci-app').classList.add('visible');
                     setTimeout(() => {
-                        this.showMemo(false, 'APPROVE', expected.action.toUpperCase(), expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -20, -5, 1);
+                        const expectedDisplay = expected.validReasons ? expected.validReasons.join(' / ').toUpperCase() : expected.reason.toUpperCase();
+                        this.showMemo(false, 'APPROVE', expected.action.toUpperCase(), expectedDisplay, d.primaryDiscrepancyText, d.workingText, d.implicationText, -20, -5, 1);
                     }, 300);
                 }
             }
@@ -1786,8 +1820,9 @@
             selectRejectReason(reason) {
                 this.currentRejectReason = reason;
                 document.querySelectorAll('.reject-option').forEach(el => el.classList.remove('selected'));
-                const target = event.currentTarget;
-                if (target) target.classList.add('selected');
+                if (event && event.currentTarget) {
+                    event.currentTarget.classList.add('selected');
+                }
             }
 
             closeRejectModal() {
@@ -1808,10 +1843,12 @@
 
                 setTimeout(() => {
                     if (expected.action === 'reject') {
-                        if (this.currentRejectReason === expected.reason) {
-                            this.showMemo(true, 'REJECT', 'REJECT', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 50, 5, 0);
+                        const isValid = expected.validReasons && expected.validReasons.includes(this.currentRejectReason);
+                        if (isValid) {
+                            this.showMemo(true, 'REJECT', 'REJECT', this.currentRejectReason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 50, 5, 0);
                         } else {
-                            this.showMemo(false, 'REJECT', 'REJECT', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 20, 0, 1);
+                            const validDisplay = expected.validReasons.join(' / ').toUpperCase();
+                            this.showMemo(false, 'REJECT', 'REJECT', validDisplay, d.primaryDiscrepancyText, d.workingText, d.implicationText, 20, 0, 1);
                         }
                     } else if (expected.action === 'audit') {
                         this.showMemo(false, 'REJECT', 'AUDIT MODE', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -15, -3, 1);
@@ -1865,7 +1902,7 @@
                 const bucketWrapper = document.getElementById('memo-reason-bucket-wrapper');
                 if (reasonBucket) {
                     bucketWrapper.style.display = 'block';
-                    document.getElementById('memo-reason-bucket').innerText = reasonBucket.replace('_', ' ').toUpperCase();
+                    document.getElementById('memo-reason-bucket').innerText = reasonBucket.replace(/_/g, ' ').toUpperCase();
                 } else {
                     bucketWrapper.style.display = 'none';
                 }
@@ -1922,79 +1959,163 @@
             useShredder() {
                 if (this.inventory.shredder <= 0) return;
                 this.inventory.shredder--;
-                showToast("🗑️ Dossier shredded cleanly!");
-                this.updateHUD();
+                showToast("🗑️ Dossier shredded safely!");
                 this.currentDossierIndex++;
+                this.updateHUD();
                 this.loadCurrentDossier();
             }
 
             useGoldenStamp() {
                 if (this.inventory.goldstamp <= 0) return;
                 this.inventory.goldstamp--;
-                showToast("🌟 Golden Pass Stamp applied! Full credit awarded.");
-                this.updateHUD();
-
-                const d = this.queue[this.currentDossierIndex];
-                const expected = this.getExpectedVerdict(d);
-                this.showMemo(true, 'GOLDEN STAMP', expected.action.toUpperCase(), expected.reason, d.primaryDiscrepancyText, d.workingText, "Auto-cleared via Golden Pass Stamp.", 60, 5, 0);
+                showToast("🌟 Golden Pass applied!");
+                this.showMemo(true, 'GOLDEN PASS', 'APPROVED', 'GOLDEN PASS', ['Golden Pass override applied.'], 'Automatic Full Credit Passed.', 'Investment Committee pass granted.', 75, 10, 0);
             }
 
             finishShift() {
                 clearInterval(this.shiftTimer);
-                
-                const bonuses = 100;
-                const penalties = this.citations * 20;
+                document.getElementById('settle-bonuses').innerText = `+$${this.cash}`;
+                document.getElementById('settle-penalties').innerText = `-$${this.citations * 15}`;
                 const rent = 30;
-
-                document.getElementById('settle-bonuses').innerText = `+$${bonuses}`;
-                document.getElementById('settle-penalties').innerText = `-$${penalties}`;
                 document.getElementById('settle-rent').innerText = `-$${rent}`;
+                const net = Math.max(0, this.cash - (this.citations * 15) - rent);
+                document.getElementById('settle-total').innerText = `$${net}`;
                 
-                this.cash = Math.max(0, this.cash + bonuses - penalties - rent);
-                document.getElementById('settle-total').innerText = `$${this.cash}`;
+                this.cash = net;
+                this.citations = 0;
 
                 this.updateShopButtons();
                 document.getElementById('settlement-overlay').style.display = 'flex';
             }
 
-            updateShopButtons() {
-                document.getElementById('buy-coffee-btn').innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
-                document.getElementById('buy-marker-btn').innerText = this.inventory.marker ? `OWNED` : `BUY ($40)`;
-                document.getElementById('buy-shield-btn').innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
-                document.getElementById('buy-shredder-btn').innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
-                document.getElementById('buy-goldstamp-btn').innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
-            }
-
-            buyItem(key) {
-                const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
-                const cost = prices[key];
-
-                if (this.cash < cost) {
-                    showToast("❌ Insufficient funds on desk!");
-                    return;
+            buyItem(item) {
+                if (item === 'coffee' && this.cash >= 25) {
+                    this.cash -= 25;
+                    this.inventory.coffee++;
+                    showToast("☕ Bought Desk Espresso!");
+                } else if (item === 'marker' && this.cash >= 40 && !this.inventory.marker) {
+                    this.cash -= 40;
+                    this.inventory.marker = true;
+                    showToast("🖊️ Bought Red Marker Pro!");
+                } else if (item === 'shield' && this.cash >= 45) {
+                    this.cash -= 45;
+                    this.inventory.shield++;
+                    showToast("🛡️ Bought Review Shield!");
+                } else if (item === 'shredder' && this.cash >= 30) {
+                    this.cash -= 30;
+                    this.inventory.shredder++;
+                    showToast("🗑️ Bought Industrial Shredder!");
+                } else if (item === 'goldstamp' && this.cash >= 60) {
+                    this.cash -= 60;
+                    this.inventory.goldstamp++;
+                    showToast("🌟 Bought Golden Pass Stamp!");
+                } else {
+                    showToast("❌ Not enough cash or item already owned!");
                 }
-
-                if (key === 'marker' && this.inventory.marker) {
-                    showToast("⚠️ Red Marker Pro already acquired!");
-                    return;
-                }
-
-                this.cash -= cost;
-                if (key === 'marker') this.inventory.marker = true;
-                else this.inventory[key]++;
-
-                showToast(`🛒 Purchased ${key.toUpperCase()}!`);
                 this.updateHUD();
                 this.updateShopButtons();
-                document.getElementById('settle-total').innerText = `$${this.cash}`;
+            }
+
+            updateShopButtons() {
+                const c = document.getElementById('buy-coffee-btn');
+                if (c) c.innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
+                const m = document.getElementById('buy-marker-btn');
+                if (m) m.innerText = this.inventory.marker ? `OWNED` : `BUY ($40)`;
+                const s = document.getElementById('buy-shield-btn');
+                if (s) s.innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
+                const sh = document.getElementById('buy-shredder-btn');
+                if (sh) sh.innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
+                const g = document.getElementById('buy-goldstamp-btn');
+                if (g) g.innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
             }
 
             nextDay() {
+                document.getElementById('settlement-overlay').style.display = 'none';
                 this.day++;
                 this.clockMinutes = 540;
-                this.citations = 0;
-                document.getElementById('settlement-overlay').style.display = 'none';
                 this.setupDay();
+            }
+
+            gameOver(reason) {
+                clearInterval(this.shiftTimer);
+                document.getElementById('gameover-reason').innerText = reason;
+                document.getElementById('go-days').innerText = this.day;
+                document.getElementById('go-cash').innerText = this.cash;
+                document.getElementById('go-rep').innerText = this.rep;
+                document.getElementById('gameover-overlay').style.display = 'flex';
+            }
+
+            openTeacherPanel() {
+                const d = this.queue[this.currentDossierIndex];
+                if (d) {
+                    const expected = this.getExpectedVerdict(d);
+                    document.getElementById('tp-queue-mix').innerText = this.queue.map(q => q.packType).join(', ');
+                    document.getElementById('tp-action').innerText = expected.action.toUpperCase();
+                    document.getElementById('tp-reason').innerText = expected.validReasons ? expected.validReasons.join(' / ').toUpperCase() : expected.reason.toUpperCase();
+                    document.getElementById('tp-math').innerText = d.isFraudMath ? "Active Math Fraud" : "Clean Math";
+                    document.getElementById('tp-info').innerText = d.isInfoMismatch ? "Name Mismatch Present" : "Entity Names Match";
+                    document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : "None";
+                    document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : "None";
+                    document.getElementById('tp-chains').innerText = JSON.stringify(d.auditChains);
+                }
+                document.getElementById('tp-save-code').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                document.getElementById('teacher-overlay').style.display = 'flex';
+            }
+
+            closeTeacherPanel() {
+                document.getElementById('teacher-overlay').style.display = 'none';
+            }
+
+            teacherForceMode(m) {
+                this.mode = m;
+                showToast(`Teacher Panel: Forced ${m.toUpperCase()} DESK`);
+                this.closeTeacherPanel();
+                this.loadCurrentDossier();
+            }
+
+            teacherAddCash(amount) {
+                this.cash += amount;
+                this.updateHUD();
+                showToast(`Teacher Panel: +$${amount} Cash Added`);
+            }
+
+            teacherResetCitations() {
+                this.citations = 0;
+                this.updateHUD();
+                showToast("Teacher Panel: Citations Reset to 0");
+            }
+
+            openSaveCodeModal() {
+                document.getElementById('save-code-input').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode, inv: this.inventory }));
+                document.getElementById('savecode-overlay').style.display = 'flex';
+            }
+
+            closeSaveCodeModal() {
+                document.getElementById('savecode-overlay').style.display = 'none';
+            }
+
+            copySaveCode() {
+                const input = document.getElementById('save-code-input');
+                input.select();
+                navigator.clipboard.writeText(input.value);
+                showToast("📋 Save Code copied to clipboard!");
+            }
+
+            loadSaveCode() {
+                try {
+                    const val = document.getElementById('save-code-input').value.trim();
+                    const data = JSON.parse(atob(val));
+                    if (data.day) this.day = data.day;
+                    if (data.cash !== undefined) this.cash = data.cash;
+                    if (data.rep !== undefined) this.rep = data.rep;
+                    if (data.mode) this.mode = data.mode;
+                    if (data.inv) this.inventory = data.inv;
+                    this.closeSaveCodeModal();
+                    this.updateHUD();
+                    showToast("💾 State loaded successfully!");
+                } catch (e) {
+                    showToast("❌ Invalid Save Code!");
+                }
             }
 
             openExitConfirmModal() {
@@ -2012,110 +2133,13 @@
                 document.getElementById('main-menu').style.display = 'flex';
             }
 
-            gameOver(reason) {
-                clearInterval(this.shiftTimer);
-                document.getElementById('gameover-reason').innerText = reason;
-                document.getElementById('go-days').innerText = this.day;
-                document.getElementById('go-cash').innerText = this.cash;
-                document.getElementById('go-rep').innerText = this.rep;
-                document.getElementById('gameover-overlay').style.display = 'flex';
-            }
-
-            openTeacherPanel() {
-                const d = this.queue[this.currentDossierIndex] || {};
-                const expected = d.card ? this.getExpectedVerdict(d) : { action: '-', reason: '-' };
-
-                const mixStr = this.queue.map(p => p.packType).join(' | ') || 'None';
-                document.getElementById('tp-queue-mix').innerText = mixStr;
-                document.getElementById('tp-action').innerText = expected.action.toUpperCase();
-                document.getElementById('tp-reason').innerText = expected.reason;
-                document.getElementById('tp-math').innerText = d.isFraudMath ? "YES (MATH FRAUD)" : "CLEAN";
-                document.getElementById('tp-info').innerText = d.isInfoMismatch ? "YES (HEADER MISMATCH)" : "MATCHING";
-                document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : "None";
-                document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : "None";
-                document.getElementById('tp-chains').innerText = JSON.stringify(d.auditChains || []);
-
-                document.getElementById('tp-save-code').value = this.generateSaveCode();
-                document.getElementById('teacher-overlay').style.display = 'flex';
-            }
-
-            closeTeacherPanel() {
-                document.getElementById('teacher-overlay').style.display = 'none';
-            }
-
-            teacherForceMode(m) {
-                this.mode = m;
-                showToast(`🎓 Mode forced to: ${m.toUpperCase()}`);
-                this.closeTeacherPanel();
-                this.setupDay();
-            }
-
-            teacherAddCash(amt) {
-                this.cash += amt;
-                this.updateHUD();
-                showToast(`🎓 Added +$${amt} Cash`);
-            }
-
-            teacherResetCitations() {
-                this.citations = 0;
-                this.updateHUD();
-                showToast("🎓 Citations Reset to 0");
-            }
-
-            generateSaveCode() {
-                const state = {
-                    day: this.day,
-                    mode: this.mode,
-                    cash: this.cash,
-                    rep: this.rep,
-                    inv: this.inventory,
-                    name: this.playerName
-                };
-                return btoa(JSON.stringify(state));
-            }
-
-            openSaveCodeModal() {
-                document.getElementById('save-code-input').value = this.generateSaveCode();
-                document.getElementById('savecode-overlay').style.display = 'flex';
-            }
-
-            closeSaveCodeModal() {
-                document.getElementById('savecode-overlay').style.display = 'none';
-            }
-
-            copySaveCode() {
-                const text = document.getElementById('save-code-input').value;
-                navigator.clipboard.writeText(text);
-                showToast("📋 Save code copied to clipboard!");
-            }
-
-            loadSaveCode() {
-                try {
-                    const raw = document.getElementById('save-code-input').value.trim();
-                    const state = JSON.parse(atob(raw));
-                    this.day = state.day || 1;
-                    this.mode = state.mode || 'junior';
-                    this.cash = state.cash || 50;
-                    this.rep = state.rep || 20;
-                    this.inventory = state.inv || this.inventory;
-                    this.playerName = state.name || 'Analyst 88';
-
-                    this.closeSaveCodeModal();
-                    this.startGame(this.mode);
-                    showToast("💾 State loaded successfully!");
-                } catch (err) {
-                    showToast("❌ Invalid save code format!");
-                }
-            }
-
             openLeaderboard() {
-                showToast("🏆 Leaderboard loaded! Current Top Analyst: Vance ($1,250)");
+                showToast("🏆 Local Analyst Badge: " + (this.playerName || "Analyst 88") + " | Level: Day " + this.day);
             }
         }
 
-        window.onload = function() {
-            window.game = new GameEngine();
-        };
+        const game = new GameEngine();
+        window.game = game;
     </script>
 </body>
 </html>
