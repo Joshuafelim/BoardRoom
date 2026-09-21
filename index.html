@@ -287,20 +287,20 @@
             outline: 2px dashed var(--ink-red) !important;
         }
 
-        /* Omitted row gap target style */
-        .missing-line-gap {
-            height: 24px;
-            background: rgba(220, 38, 38, 0.04);
-            border: 1px dashed rgba(185, 28, 28, 0.25);
-            border-radius: 3px;
+        /* Omitted row gap target style (ZERO TEXT, SUBTLE HIGHLIGHT IN AUDIT MODE ONLY) */
+        .missing-line-gap-row {
+            height: 4px;
+            padding: 0;
+            margin: 0;
         }
-        body.audit-mode .missing-line-gap {
-            background: rgba(220, 38, 38, 0.12);
-            border: 1px dashed rgba(185, 28, 28, 0.6);
+        body.audit-mode .missing-line-gap-row {
+            height: 16px;
+            background: rgba(220, 38, 38, 0.08);
+            border: 1px dashed rgba(185, 28, 28, 0.3);
             cursor: pointer !important;
         }
-        body.audit-mode .missing-line-gap:hover {
-            background-color: rgba(220, 38, 38, 0.3) !important;
+        body.audit-mode .missing-line-gap-row:hover {
+            background-color: rgba(220, 38, 38, 0.25) !important;
             outline: 2px dashed var(--ink-red) !important;
         }
 
@@ -816,7 +816,7 @@
                     <div id="memo-implication" style="font-size: 0.82rem; color: #374151; font-style: italic;">Overstated margins obscure real operational losses.</div>
                 </div>
 
-                <div class="feedback-section correct-border" style="display:flex; justify-style:space-around; align-items:center; padding:6px 10px;">
+                <div class="feedback-section correct-border" style="display:flex; justify-content:space-around; align-items:center; padding:6px 10px;">
                     <div id="memo-delta-pay" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">PAY: +$50</div>
                     <div id="memo-delta-rep" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">REP: +5</div>
                     <div id="memo-delta-cit" style="font-weight:bold; color:#b91c1c; font-size: 0.85rem; display:none;">CITATIONS: +1</div>
@@ -1147,7 +1147,7 @@
             static generateBaseCompanyCard(overrideName = null, overrideFounded = null) {
                 const name = overrideName || COMPANY_NAMES[Math.floor(Math.random() * COMPANY_NAMES.length)];
                 const industry = INDUSTRIES[Math.floor(Math.random() * INDUSTRIES.length)];
-                const founded = overrideFounded || (Math.floor(Math.random() * 5) + 2019); // 2019-2023 for standard
+                const founded = overrideFounded || (Math.floor(Math.random() * 5) + 2019);
                 return {
                     name: name,
                     industry: industry,
@@ -1158,23 +1158,20 @@
                 };
             }
 
-            /* HEALTHY APPROVE BUILDER: Guaranteed PAT > 0, clean maths, hasFraud = false, correctAction = approve */
             static buildHealthyApprove(mode, dayIndex) {
                 const card = RolePackBuilder.generateBaseCompanyCard();
                 
-                // SCI: Strong clean numbers
                 const rev26 = 500 + Math.floor(Math.random() * 4) * 100;
-                const cos26 = Math.round((rev26 * 0.50) / 10) * 10; // 50% GP margin
-                const gp26 = rev26 - cos26; // 50% GPM >= 20%
+                const cos26 = Math.round((rev26 * 0.50) / 10) * 10;
+                const gp26 = rev26 - cos26;
                 const sell26 = 40;
-                const admin26 = 50; // Admin 10% <= 25%
+                const admin26 = 50;
                 const op26 = gp26 - sell26 - admin26;
                 const fin26 = 10;
                 const pbt26 = op26 - fin26;
                 const tax26 = Math.round(pbt26 * 0.20);
-                const pat26 = pbt26 - tax26; // Strong positive PAT
+                const pat26 = pbt26 - tax26;
 
-                // Prior year 2025: modest growth YoY
                 const rev25 = Math.round((rev26 * 0.90) / 10) * 10;
                 const cos25 = Math.round((rev25 * 0.50) / 10) * 10;
                 const gp25 = rev25 - cos25;
@@ -1193,15 +1190,14 @@
                 };
                 const sci25 = { rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 };
 
-                // Balance sheet: Healthy (CA >= CL, Cash >= 15, NCL <= Equity)
                 let bs26 = null, bs25 = null;
                 if (mode === 'senior') {
                     const ppe = 300, intangibles = 50, nca = 350;
-                    const inv = 80, rec = 70, cash = 60, ca = 210; // CA 210, Cash 60 >= 15
-                    const assets = nca + ca; // 560
-                    const payables = 40, st_borr = 20, o_cl = 10, cl = 70; // CL 70 <= CA 210
+                    const inv = 80, rec = 70, cash = 60, ca = 210;
+                    const assets = nca + ca;
+                    const payables = 40, st_borr = 20, o_cl = 10, cl = 70;
                     const lt_borr = 100, ncl = 100;
-                    const equity = assets - cl - ncl; // 390 (NCL 100 <= Equity 390)
+                    const equity = assets - cl - ncl;
 
                     bs26 = {
                         headerName: card.name,
@@ -1239,9 +1235,8 @@
                 };
             }
 
-            /* REJECT COMMERCIAL BUILDER: Clean maths, hasFraud = false, correctAction = reject */
             static buildCommercialReject(mode, dayIndex, reason) {
-                const card = RolePackBuilder.generateBaseCompanyCard(null, 2020); // Founded 2020 (older)
+                const card = RolePackBuilder.generateBaseCompanyCard(null, 2020);
                 const rev26 = 400;
                 let cos26 = 200, gp26 = 200, sell26 = 30, admin26 = 40, op26 = 130, fin26 = 10, pbt26 = 120, tax26 = 24, pat26 = 96;
                 let rev25 = 380, cos25 = 190, gp25 = 190, sell25 = 30, admin25 = 40, op25 = 120, fin25 = 10, pbt25 = 110, tax25 = 22, pat25 = 88;
@@ -1249,23 +1244,20 @@
 
                 if (reason === 'loss_unprotected') {
                     packType = 'loss';
-                    admin26 = 250; // Causes heavy operating loss
-                    op26 = gp26 - sell26 - admin26; // 200 - 30 - 250 = -80
-                    pbt26 = op26 - fin26; // -90
+                    admin26 = 250;
+                    op26 = gp26 - sell26 - admin26;
+                    pbt26 = op26 - fin26;
                     tax26 = 0;
-                    pat26 = -90; // Loss PAT
+                    pat26 = -90;
                     
-                    // Prior year loss or flat, un-protected older company
                     admin25 = 240; op25 = -80; pbt25 = -90; tax25 = 0; pat25 = -90;
                 } else if (reason === 'worse_yoy') {
                     packType = 'collapse_yoy';
-                    // 2026 PAT is 25 vs 2025 PAT was 120 (severe collapse > 40%)
                     pat26 = 25; pbt26 = 31; tax26 = 6; op26 = 41; admin26 = 129;
                     pat25 = 120; pbt25 = 150; tax25 = 30; op25 = 160; admin25 = 10;
                 } else if (reason === 'weak_margins') {
                     packType = 'weak_margins';
-                    // Very high CoS -> GP margin only 12% (< 20% floor)
-                    cos26 = 352; gp26 = 48; // 48 / 400 = 12% GPM
+                    cos26 = 352; gp26 = 48;
                     sell26 = 10; admin26 = 10; op26 = 28; fin26 = 3; pbt26 = 25; tax26 = 5; pat26 = 20;
                 }
 
@@ -1278,7 +1270,6 @@
 
                 let bs26 = null, bs25 = null;
                 if (mode === 'senior') {
-                    // Standard clean BS
                     bs26 = {
                         headerName: card.name, ppe: 300, int: 50, nca_total: 350,
                         inv: 80, receivables: 70, cash: 50, ca_total: 200, assets_total: 550,
@@ -1305,7 +1296,6 @@
                 };
             }
 
-            /* AUDIT FRAUD BUILDER: hasFraud = true, correctAction = audit, validChains non-empty */
             static buildAuditFraud(mode, dayIndex, family) {
                 const card = RolePackBuilder.generateBaseCompanyCard();
                 let sci26 = { 
@@ -1335,7 +1325,7 @@
                 if (family === 'missing_tax_row') {
                     fraudCategory = 'Whole-row missing line (Taxation)';
                     sci26.missingTaxRow = true;
-                    sci26.pat = sci26.pbt; // PAT equals PBT because tax row is omitted!
+                    sci26.pat = sci26.pbt;
                     validChains.push(['sci:taxation:missing']);
                     validChains.push(['sci_pbt_26', 'sci_pat_26']);
                     bullets.push("Taxation line is completely missing between Profit Before Tax and Profit After Tax.");
@@ -1345,7 +1335,7 @@
                 } else if (family === 'missing_finance_row') {
                     fraudCategory = 'Whole-row missing line (Finance Costs)';
                     sci26.missingFinanceRow = true;
-                    sci26.pbt = sci26.op; // PBT equals OP because finance row is omitted!
+                    sci26.pbt = sci26.op;
                     sci26.pat = sci26.pbt - sci26.tax;
                     validChains.push(['sci:financeCosts:missing']);
                     validChains.push(['sci_op_26', 'sci_pbt_26']);
@@ -1363,16 +1353,16 @@
 
                 } else if (family === 'low_tax') {
                     fraudCategory = 'Suspiciously low taxation';
-                    sci26.tax = 1; // Only Rp 1M tax on 120M PBT
+                    sci26.tax = 1;
                     sci26.pat = 119;
                     validChains.push(['sci_tax_26', 'sci_pbt_26']);
                     bullets.push(`Suspiciously low tax provision (Rp ${sci26.tax}M on PBT Rp ${sci26.pbt}M).`);
                     working = `Tax check: Tax rate is under 1% on positive PBT.`;
                     impl = "Abnormally low taxation provision inflates PAT artificially.";
 
-                } else { // 'arithmetic' default
+                } else {
                     fraudCategory = 'Arithmetic calculation error';
-                    sci26.gp = 240; // Rev 400 - CoS 200 = 200, but reported 240
+                    sci26.gp = 240;
                     validChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
                     bullets.push(`Gross Profit misstated. Revenue 400 − Cost 200 = 200, but pack shows 240.`);
                     working = `Gross Profit calculation: 400 − 200 = 200 (Reported: 240).`;
@@ -1396,17 +1386,15 @@
                 };
             }
 
-            /* MODE 2 BALANCE SHEET SPECIFIC BUILDERS */
             static buildMode2BSPack(subtype, dayIndex) {
                 const card = RolePackBuilder.generateBaseCompanyCard();
                 
-                // SCI is clean and profitable!
                 const sci26 = { 
                     rev: 500, cos: 250, gp: 250, sell: 40, admin: 50, op: 160, fin: 10, pbt: 150, tax: 30, pat: 120,
                     headerName: card.name, headerSubtext: "Statement of Comprehensive Income",
                     missingFinanceRow: false, missingTaxRow: false 
                 };
-                const sci25 = { rev: 460, cos: 230, gp: 230, sell: 35, admin: 45, op: 150, fin: 10, pbt: 140, tax: 28, PAT: 112 };
+                const sci25 = { rev: 460, cos: 230, gp: 230, sell: 35, admin: 45, op: 150, fin: 10, pbt: 140, tax: 28, pat: 112 };
 
                 let bs26, bs25;
                 let packType = 'bs_risk';
@@ -1418,11 +1406,10 @@
                 let impl = "";
 
                 if (subtype === 'BS_REJECT_LIQUIDITY') {
-                    // Current Assets < Current Liabilities (Liquidity Trap)
                     bs26 = {
                         headerName: card.name, ppe: 300, int: 50, nca_total: 350,
-                        inv: 20, receivables: 15, cash: 5, ca_total: 40, assets_total: 390, // CA = 40, Cash = 5
-                        payables: 80, st_borrowings: 50, o_cl: 20, cl_total: 150, // CL = 150 (CA 40 < CL 150)
+                        inv: 20, receivables: 15, cash: 5, ca_total: 40, assets_total: 390,
+                        payables: 80, st_borrowings: 50, o_cl: 20, cl_total: 150,
                         lt_borrowings: 40, ncl_total: 40, equity_total: 200, liab_eq_total: 390
                     };
                     bullets = ["Current assets (Rp 40M) are less than current liabilities (Rp 150M) — Severe Liquidity Trap."];
@@ -1430,25 +1417,23 @@
                     impl = "Company is insolvent short-term despite showing SCI profits. Immediate debt default risk.";
 
                 } else if (subtype === 'BS_REJECT_GEARING') {
-                    // Non-current liabilities > Equity
                     bs26 = {
                         headerName: card.name, ppe: 400, int: 50, nca_total: 450,
                         inv: 60, receivables: 50, cash: 40, ca_total: 150, assets_total: 600,
                         payables: 30, st_borrowings: 20, o_cl: 10, cl_total: 60,
-                        lt_borrowings: 420, ncl_total: 420, // NCL = 420
-                        equity_total: 120, liab_eq_total: 600 // Equity = 120 (NCL 420 > Equity 120)
+                        lt_borrowings: 420, ncl_total: 420,
+                        equity_total: 120, liab_eq_total: 600
                     };
                     bullets = ["Non-current liabilities (Rp 420M) exceed Total Equity (Rp 120M) — Excessive Debt Gearing."];
                     working = "Balance Sheet Debt Check: NCL (420) > Equity (120). Gearing ratio > 350%.";
                     impl = "Extreme leverage makes equity vulnerable to minor income shocks.";
 
                 } else if (subtype === 'BS_AUDIT_STRUCTURE') {
-                    // Non-balancing statement / component total break
                     hasFraud = true;
                     fraudCategory = 'Balance Sheet structure discrepancy';
                     bs26 = {
                         headerName: card.name, ppe: 300, int: 50, nca_total: 350,
-                        inv: 80, receivables: 70, cash: 50, ca_total: 280, // Printed 280, but 80+70+50 = 200!
+                        inv: 80, receivables: 70, cash: 50, ca_total: 280,
                         assets_total: 630,
                         payables: 40, st_borrowings: 20, o_cl: 10, cl_total: 70,
                         lt_borrowings: 100, ncl_total: 100, equity_total: 380, liab_eq_total: 550
@@ -1459,7 +1444,6 @@
                     impl = "Forced or miscalculated balance sheet total obscures actual asset backing.";
 
                 } else if (subtype === 'BS_OK_WITH_SCI_FRAUD') {
-                    // SCI has missing row or math fraud, BS is fine
                     hasFraud = true;
                     fraudCategory = 'Whole-row missing line (Taxation)';
                     sci26.missingTaxRow = true;
@@ -1496,20 +1480,16 @@
                 };
             }
 
-            /* FLEX SLOT SCHEDULE BUILDER */
             static buildFlexSlot(mode, dayIndex, mainAuditFamily) {
                 if (dayIndex % 2 === 0) {
-                    // Flex = missing detail audit if main wasn't missing detail, else identity
                     if (!mainAuditFamily.startsWith('missing')) {
                         return RolePackBuilder.buildAuditFraud(mode, dayIndex, 'missing_tax_row');
                     } else {
                         return RolePackBuilder.buildAuditFraud(mode, dayIndex, 'identity_mismatch');
                     }
                 } else if (dayIndex % 3 === 0) {
-                    // Flex = Second Healthy Approve
                     return RolePackBuilder.buildHealthyApprove(mode, dayIndex);
                 } else {
-                    // Flex = Commercial Reject weak margins
                     return RolePackBuilder.buildCommercialReject(mode, dayIndex, 'weak_margins');
                 }
             }
@@ -1525,18 +1505,16 @@
                 let attempts = 0;
                 let pass = false;
 
-                // Commercial rejection rotation: shift % 3
                 const commercialRejectReasons = ['loss_unprotected', 'worse_yoy', 'weak_margins'];
                 const rotatedRejectReason = commercialRejectReasons[dayIndex % 3];
 
-                // Audit family rotation: dayIndex % 6
                 const auditFamilies = [
-                    'arithmetic',           // 0: math break
-                    'missing_tax_row',      // 1: missing taxation
-                    'identity_mismatch',    // 2: name mismatch
-                    'low_tax',              // 3: low tax
-                    'missing_finance_row',  // 4: missing finance costs
-                    'identity_mismatch'     // 5: identity mismatch
+                    'arithmetic',
+                    'missing_tax_row',
+                    'identity_mismatch',
+                    'low_tax',
+                    'missing_finance_row',
+                    'identity_mismatch'
                 ];
                 const rotatedAuditFamily = auditFamilies[dayIndex % 6];
 
@@ -1545,40 +1523,25 @@
                     queue = [];
 
                     if (mode === 'junior') {
-                        // Slot 1: Healthy Approve
                         queue.push(RolePackBuilder.buildHealthyApprove('junior', dayIndex));
-                        // Slot 2: Healthy Approve
                         queue.push(RolePackBuilder.buildHealthyApprove('junior', dayIndex));
-                        // Slot 3: Commercial Reject
                         queue.push(RolePackBuilder.buildCommercialReject('junior', dayIndex, rotatedRejectReason));
-                        // Slot 4: Audit Fraud
                         queue.push(RolePackBuilder.buildAuditFraud('junior', dayIndex, rotatedAuditFamily));
-                        // Slot 5: Flex Slot
                         queue.push(RolePackBuilder.buildFlexSlot('junior', dayIndex, rotatedAuditFamily));
                     } else {
-                        // Mode 2 (Senior Desk): Must include at least 2 packs that require SOFP!
-                        // Slot 1: Healthy Approve (TRUE_HEALTHY_BOTH) -> requires SOFP
                         queue.push(RolePackBuilder.buildHealthyApprove('senior', dayIndex));
-                        // Slot 2: Healthy Approve or Mode 2 BS Reject
                         queue.push(RolePackBuilder.buildHealthyApprove('senior', dayIndex));
-                        // Slot 3: Mode 2 BS Liquidity or Gearing Reject -> requires SOFP
                         const bsSubtype = (dayIndex % 2 === 0) ? 'BS_REJECT_LIQUIDITY' : 'BS_REJECT_GEARING';
                         queue.push(RolePackBuilder.buildMode2BSPack(bsSubtype, dayIndex));
-                        // Slot 4: Audit Fraud (SCI or BS structure)
                         queue.push(RolePackBuilder.buildAuditFraud('senior', dayIndex, rotatedAuditFamily));
-                        // Slot 5: Flex Slot
                         queue.push(RolePackBuilder.buildFlexSlot('senior', dayIndex, rotatedAuditFamily));
                     }
 
                     shuffle(queue);
-
-                    // Assertions check
                     pass = ShiftQueueGenerator.assertQuotas(queue, mode);
                 }
 
                 if (!pass) {
-                    console.error("Queue build failed assertions after 100 attempts! Applying force-fill fallback.");
-                    // Guaranteed fallback quota
                     queue = [
                         RolePackBuilder.buildHealthyApprove(mode, dayIndex),
                         RolePackBuilder.buildHealthyApprove(mode, dayIndex),
@@ -1610,12 +1573,6 @@
                     if (p.requiresSOFP) sofpRequiredCount++;
                 });
 
-                // HARD QUOTA ASSERTS:
-                // 1. Healthy Approve >= 2
-                // 2. Reject <= 2
-                // 3. Audit >= 1
-                // 4. Worse YoY <= 2
-                // 5. In Mode 2: Packs requiring SOFP >= 2
                 const validApprove = healthyApproveCount >= 2;
                 const validReject = rejectCount <= 2;
                 const validAudit = auditCount >= 1;
@@ -1627,10 +1584,9 @@
         }
 
         /* ════════════════════════════════════════════════════════════
-           4. VERDICT LADDER EVALUATOR (§1 LADDER + MULTI-REASON SET)
+           4. VERDICT LADDER EVALUATOR
            ════════════════════════════════════════════════════════════ */
         function evaluateDossierVerdict(dossier, activeRule, activeNote, mode) {
-            // Step 1 — ANY fraud -> AUDIT (FIRST MATCH WINS)
             if (dossier.hasFraud === true) {
                 return {
                     correctAction: 'audit',
@@ -1640,7 +1596,6 @@
                 };
             }
 
-            // Step 2 — Daily Note (clean packs only)
             if (activeNote) {
                 if (activeNote.forceApproveName && dossier.card.name === activeNote.forceApproveName) {
                     return { correctAction: 'approve', correctRejectReason: null, correctRejectReasons: [], note: 'Partner note forced approval for clean pack.' };
@@ -1650,14 +1605,12 @@
                 }
             }
 
-            // Step 3 & 4 — Multi-reason REJECT set collection
             const validRejectReasons = new Set();
 
             if (activeRule && activeRule.test(dossier)) {
                 validRejectReasons.add(activeRule.rejectReason || 'fails_rule');
             }
 
-            // Commercial Base Standards
             if (dossier.sci26.pat <= 0) {
                 const isStartupProtected = dossier.card.founded >= 2024;
                 const isTrajectoryProtected = dossier.sci25.pat !== null && dossier.sci26.pat > dossier.sci25.pat;
@@ -1747,40 +1700,30 @@
                 this.cash = 50;
                 this.rep = 20;
                 this.citations = 0;
-                this.maxCitations = 4;
+                this.maxCitations = (this.inventory.marker > 0) ? 5 : 4;
                 this.inventory = { coffee: 0, marker: 0, shield: 0, shredder: 0, goldstamp: 0 };
 
                 document.getElementById('main-menu').style.display = 'none';
-                document.getElementById('game-container').style.display = 'flex';
-
-                this.setupDayShift();
+                this.showBriefing();
             }
 
-            setupDayShift() {
-                // Pick Rule of the Day
-                const pool = (this.mode === 'senior') ? RULES_POOL_SENIOR : RULES_POOL_JUNIOR;
+            showBriefing() {
+                const pool = (this.mode === 'senior') ? [...RULES_POOL_JUNIOR, ...RULES_POOL_SENIOR] : RULES_POOL_JUNIOR;
                 this.activeRule = pool[(this.day - 1) % pool.length];
-
-                // Pick Partner Note on every 2nd day
+                
                 if (this.day % 2 === 0) {
-                    this.activeNote = DAILY_NOTES_POOL[(this.day / 2) % DAILY_NOTES_POOL.length];
+                    this.activeNote = DAILY_NOTES_POOL[(this.day / 2 - 1) % DAILY_NOTES_POOL.length];
                 } else {
                     this.activeNote = null;
                 }
 
-                // Generate Queue with Hard Assertions
-                this.currentQueue = ShiftQueueGenerator.generateShiftQueue(this.mode, this.day);
-                this.shiftPackIndex = 0;
-                this.hasSavedScoreThisShift = false;
-
-                // Show Briefing Overlay
-                document.getElementById('briefing-date').innerText = `DAY ${this.day} (${this.mode.toUpperCase()})`;
+                document.getElementById('briefing-date').innerText = `DAY ${this.day}`;
                 document.getElementById('briefing-rule-text').innerText = this.activeRule.text;
-
+                
                 const noteBox = document.getElementById('briefing-note-box');
                 if (this.activeNote) {
                     noteBox.style.display = 'block';
-                    document.getElementById('briefing-note-text').innerText = `${this.activeNote.title}: "${this.activeNote.text}"`;
+                    document.getElementById('briefing-note-text').innerText = `${this.activeNote.title}: ${this.activeNote.text}`;
                 } else {
                     noteBox.style.display = 'none';
                 }
@@ -1790,8 +1733,13 @@
 
             startShiftQueue() {
                 document.getElementById('briefing-overlay').style.display = 'none';
+                this.currentQueue = ShiftQueueGenerator.generateShiftQueue(this.mode, this.day);
+                this.shiftPackIndex = 0;
+                this.hasSavedScoreThisShift = false;
 
-                // Pinned Strip
+                document.getElementById('game-container').style.display = 'flex';
+                this.updateHUD();
+
                 document.getElementById('pinned-rule').innerText = `📌 RULE OF THE DAY: ${this.activeRule.text}`;
                 const pinnedNote = document.getElementById('pinned-note');
                 if (this.activeNote) {
@@ -1801,303 +1749,345 @@
                     pinnedNote.style.display = 'none';
                 }
 
-                // Timer setup
-                this.timerSeconds = 130 + (this.inventory.coffee * 30);
                 this.startTimer();
-
-                this.loadCurrentPack();
+                this.loadPack(this.shiftPackIndex);
             }
 
             startTimer() {
                 if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timerSeconds = 130 + (this.inventory.coffee * 30);
+                this.updateTimerDisplay();
+
                 this.timerInterval = setInterval(() => {
                     this.timerSeconds--;
-                    const mins = Math.floor(this.timerSeconds / 60);
-                    const secs = this.timerSeconds % 60;
-                    document.getElementById('hud-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-
+                    this.updateTimerDisplay();
                     if (this.timerSeconds <= 0) {
                         clearInterval(this.timerInterval);
-                        showToast("⏰ Shift time expired! Desk auto-submitted.");
-                        this.submitApprove(); // Default auto action
+                        showToast("⏳ Shift Time expired! Emergency settlement triggered.");
+                        this.timeExpiredAutoFail();
                     }
                 }, 1000);
             }
 
-            loadCurrentPack() {
-                if (this.shiftPackIndex >= 5) {
-                    this.endShift();
-                    return;
-                }
-
-                const currentPack = this.currentQueue[this.shiftPackIndex];
-                this.auditMode = false;
-                this.markedTargets.clear();
-                document.body.classList.remove('audit-mode');
-                this.updateAuditUI();
-
-                // Clear stamps
-                document.querySelectorAll('.stamp-mark').forEach(s => s.classList.remove('visible'));
-
-                // Update HUD
-                document.getElementById('hud-day').innerText = this.day;
-                document.getElementById('hud-file-progress').innerText = `FILE ${this.shiftPackIndex + 1}/5`;
-                document.getElementById('hud-wage').innerText = this.cash;
-                document.getElementById('hud-rep').innerText = this.rep;
-                document.getElementById('hud-citations').innerText = `${this.citations}/${this.maxCitations}`;
-
-                // Update Item Buttons
-                document.getElementById('btn-shredder').style.display = (this.inventory.shredder > 0) ? 'inline-block' : 'none';
-                document.getElementById('shredder-count').innerText = this.inventory.shredder;
-                document.getElementById('btn-golden-stamp').style.display = (this.inventory.goldstamp > 0) ? 'inline-block' : 'none';
-                document.getElementById('gold-stamp-count').innerText = this.inventory.goldstamp;
-
-                // Render Dossier Card
-                document.getElementById('card-company-name').innerText = currentPack.card.name;
-                document.getElementById('card-industry').innerText = currentPack.card.industry;
-                document.getElementById('card-founded').innerText = currentPack.card.founded;
-                document.getElementById('card-operating').innerText = `${currentPack.card.operating} yrs operating`;
-                document.getElementById('card-desc').innerText = currentPack.card.desc;
-                document.getElementById('card-minimized-summary').innerText = `• Founded: ${currentPack.card.founded}`;
-
-                const vipBox = document.getElementById('card-vip-container');
-                if (currentPack.card.vip) {
-                    vipBox.innerHTML = `<span style="background:#b45309; color:#fff; font-size:0.72rem; padding:2px 6px; border-radius:3px; font-weight:bold;">★ ${currentPack.card.vip}</span>`;
-                } else {
-                    vipBox.innerHTML = '';
-                }
-
-                // Render SCI Table
-                this.renderSCITable(currentPack);
-
-                // Render BS Table
-                const bsPaper = document.getElementById('doc-bs');
-                const tabBar = document.getElementById('doc-tab-bar');
-
-                if (this.mode === 'senior' && currentPack.bs26) {
-                    bsPaper.style.display = 'block';
-                    this.renderBSTable(currentPack);
-
-                    // Responsive Tab or Side-by-Side
-                    if (window.innerWidth < 1024) {
-                        tabBar.style.display = 'flex';
-                        this.switchTab('sci');
-                    } else {
-                        tabBar.style.display = 'none';
-                        document.getElementById('doc-sci').style.display = 'block';
-                        document.getElementById('doc-bs').style.display = 'block';
-                    }
-                } else {
-                    bsPaper.style.display = 'none';
-                    tabBar.style.display = 'none';
-                    document.getElementById('doc-sci').style.display = 'block';
-                }
-
-                this.attachAuditClickHandlers();
+            updateTimerDisplay() {
+                const mins = Math.floor(Math.max(0, this.timerSeconds) / 60);
+                const secs = Math.max(0, this.timerSeconds) % 60;
+                const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                document.getElementById('hud-timer').innerText = formatted;
             }
 
-            renderSCITable(pack) {
-                document.getElementById('sci-company-name').innerText = pack.sci26.headerName;
-                document.getElementById('sci-subtext').innerText = pack.sci26.headerSubtext;
+            timeExpiredAutoFail() {
+                this.citations++;
+                this.updateHUD();
+                if (this.citations >= this.maxCitations) {
+                    this.triggerGameOver("Shift timer expired and citation limit exceeded.");
+                } else {
+                    this.endShift();
+                }
+            }
 
-                const s26 = pack.sci26;
-                const s25 = pack.sci25;
+            loadPack(index) {
+                const dossier = this.currentQueue[index];
+                if (!dossier) return;
+
+                this.auditMode = false;
+                document.body.classList.remove('audit-mode');
+                this.markedTargets.clear();
+                this.updateAuditUI();
+
+                document.getElementById('stamp-sci-app').classList.remove('visible');
+                document.getElementById('stamp-sci-den').classList.remove('visible');
+                document.getElementById('stamp-bs-app').classList.remove('visible');
+                document.getElementById('stamp-bs-den').classList.remove('visible');
+
+                document.getElementById('hud-file-progress').innerText = `FILE ${index + 1}/5`;
+
+                this.renderCard(dossier);
+                this.renderSCI(dossier);
+                this.renderBS(dossier);
+
+                const tabBar = document.getElementById('doc-tab-bar');
+                const docBS = document.getElementById('doc-bs');
+                if (this.mode === 'senior') {
+                    tabBar.style.display = 'flex';
+                    docBS.style.display = 'block';
+                    this.switchTab('sci');
+                } else {
+                    tabBar.style.display = 'none';
+                    docBS.style.display = 'none';
+                }
+
+                this.updateSpecialButtons();
+            }
+
+            renderCard(dossier) {
+                const c = dossier.card;
+                document.getElementById('card-company-name').innerText = c.name;
+                document.getElementById('card-industry').innerText = c.industry;
+                document.getElementById('card-founded').innerText = c.founded;
+                document.getElementById('card-operating').innerText = `${c.operating} yrs operating`;
+                document.getElementById('card-desc').innerText = c.desc;
+                document.getElementById('card-minimized-summary').innerText = `• Founded: ${c.founded} | ${c.industry}`;
+
+                const vipContainer = document.getElementById('card-vip-container');
+                if (c.vip) {
+                    vipContainer.innerHTML = `<span style="background:#b45309; color:#fff; font-weight:bold; padding:2px 6px; border-radius:3px; font-size:0.75rem;">⭐ ${c.vip}</span>`;
+                } else {
+                    vipContainer.innerHTML = '';
+                }
+            }
+
+            renderSCI(dossier) {
+                const table = document.getElementById('sci-table');
+                if (!table) return;
+
+                const s26 = dossier.sci26;
+                const s25 = dossier.sci25;
+
+                document.getElementById('sci-company-name').innerText = s26.headerName || dossier.card.name;
 
                 let html = `
                     <thead>
-                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
-                            <th style="text-align:left; padding-bottom: 4px;">Line Item (Rp M)</th>
-                            <th style="text-align:right; width: 80px;" data-audit-target="sci_rev_26">2026</th>
-                            <th style="text-align:right; width: 80px;" data-audit-target="sci_rev_25">2025</th>
+                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold; font-size: 0.72rem;">
+                            <th style="text-align: left; padding: 4px;">LINE ITEM</th>
+                            <th style="text-align: right; padding: 4px;">2026</th>
+                            <th style="text-align: right; padding: 4px;">2025</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Revenue</td><td class="num" data-audit-target="sci_rev_26">${s26.rev ?? '-'}</td><td class="num" data-audit-target="sci_rev_25">${s25.rev ?? '-'}</td></tr>
-                        <tr><td>Cost of Sales</td><td class="num" data-audit-target="sci_cos_26">(${s26.cos ?? '-'})</td><td class="num" data-audit-target="sci_cos_25">(${s25.cos ?? '-'})</td></tr>
-                        <tr class="subtotal"><td>Gross Profit</td><td class="num" data-audit-target="sci_gp_26">${s26.gp ?? '-'}</td><td class="num" data-audit-target="sci_gp_25">${s25.gp ?? '-'}</td></tr>
-                        <tr class="indent"><td>Selling & Distribution</td><td class="num" data-audit-target="sci_sell_26">(${s26.sell ?? '-'})</td><td class="num" data-audit-target="sci_sell_25">(${s25.sell ?? '-'})</td></tr>
-                        <tr class="indent"><td>Administrative Expenses</td><td class="num" data-audit-target="sci_admin_26">(${s26.admin ?? '-'})</td><td class="num" data-audit-target="sci_admin_25">(${s25.admin ?? '-'})</td></tr>
-                        <tr class="subtotal"><td>Operating Profit</td><td class="num" data-audit-target="sci_op_26">${s26.op ?? '-'}</td><td class="num" data-audit-target="sci_op_25">${s25.op ?? '-'}</td></tr>
+                        <tr data-audit-target="sci_rev_26">
+                            <td>Revenue</td>
+                            <td class="num">Rp ${s26.rev}M</td>
+                            <td class="num">Rp ${s25.rev}M</td>
+                        </tr>
+                        <tr data-audit-target="sci_cos_26">
+                            <td>Cost of Sales</td>
+                            <td class="num">(Rp ${s26.cos}M)</td>
+                            <td class="num">(Rp ${s25.cos}M)</td>
+                        </tr>
+                        <tr class="subtotal" data-audit-target="sci_gp_26">
+                            <td><strong>Gross Profit</strong></td>
+                            <td class="num"><strong>Rp ${s26.gp}M</strong></td>
+                            <td class="num"><strong>Rp ${s25.gp}M</strong></td>
+                        </tr>
+                        <tr class="indent" data-audit-target="sci_sell_26">
+                            <td>Selling Expenses</td>
+                            <td class="num">(Rp ${s26.sell}M)</td>
+                            <td class="num">(Rp ${s25.sell}M)</td>
+                        </tr>
+                        <tr class="indent" data-audit-target="sci_admin_26">
+                            <td>Administrative Expenses</td>
+                            <td class="num">(Rp ${s26.admin}M)</td>
+                            <td class="num">(Rp ${s25.admin}M)</td>
+                        </tr>
+                        <tr class="subtotal" data-audit-target="sci_op_26">
+                            <td><strong>Operating Profit</strong></td>
+                            <td class="num"><strong>Rp ${s26.op}M</strong></td>
+                            <td class="num"><strong>Rp ${s25.op}M</strong></td>
+                        </tr>
                 `;
 
-                // MISSING FINANCE COSTS ROW PRESENTATION
+                // Finance Costs Row OR Omitted Zero-Text Target Gap
                 if (s26.missingFinanceRow) {
                     html += `
-                        <tr class="missing-line-gap" data-audit-target="sci:financeCosts:missing">
-                            <td colspan="3" style="text-align:center; font-style:italic; font-size:0.7rem; color:#b91c1c;">[ GAP: FINANCE COSTS LINE OMITTED ]</td>
+                        <tr data-audit-target="sci:financeCosts:missing" class="missing-line-gap-row">
+                            <td colspan="3" style="padding: 0; border: none;"></td>
                         </tr>
                     `;
                 } else {
                     html += `
-                        <tr class="indent"><td>Finance Costs</td><td class="num" data-audit-target="sci_fin_26">(${s26.fin ?? '-'})</td><td class="num" data-audit-target="sci_fin_25">(${s25.fin ?? '-'})</td></tr>
+                        <tr class="indent" data-audit-target="sci_fin_26">
+                            <td>Finance Costs</td>
+                            <td class="num">(Rp ${s26.fin}M)</td>
+                            <td class="num">(Rp ${s25.fin}M)</td>
+                        </tr>
                     `;
                 }
 
                 html += `
-                    <tr class="subtotal"><td>Profit Before Tax</td><td class="num" data-audit-target="sci_pbt_26">${s26.pbt ?? '-'}</td><td class="num" data-audit-target="sci_pbt_25">${s25.pbt ?? '-'}</td></tr>
+                        <tr class="subtotal" data-audit-target="sci_pbt_26">
+                            <td><strong>Profit Before Tax</strong></td>
+                            <td class="num"><strong>Rp ${s26.pbt}M</strong></td>
+                            <td class="num"><strong>Rp ${s25.pbt}M</strong></td>
+                        </tr>
                 `;
 
-                // MISSING TAXATION ROW PRESENTATION
+                // Taxation Row OR Omitted Zero-Text Target Gap
                 if (s26.missingTaxRow) {
                     html += `
-                        <tr class="missing-line-gap" data-audit-target="sci:taxation:missing">
-                            <td colspan="3" style="text-align:center; font-style:italic; font-size:0.7rem; color:#b91c1c;">[ GAP: TAXATION LINE OMITTED ]</td>
+                        <tr data-audit-target="sci:taxation:missing" class="missing-line-gap-row">
+                            <td colspan="3" style="padding: 0; border: none;"></td>
                         </tr>
                     `;
                 } else {
                     html += `
-                        <tr class="indent"><td>Taxation Provision</td><td class="num" data-audit-target="sci_tax_26">(${s26.tax ?? '-'})</td><td class="num" data-audit-target="sci_tax_25">(${s25.tax ?? '-'})</td></tr>
+                        <tr class="indent" data-audit-target="sci_tax_26">
+                            <td>Taxation</td>
+                            <td class="num">(Rp ${s26.tax}M)</td>
+                            <td class="num">(Rp ${s25.tax}M)</td>
+                        </tr>
                     `;
                 }
 
                 html += `
-                        <tr class="total"><td>Profit After Tax</td><td class="num" data-audit-target="sci_pat_26">${s26.pat ?? '-'}</td><td class="num" data-audit-target="sci_pat_25">${s25.pat ?? '-'}</td></tr>
+                        <tr class="total" data-audit-target="sci_pat_26">
+                            <td><strong>Profit After Tax</strong></td>
+                            <td class="num"><strong>Rp ${s26.pat}M</strong></td>
+                            <td class="num"><strong>Rp ${s25.pat}M</strong></td>
+                        </tr>
                     </tbody>
                 `;
 
-                document.getElementById('sci-table').innerHTML = html;
+                table.innerHTML = html;
+                this.attachAuditListeners();
             }
 
-            renderBSTable(pack) {
-                if (!pack.bs26) return;
-                document.getElementById('bs-company-name').innerText = pack.bs26.headerName;
+            renderBS(dossier) {
+                const table = document.getElementById('bs-table');
+                if (!table || !dossier.bs26) return;
 
-                const b26 = pack.bs26;
-                const b25 = pack.bs25;
+                const b26 = dossier.bs26;
+                const b25 = dossier.bs25 || b26;
 
-                const html = `
+                document.getElementById('bs-company-name').innerText = b26.headerName || dossier.card.name;
+
+                let html = `
                     <thead>
-                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
-                            <th style="text-align:left; padding-bottom: 4px;">Balance Sheet Item (Rp M)</th>
-                            <th style="text-align:right; width: 80px;" data-audit-target="bs_assets_26">2026</th>
-                            <th style="text-align:right; width: 80px;" data-audit-target="bs_assets_25">2025</th>
+                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold; font-size: 0.72rem;">
+                            <th style="text-align: left; padding: 4px;">FINANCIAL POSITION</th>
+                            <th style="text-align: right; padding: 4px;">2026</th>
+                            <th style="text-align: right; padding: 4px;">2025</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="section-head"><td colspan="3">Non-Current Assets</td></tr>
-                        <tr class="indent"><td>Property, Plant & Equip.</td><td class="num" data-audit-target="bs_ppe_26">${b26.ppe}</td><td class="num">${b25.ppe}</td></tr>
-                        <tr class="indent"><td>Intangibles & Goodwill</td><td class="num" data-audit-target="bs_int_26">${b26.int}</td><td class="num">${b25.int}</td></tr>
-                        <tr class="subtotal"><td>Total Non-Current Assets</td><td class="num" data-audit-target="bs_nca_tot_26">${b26.nca_total}</td><td class="num">${b25.nca_total}</td></tr>
+                        <tr class="indent" data-audit-target="bs_ppe_26"><td>Property, Plant & Equip.</td><td class="num">Rp ${b26.ppe}M</td><td class="num">Rp ${b25.ppe}M</td></tr>
+                        <tr class="indent" data-audit-target="bs_int_26"><td>Intangible Assets</td><td class="num">Rp ${b26.int}M</td><td class="num">Rp ${b25.int}M</td></tr>
+                        <tr class="subtotal" data-audit-target="bs_nca_tot_26"><td>Total Non-Current Assets</td><td class="num">Rp ${b26.nca_total}M</td><td class="num">Rp ${b25.nca_total}M</td></tr>
 
                         <tr class="section-head"><td colspan="3">Current Assets</td></tr>
-                        <tr class="indent"><td>Inventories</td><td class="num" data-audit-target="bs_inv_26">${b26.inv}</td><td class="num">${b25.inv}</td></tr>
-                        <tr class="indent"><td>Trade Receivables</td><td class="num" data-audit-target="bs_rec_26">${b26.receivables}</td><td class="num">${b25.receivables}</td></tr>
-                        <tr class="indent"><td>Cash & Equivalents</td><td class="num" data-audit-target="bs_cash_26">${b26.cash}</td><td class="num">${b25.cash}</td></tr>
-                        <tr class="subtotal"><td>Total Current Assets</td><td class="num" data-audit-target="bs_ca_tot_26">${b26.ca_total}</td><td class="num">${b25.ca_total}</td></tr>
-                        <tr class="total"><td>TOTAL ASSETS</td><td class="num" data-audit-target="bs_assets_tot_26">${b26.assets_total}</td><td class="num">${b25.assets_total}</td></tr>
+                        <tr class="indent" data-audit-target="bs_inv_26"><td>Inventories</td><td class="num">Rp ${b26.inv}M</td><td class="num">Rp ${b25.inv}M</td></tr>
+                        <tr class="indent" data-audit-target="bs_rec_26"><td>Trade Receivables</td><td class="num">Rp ${b26.receivables}M</td><td class="num">Rp ${b25.receivables}M</td></tr>
+                        <tr class="indent" data-audit-target="bs_cash_26"><td>Cash & Equivalents</td><td class="num">Rp ${b26.cash}M</td><td class="num">Rp ${b25.cash}M</td></tr>
+                        <tr class="subtotal" data-audit-target="bs_ca_tot_26"><td>Total Current Assets</td><td class="num">Rp ${b26.ca_total}M</td><td class="num">Rp ${b25.ca_total}M</td></tr>
+
+                        <tr class="total" data-audit-target="bs_assets_tot_26"><td>TOTAL ASSETS</td><td class="num">Rp ${b26.assets_total}M</td><td class="num">Rp ${b25.assets_total}M</td></tr>
 
                         <tr class="section-head"><td colspan="3">Current Liabilities</td></tr>
-                        <tr class="indent"><td>Trade Payables</td><td class="num" data-audit-target="bs_pay_26">${b26.payables}</td><td class="num">${b25.payables}</td></tr>
-                        <tr class="indent"><td>Short-Term Debt</td><td class="num" data-audit-target="bs_st_26">${b26.st_borrowings}</td><td class="num">${b25.st_borrowings}</td></tr>
-                        <tr class="subtotal"><td>Total Current Liabilities</td><td class="num" data-audit-target="bs_cl_tot_26">${b26.cl_total}</td><td class="num">${b25.cl_total}</td></tr>
+                        <tr class="indent" data-audit-target="bs_pay_26"><td>Trade Payables</td><td class="num">Rp ${b26.payables}M</td><td class="num">Rp ${b25.payables}M</td></tr>
+                        <tr class="indent" data-audit-target="bs_cl_tot_26"><td>Total Current Liabilities</td><td class="num">Rp ${b26.cl_total}M</td><td class="num">Rp ${b25.cl_total}M</td></tr>
 
-                        <tr class="section-head"><td colspan="3">Non-Current Liabilities & Equity</td></tr>
-                        <tr class="indent"><td>Long-Term Liabilities</td><td class="num" data-audit-target="bs_ncl_tot_26">${b26.ncl_total}</td><td class="num">${b25.ncl_total}</td></tr>
-                        <tr class="indent"><td>Total Shareholder Equity</td><td class="num" data-audit-target="bs_eq_tot_26">${b26.equity_total}</td><td class="num">${b25.equity_total}</td></tr>
-                        <tr class="total"><td>TOTAL LIABILITIES & EQUITY</td><td class="num" data-audit-target="bs_liab_eq_26">${b26.liab_eq_total}</td><td class="num">${b25.liab_eq_total}</td></tr>
+                        <tr class="section-head"><td colspan="3">Non-Current Liabilities</td></tr>
+                        <tr class="indent" data-audit-target="bs_lt_borr_26"><td>Long-Term Borrowings</td><td class="num">Rp ${b26.lt_borrowings}M</td><td class="num">Rp ${b25.lt_borrowings}M</td></tr>
+                        <tr class="subtotal" data-audit-target="bs_ncl_tot_26"><td>Total Non-Current Liab.</td><td class="num">Rp ${b26.ncl_total}M</td><td class="num">Rp ${b25.ncl_total}M</td></tr>
+
+                        <tr class="total" data-audit-target="bs_equity_tot_26"><td>TOTAL EQUITY</td><td class="num">Rp ${b26.equity_total}M</td><td class="num">Rp ${b25.equity_total}M</td></tr>
+                        <tr class="total" data-audit-target="bs_liab_eq_tot_26"><td>TOTAL LIABILITIES & EQUITY</td><td class="num">Rp ${b26.liab_eq_total}M</td><td class="num">Rp ${b25.liab_eq_total}M</td></tr>
                     </tbody>
                 `;
 
-                document.getElementById('bs-table').innerHTML = html;
+                table.innerHTML = html;
+                this.attachAuditListeners();
             }
 
-            switchTab(tab) {
-                document.getElementById('tab-card').classList.toggle('active', tab === 'card');
-                document.getElementById('tab-sci').classList.toggle('active', tab === 'sci');
-                document.getElementById('tab-bs').classList.toggle('active', tab === 'bs');
-
-                document.getElementById('card-dock-row').style.display = (tab === 'card' || window.innerWidth >= 1024) ? 'block' : 'none';
-                document.getElementById('doc-sci').style.display = (tab === 'sci' || window.innerWidth >= 1024) ? 'block' : 'none';
-                document.getElementById('doc-bs').style.display = (tab === 'bs' || window.innerWidth >= 1024) ? 'block' : 'none';
-            }
-
-            toggleCompanyCard(e) {
-                if (e) e.stopPropagation();
-                const card = document.getElementById('company-card-box');
-                const btn = document.getElementById('btn-toggle-card');
-                card.classList.toggle('minimized');
-                btn.innerText = card.classList.contains('minimized') ? 'Expand +' : 'Minimize −';
-            }
-
-            toggleAuditMode() {
-                this.auditMode = !this.auditMode;
-                document.body.classList.toggle('audit-mode', this.auditMode);
-                this.updateAuditUI();
-
-                if (this.auditMode) {
-                    showToast("🔍 AUDIT MODE ACTIVE: Click numbers, gaps, or card details to highlight discrepancy.");
-                }
-            }
-
-            updateAuditUI() {
-                document.getElementById('btn-approve').style.display = this.auditMode ? 'none' : 'inline-block';
-                document.getElementById('btn-reject').style.display = this.auditMode ? 'none' : 'inline-block';
-                document.getElementById('btn-audit').style.display = this.auditMode ? 'none' : 'inline-block';
-                document.getElementById('btn-cancel-audit').style.display = this.auditMode ? 'inline-block' : 'none';
-                document.getElementById('btn-stamp-audit').style.display = this.auditMode ? 'inline-block' : 'none';
-            }
-
-            attachAuditClickHandlers() {
-                document.querySelectorAll('[data-audit-target]').forEach(elem => {
-                    elem.onclick = (e) => {
+            attachAuditListeners() {
+                const targets = document.querySelectorAll('[data-audit-target]');
+                targets.forEach(el => {
+                    el.onclick = (e) => {
                         if (!this.auditMode) return;
                         e.stopPropagation();
-                        const targetId = elem.getAttribute('data-audit-target');
-                        if (this.markedTargets.has(targetId)) {
-                            this.markedTargets.delete(targetId);
-                            elem.classList.remove('marked-discrepancy');
+                        const key = el.getAttribute('data-audit-target');
+                        if (this.markedTargets.has(key)) {
+                            this.markedTargets.delete(key);
+                            el.classList.remove('marked-discrepancy');
                         } else {
-                            this.markedTargets.add(targetId);
-                            elem.classList.add('marked-discrepancy');
+                            this.markedTargets.add(key);
+                            el.classList.add('marked-discrepancy');
                         }
                     };
                 });
             }
 
-            /* ════════════════════════════════════════════════════════════
-               SUBMISSION HANDLERS
-               ════════════════════════════════════════════════════════════ */
+            toggleAuditMode() {
+                this.auditMode = !this.auditMode;
+                if (this.auditMode) {
+                    document.body.classList.add('audit-mode');
+                    showToast("🔍 AUDIT MODE ACTIVE: Click discrepancy line items to mark them.");
+                } else {
+                    document.body.classList.remove('audit-mode');
+                    this.clearMarkedTargets();
+                }
+                this.updateAuditUI();
+            }
+
+            clearMarkedTargets() {
+                this.markedTargets.clear();
+                document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
+            }
+
+            updateAuditUI() {
+                const btnApp = document.getElementById('btn-approve');
+                const btnRej = document.getElementById('btn-reject');
+                const btnAud = document.getElementById('btn-audit');
+                const btnCancelAud = document.getElementById('btn-cancel-audit');
+                const btnStampAud = document.getElementById('btn-stamp-audit');
+
+                if (this.auditMode) {
+                    btnApp.style.display = 'none';
+                    btnRej.style.display = 'none';
+                    btnAud.style.display = 'none';
+                    btnCancelAud.style.display = 'inline-block';
+                    btnStampAud.style.display = 'inline-block';
+                } else {
+                    btnApp.style.display = 'inline-block';
+                    btnRej.style.display = 'inline-block';
+                    btnAud.style.display = 'inline-block';
+                    btnCancelAud.style.display = 'none';
+                    btnStampAud.style.display = 'none';
+                }
+            }
+
             submitApprove() {
-                const currentPack = this.currentQueue[this.shiftPackIndex];
-                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
-                this.processVerdict('approve', null, expected);
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
+
+                document.getElementById('stamp-sci-app').classList.add('visible');
+                
+                const isCorrect = (verdict.correctAction === 'approve');
+                this.processVerdictResult('approve', isCorrect, verdict);
             }
 
             openRejectModal() {
-                const modal = document.getElementById('reject-modal');
-                const list = document.getElementById('reject-reasons-list');
-                list.innerHTML = '';
+                this.selectedRejectReason = null;
+                const container = document.getElementById('reject-reasons-list');
+                let html = '';
 
-                const availableReasons = [
-                    { id: 'loss_unprotected', title: 'Loss — no protection', desc: 'Net loss (PAT <= 0) without trajectory or startup protection.' },
-                    { id: 'worse_yoy', title: 'Worse than last year', desc: 'Severe YoY earnings collapse (>40% drop).' },
-                    { id: 'weak_margins', title: 'Weak margins', desc: 'Thin Gross Margin (<20%) or Net Margin (<5%).' },
-                    { id: 'fails_rule', title: 'Failed Rule of the Day', desc: 'Violates daily Investment Committee directive.' },
-                    { id: 'bs_risk', title: 'Balance Sheet risk', desc: 'Current liabilities exceed current assets, cash floor breach, or gearing risk.' }
-                ];
+                const availableReasons = (this.mode === 'senior') ? 
+                    ['loss_unprotected', 'worse_yoy', 'weak_margins', 'fails_rule', 'bs_risk'] :
+                    ['loss_unprotected', 'worse_yoy', 'weak_margins', 'fails_rule'];
 
-                availableReasons.forEach((r, idx) => {
-                    const div = document.createElement('div');
-                    div.className = `reject-option ${idx === 0 ? 'selected' : ''}`;
-                    div.dataset.reason = r.id;
-                    div.innerHTML = `
-                        <input type="radio" name="rej_reason_rad" value="${r.id}" ${idx === 0 ? 'checked' : ''} style="margin-top:2px;">
-                        <div>
-                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">${r.title}</div>
-                            <div style="font-size:0.75rem; color:#4b5563;">${r.desc}</div>
+                availableReasons.forEach(reasonKey => {
+                    const label = REJECT_REASON_LABELS[reasonKey] || reasonKey;
+                    html += `
+                        <div class="reject-option" onclick="game.selectRejectReason('${reasonKey}', this)">
+                            <input type="radio" name="reject_reason" value="${reasonKey}" style="margin-top:2px;">
+                            <div>
+                                <div style="font-weight:bold; font-size:0.85rem; color:#111827;">${label}</div>
+                            </div>
                         </div>
                     `;
-                    div.onclick = () => {
-                        document.querySelectorAll('.reject-option').forEach(opt => opt.classList.remove('selected'));
-                        div.classList.add('selected');
-                        div.querySelector('input').checked = true;
-                        this.selectedRejectReason = r.id;
-                    };
-                    list.appendChild(div);
                 });
 
-                this.selectedRejectReason = 'loss_unprotected';
-                modal.style.display = 'flex';
+                container.innerHTML = html;
+                document.getElementById('reject-modal').style.display = 'flex';
+            }
+
+            selectRejectReason(reasonKey, element) {
+                this.selectedRejectReason = reasonKey;
+                document.querySelectorAll('.reject-option').forEach(el => el.classList.remove('selected'));
+                element.classList.add('selected');
+                const radio = element.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
             }
 
             closeRejectModal() {
@@ -2105,232 +2095,251 @@
             }
 
             confirmReject() {
+                if (!this.selectedRejectReason) {
+                    showToast("⚠️ Select a rejection reason first!");
+                    return;
+                }
+
                 this.closeRejectModal();
-                const currentPack = this.currentQueue[this.shiftPackIndex];
-                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
-                this.processVerdict('reject', this.selectedRejectReason, expected);
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
+
+                document.getElementById('stamp-sci-den').classList.add('visible');
+
+                let isCorrect = false;
+                if (verdict.correctAction === 'reject') {
+                    isCorrect = verdict.correctRejectReasons.includes(this.selectedRejectReason);
+                }
+
+                this.processVerdictResult('reject', isCorrect, verdict, this.selectedRejectReason);
             }
 
             submitAuditStamp() {
-                const currentPack = this.currentQueue[this.shiftPackIndex];
-                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
-
-                // Verify marked targets match validChains
-                let auditSuccess = false;
-                if (currentPack.hasFraud) {
-                    const markedArray = Array.from(this.markedTargets);
-                    if (markedArray.length > 0) {
-                        for (let chain of currentPack.validChains) {
-                            if (chain.some(target => markedArray.includes(target))) {
-                                auditSuccess = true;
-                                break;
-                            }
-                        }
-                    }
+                if (this.markedTargets.size === 0) {
+                    showToast("⚠️ Mark at least 1 discrepancy in Audit Mode!");
+                    return;
                 }
 
-                this.processVerdict('audit', auditSuccess ? 'VALID_AUDIT_STAMP' : 'INVALID_AUDIT_STAMP', expected);
-            }
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
 
-            useShredder() {
-                if (this.inventory.shredder <= 0) return;
-                this.inventory.shredder--;
-                showToast("🗑️ Dossier shredded! Safely skipped without citation.");
-                this.shiftPackIndex++;
-                this.loadCurrentPack();
-            }
+                document.getElementById('stamp-sci-den').classList.add('visible');
 
-            useGoldenStamp() {
-                if (this.inventory.goldstamp <= 0) return;
-                this.inventory.goldstamp--;
-                showToast("🌟 Golden Pass Stamp used! Auto-cleared deal pack.");
-                const currentPack = this.currentQueue[this.shiftPackIndex];
-                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
-                this.processVerdict(expected.correctAction, expected.correctRejectReason, expected, true);
-            }
-
-            processVerdict(userAction, userReason, expected, isGoldenStamp = false) {
                 let isCorrect = false;
+                if (verdict.correctAction === 'audit') {
+                    const markedArray = Array.from(this.markedTargets);
+                    isCorrect = dossier.validChains.some(chain => {
+                        return chain.every(target => markedArray.includes(target));
+                    });
+                }
+
+                this.toggleAuditMode();
+                this.processVerdictResult('audit', isCorrect, verdict);
+            }
+
+            processVerdictResult(playerAction, isCorrect, verdict, chosenReason = null) {
+                const dossier = this.currentQueue[this.shiftPackIndex];
+
                 let payDelta = 0;
                 let repDelta = 0;
-                let isCitation = false;
+                let citationDelta = 0;
 
-                if (isGoldenStamp) {
-                    isCorrect = true;
+                if (isCorrect) {
                     payDelta = 50;
                     repDelta = 5;
-                } else if (userAction === expected.correctAction) {
-                    if (userAction === 'reject') {
-                        // Multi-reason acceptance
-                        if (expected.correctRejectReasons.includes(userReason) || expected.correctRejectReason === userReason) {
-                            isCorrect = true;
-                            payDelta = 50;
-                            repDelta = 5;
-                        } else {
-                            isCorrect = false;
-                            payDelta = -20;
-                            repDelta = -5;
-                            isCitation = true;
-                        }
-                    } else if (userAction === 'audit') {
-                        if (userReason === 'VALID_AUDIT_STAMP') {
-                            isCorrect = true;
-                            payDelta = 75; // Audit bounty
-                            repDelta = 10;
-                        } else {
-                            isCorrect = false;
-                            payDelta = -20;
-                            repDelta = -5;
-                            isCitation = true;
-                        }
-                    } else { // approve
-                        isCorrect = true;
-                        payDelta = 50;
-                        repDelta = 5;
-                    }
+                    this.cash += payDelta;
+                    this.rep += repDelta;
                 } else {
-                    isCorrect = false;
-                    payDelta = -20;
-                    repDelta = -5;
-                    isCitation = true;
-                }
-
-                // Handle Citation Shield
-                if (isCitation && this.inventory.shield > 0) {
-                    this.inventory.shield--;
-                    isCitation = false;
                     payDelta = 0;
-                    showToast("🛡️ Internal Review Shield absorbed citation penalty!");
+                    repDelta = -10;
+                    
+                    if (this.inventory.shield > 0) {
+                        this.inventory.shield--;
+                        showToast("🛡️ Internal Review Shield absorbed 1 citation penalty!");
+                    } else {
+                        citationDelta = 1;
+                        this.citations += citationDelta;
+                    }
+
+                    this.rep += repDelta;
                 }
 
-                if (isCitation) {
-                    this.citations++;
-                }
+                this.updateHUD();
 
-                this.cash += payDelta;
-                this.rep += repDelta;
-
-                // Show Stamp Animation
-                const appStamp = document.getElementById('stamp-sci-app');
-                const denStamp = document.getElementById('stamp-sci-den');
-                if (userAction === 'approve') appStamp.classList.add('visible');
-                else denStamp.classList.add('visible');
-
-                setTimeout(() => {
-                    this.showVerdictMemo(isCorrect, userAction, expected, payDelta, repDelta, isCitation);
-                }, 300);
-            }
-
-            showVerdictMemo(isCorrect, userAction, expected, payDelta, repDelta, isCitation) {
-                const currentPack = this.currentQueue[this.shiftPackIndex];
-                const memo = document.getElementById('memo-overlay');
-                
                 const statusLine = document.getElementById('memo-status-line');
-                statusLine.className = isCorrect ? 'memo-status-CORRECT' : 'memo-status-INCORRECT';
-                statusLine.innerText = isCorrect ? 'STATUS: VERDICT ACCEPTEABLE' : 'STATUS: INTERNAL REVIEW CITATION';
-
-                document.getElementById('memo-correct-action').innerText = expected.correctAction.toUpperCase();
-                
-                const reasonBucket = document.getElementById('memo-reason-bucket-wrapper');
-                if (expected.correctAction === 'reject') {
-                    reasonBucket.style.display = 'block';
-                    document.getElementById('memo-reason-bucket').innerText = expected.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(' / ');
+                if (isCorrect) {
+                    statusLine.className = 'memo-status-CORRECT';
+                    statusLine.innerText = 'STATUS: VERIFIED CORRECT (+ $50 BONUS)';
                 } else {
-                    reasonBucket.style.display = 'none';
+                    statusLine.className = 'memo-status-INCORRECT';
+                    statusLine.innerText = 'STATUS: CITATION ISSUED (INTERNAL REVIEW WARNING)';
+                }
+
+                document.getElementById('memo-correct-action').innerText = verdict.correctAction.toUpperCase();
+
+                const reasonBucketWrapper = document.getElementById('memo-reason-bucket-wrapper');
+                if (verdict.correctAction === 'reject') {
+                    reasonBucketWrapper.style.display = 'block';
+                    document.getElementById('memo-reason-bucket').innerText = verdict.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(', ');
+                } else {
+                    reasonBucketWrapper.style.display = 'none';
                 }
 
                 const bulletsList = document.getElementById('memo-discrepancy-bullets');
-                bulletsList.innerHTML = '';
-                currentPack.discrepancyBullets.forEach(b => {
-                    const li = document.createElement('li');
-                    li.innerText = b;
-                    bulletsList.appendChild(li);
-                });
+                bulletsList.innerHTML = dossier.discrepancyBullets.map(b => `<li>${b}</li>`).join('');
 
-                document.getElementById('memo-working').innerText = currentPack.workingText || "N/A";
-                document.getElementById('memo-implication').innerText = currentPack.implicationText || "N/A";
+                document.getElementById('memo-working').innerText = dossier.workingText || "N/A";
+                document.getElementById('memo-implication').innerText = dossier.implicationText || "Standard financial review.";
 
                 document.getElementById('memo-delta-pay').innerText = `PAY: ${payDelta >= 0 ? '+' : ''}$${payDelta}`;
                 document.getElementById('memo-delta-rep').innerText = `REP: ${repDelta >= 0 ? '+' : ''}${repDelta}`;
                 
                 const citElem = document.getElementById('memo-delta-cit');
-                citElem.style.display = isCitation ? 'inline-block' : 'none';
+                if (citationDelta > 0) {
+                    citElem.style.display = 'block';
+                    citElem.innerText = `CITATIONS: +${citationDelta}`;
+                } else {
+                    citElem.style.display = 'none';
+                }
 
-                document.getElementById('memo-pedagogy').innerText = expected.note || "Review investment standards.";
-
-                memo.style.display = 'flex';
+                document.getElementById('memo-pedagogy').innerText = this.activeRule.text;
+                document.getElementById('memo-overlay').style.display = 'flex';
             }
 
             closeMemo() {
                 document.getElementById('memo-overlay').style.display = 'none';
 
                 if (this.citations >= this.maxCitations) {
-                    this.triggerGameOver("Accumulated maximum internal review citations.");
+                    this.triggerGameOver("Internal review citations exceeded allowable limit.");
                     return;
                 }
 
                 this.shiftPackIndex++;
-                this.loadCurrentPack();
+                if (this.shiftPackIndex < 5) {
+                    this.loadPack(this.shiftPackIndex);
+                } else {
+                    this.endShift();
+                }
             }
 
             endShift() {
                 if (this.timerInterval) clearInterval(this.timerInterval);
 
+                const bonuses = 250;
+                const penalties = this.citations * 20;
                 const rent = 30;
-                this.cash -= rent;
+                const netShift = bonuses - penalties - rent;
 
-                document.getElementById('settle-bonuses').innerText = `+$${Math.max(0, this.cash + rent)}`;
+                document.getElementById('settle-bonuses').innerText = `+$${bonuses}`;
+                document.getElementById('settle-penalties').innerText = `-$${penalties}`;
                 document.getElementById('settle-rent').innerText = `-$${rent}`;
                 document.getElementById('settle-total').innerText = `$${this.cash}`;
 
                 const currentScore = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
                 document.getElementById('settle-score-text').innerText = `Your Current Desk Score: ${currentScore} pts`;
                 document.getElementById('settle-name-input').value = this.playerName;
+                document.getElementById('settle-save-status').innerText = '';
 
                 document.getElementById('settle-next-day').innerText = this.day + 1;
                 this.updateShopButtons();
 
+                document.getElementById('game-container').style.display = 'none';
                 document.getElementById('settlement-overlay').style.display = 'flex';
-            }
-
-            updateShopButtons() {
-                document.getElementById('buy-coffee-btn').innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
-                document.getElementById('buy-marker-btn').innerText = `BUY ($40) [Max: ${this.maxCitations}]`;
-                document.getElementById('buy-shield-btn').innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
-                document.getElementById('buy-shredder-btn').innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
-                document.getElementById('buy-goldstamp-btn').innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
-            }
-
-            buyItem(item) {
-                const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
-                const price = prices[item];
-
-                if (this.cash < price) {
-                    showToast("❌ Insufficient funds for desk item!");
-                    return;
-                }
-
-                this.cash -= price;
-                if (item === 'marker') {
-                    this.maxCitations = 5;
-                    showToast("🖊️ Red Marker Pro acquired! Max citations increased to 5.");
-                } else {
-                    this.inventory[item]++;
-                    showToast(`🛒 Purchased ${item.toUpperCase()}!`);
-                }
-
-                document.getElementById('settle-total').innerText = `$${this.cash}`;
-                this.updateShopButtons();
             }
 
             nextDay() {
                 document.getElementById('settlement-overlay').style.display = 'none';
                 this.day++;
-                this.setupDayShift();
+                this.showBriefing();
+            }
+
+            updateShopButtons() {
+                const btnCoffee = document.getElementById('buy-coffee-btn');
+                const btnMarker = document.getElementById('buy-marker-btn');
+                const btnShield = document.getElementById('buy-shield-btn');
+                const btnShredder = document.getElementById('buy-shredder-btn');
+                const btnGold = document.getElementById('buy-goldstamp-btn');
+
+                if (btnCoffee) btnCoffee.innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
+                if (btnMarker) btnMarker.innerText = (this.maxCitations > 4) ? `MAXED (5 Citations)` : `BUY ($40)`;
+                if (btnShield) btnShield.innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
+                if (btnShredder) btnShredder.innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
+                if (btnGold) btnGold.innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
+            }
+
+            buyItem(itemKey) {
+                const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
+                const cost = prices[itemKey] || 0;
+
+                if (this.cash < cost) {
+                    showToast("⚠️ Not enough pay cash balance!");
+                    return;
+                }
+
+                if (itemKey === 'marker' && this.maxCitations > 4) {
+                    showToast("⚠️ Citation limit already upgraded to max (5)!");
+                    return;
+                }
+
+                this.cash -= cost;
+                if (itemKey === 'marker') {
+                    this.maxCitations = 5;
+                } else {
+                    this.inventory[itemKey] = (this.inventory[itemKey] || 0) + 1;
+                }
+
+                showToast(`🛒 Purchased ${itemKey.toUpperCase()}!`);
+                this.updateHUD();
+                this.updateShopButtons();
+            }
+
+            updateSpecialButtons() {
+                const btnShredder = document.getElementById('btn-shredder');
+                const btnGold = document.getElementById('btn-golden-stamp');
+                
+                if (this.inventory.shredder > 0) {
+                    btnShredder.style.display = 'inline-block';
+                    document.getElementById('shredder-count').innerText = this.inventory.shredder;
+                } else {
+                    btnShredder.style.display = 'none';
+                }
+
+                if (this.inventory.goldstamp > 0) {
+                    btnGold.style.display = 'inline-block';
+                    document.getElementById('gold-stamp-count').innerText = this.inventory.goldstamp;
+                } else {
+                    btnGold.style.display = 'none';
+                }
+            }
+
+            useShredder() {
+                if (this.inventory.shredder <= 0) return;
+                this.inventory.shredder--;
+                showToast("🗑️ Shredder used — dossier skipped safely!");
+                this.shiftPackIndex++;
+                if (this.shiftPackIndex < 5) {
+                    this.loadPack(this.shiftPackIndex);
+                } else {
+                    this.endShift();
+                }
+            }
+
+            useGoldenStamp() {
+                if (this.inventory.goldstamp <= 0) return;
+                this.inventory.goldstamp--;
+                showToast("🌟 Golden Pass Stamp used — Pack automatically cleared!");
+                
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
+                this.processVerdictResult(verdict.correctAction, true, verdict);
             }
 
             triggerGameOver(reason) {
                 if (this.timerInterval) clearInterval(this.timerInterval);
+
+                document.getElementById('game-container').style.display = 'none';
+                document.getElementById('memo-overlay').style.display = 'none';
+
                 document.getElementById('gameover-reason').innerText = reason;
                 document.getElementById('go-days').innerText = this.day;
                 document.getElementById('go-cash').innerText = this.cash;
@@ -2343,11 +2352,20 @@
                 document.getElementById('gameover-overlay').style.display = 'flex';
             }
 
+            saveScoreFromExit() {
+                const name = document.getElementById('exit-name-input').value;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
+                    document.getElementById('exit-save-status').innerText = "✓ Score saved to Leaderboard!";
+                    LeaderboardManager.renderTitleList();
+                }
+            }
+
             saveScoreFromSettlement() {
                 const name = document.getElementById('settle-name-input').value;
                 const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
                 if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
-                    document.getElementById('settle-save-status').innerText = "✓ Score saved to Top 3 Leaderboard!";
+                    document.getElementById('settle-save-status').innerText = "✓ Score saved to Leaderboard!";
                     LeaderboardManager.renderTitleList();
                 }
             }
@@ -2356,7 +2374,7 @@
                 const name = document.getElementById('go-name-input').value;
                 const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
                 if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
-                    document.getElementById('go-save-status').innerText = "✓ Final score saved!";
+                    document.getElementById('go-save-status').innerText = "✓ Score saved to Leaderboard!";
                     LeaderboardManager.renderTitleList();
                 }
             }
@@ -2365,20 +2383,12 @@
                 const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
                 document.getElementById('exit-score-text').innerText = `Your Current Score: ${score} pts`;
                 document.getElementById('exit-name-input').value = this.playerName;
+                document.getElementById('exit-save-status').innerText = '';
                 document.getElementById('exit-confirm-modal').style.display = 'flex';
             }
 
             closeExitConfirmModal() {
                 document.getElementById('exit-confirm-modal').style.display = 'none';
-            }
-
-            saveScoreFromExit() {
-                const name = document.getElementById('exit-name-input').value;
-                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
-                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
-                    document.getElementById('exit-save-status').innerText = "✓ Score saved!";
-                    LeaderboardManager.renderTitleList();
-                }
             }
 
             confirmReturnToMenu() {
@@ -2389,48 +2399,126 @@
                 LeaderboardManager.renderTitleList();
             }
 
+            updateHUD() {
+                document.getElementById('hud-day').innerText = this.day;
+                document.getElementById('hud-wage').innerText = this.cash;
+                document.getElementById('hud-rep').innerText = this.rep;
+                document.getElementById('hud-citations').innerText = `${this.citations}/${this.maxCitations}`;
+            }
+
+            toggleCompanyCard(e) {
+                if (e) e.stopPropagation();
+                const card = document.getElementById('company-card-box');
+                const btn = document.getElementById('btn-toggle-card');
+                if (card.classList.contains('minimized')) {
+                    card.classList.remove('minimized');
+                    btn.innerText = 'Minimize −';
+                } else {
+                    card.classList.add('minimized');
+                    btn.innerText = 'Expand +';
+                }
+            }
+
+            switchTab(tabKey) {
+                document.querySelectorAll('.doc-tab').forEach(b => b.classList.remove('active'));
+                const targetBtn = document.getElementById(`tab-${tabKey}`);
+                if (targetBtn) targetBtn.classList.add('active');
+
+                const sci = document.getElementById('doc-sci');
+                const bs = document.getElementById('doc-bs');
+                const card = document.getElementById('card-dock-row');
+
+                if (tabKey === 'card') {
+                    card.style.display = 'block';
+                    sci.style.display = 'none';
+                    bs.style.display = 'none';
+                } else if (tabKey === 'sci') {
+                    card.style.display = 'block';
+                    sci.style.display = 'block';
+                    bs.style.display = 'none';
+                } else if (tabKey === 'bs') {
+                    card.style.display = 'block';
+                    sci.style.display = 'none';
+                    bs.style.display = 'block';
+                }
+            }
+
             openTeacherPanel() {
-                document.getElementById('teacher-overlay').style.display = 'flex';
-                const cp = this.currentQueue[this.shiftPackIndex];
-                if (cp) {
-                    const verdict = evaluateDossierVerdict(cp, this.activeRule, this.activeNote, this.mode);
-                    document.getElementById('tp-queue-index').innerText = `Pack ${this.shiftPackIndex + 1} of 5`;
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                if (dossier) {
+                    const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
+                    document.getElementById('tp-queue-index').innerText = `${this.shiftPackIndex + 1} / 5`;
                     document.getElementById('tp-action').innerText = verdict.correctAction.toUpperCase();
-                    document.getElementById('tp-reason').innerText = verdict.correctRejectReasons.join(', ') || 'None';
-                    document.getElementById('tp-math').innerText = cp.fraudCategory || 'Clean';
-                    document.getElementById('tp-chains').innerText = JSON.stringify(cp.validChains);
+                    document.getElementById('tp-reason').innerText = verdict.correctRejectReasons.length ? verdict.correctRejectReasons.join(', ') : 'None';
+                    document.getElementById('tp-math').innerText = dossier.fraudCategory || 'None';
+                    document.getElementById('tp-chains').innerText = JSON.stringify(dossier.validChains);
                 }
                 document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : 'None';
                 document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : 'None';
-                document.getElementById('tp-save-code').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+
+                const stateCode = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                document.getElementById('tp-save-code').value = stateCode;
+
+                document.getElementById('teacher-overlay').style.display = 'flex';
             }
 
-            closeTeacherPanel() { document.getElementById('teacher-overlay').style.display = 'none'; }
-            teacherForceMode(m) { this.mode = m; showToast(`Switched to ${m.toUpperCase()} DESK`); this.closeTeacherPanel(); }
-            teacherAddCash(amt) { this.cash += amt; showToast(`Added +$${amt} cash`); this.closeTeacherPanel(); }
-            teacherResetCitations() { this.citations = 0; showToast("Citations reset to 0"); this.closeTeacherPanel(); }
-            clearLeaderboardTeacher() { LeaderboardManager.clear(); showToast("Leaderboard cleared."); LeaderboardManager.renderTitleList(); }
+            closeTeacherPanel() {
+                document.getElementById('teacher-overlay').style.display = 'none';
+            }
 
-            openSaveCodeModal() { document.getElementById('savecode-overlay').style.display = 'flex'; }
-            closeSaveCodeModal() { document.getElementById('savecode-overlay').style.display = 'none'; }
+            teacherForceMode(m) {
+                this.mode = m;
+                showToast(`🎓 Mode forced to: ${m.toUpperCase()}`);
+            }
+
+            teacherAddCash(amt) {
+                this.cash += amt;
+                this.updateHUD();
+                showToast(`🎓 Added +$${amt} pay!`);
+            }
+
+            teacherResetCitations() {
+                this.citations = 0;
+                this.updateHUD();
+                showToast(`🎓 Citations reset to 0!`);
+            }
+
+            clearLeaderboardTeacher() {
+                LeaderboardManager.clear();
+                LeaderboardManager.renderTitleList();
+                showToast("🎓 Leaderboard cleared!");
+            }
+
+            openSaveCodeModal() {
+                const stateCode = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                document.getElementById('save-code-input').value = stateCode;
+                document.getElementById('savecode-overlay').style.display = 'flex';
+            }
+
+            closeSaveCodeModal() {
+                document.getElementById('savecode-overlay').style.display = 'none';
+            }
+
             copySaveCode() {
-                const code = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
-                navigator.clipboard.writeText(code);
+                const input = document.getElementById('save-code-input');
+                input.select();
+                navigator.clipboard.writeText(input.value);
                 showToast("📋 Save code copied to clipboard!");
             }
+
             loadSaveCode() {
                 try {
                     const raw = document.getElementById('save-code-input').value.trim();
                     const data = JSON.parse(atob(raw));
-                    this.day = data.day || 1;
-                    this.cash = data.cash || 50;
-                    this.rep = data.rep || 20;
-                    this.mode = data.mode || 'junior';
-                    showToast("💾 State loaded successfully!");
+                    if (data.day) this.day = data.day;
+                    if (data.cash) this.cash = data.cash;
+                    if (data.rep) this.rep = data.rep;
+                    if (data.mode) this.mode = data.mode;
+                    showToast("💾 Save code loaded successfully!");
                     this.closeSaveCodeModal();
                     this.startGame(this.mode);
                 } catch (e) {
-                    showToast("❌ Invalid save code!");
+                    showToast("❌ Invalid save code format!");
                 }
             }
         }
