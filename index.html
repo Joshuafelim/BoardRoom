@@ -289,18 +289,18 @@
 
         /* Omitted row gap target style */
         .missing-line-gap {
-            height: 14px;
-            background: transparent;
-            transition: all 0.2s;
-        }
-        body.audit-mode .missing-line-gap {
-            height: 22px;
-            background: rgba(220, 38, 38, 0.05);
-            border: 1px dashed rgba(185, 28, 28, 0.3);
+            height: 24px;
+            background: rgba(220, 38, 38, 0.04);
+            border: 1px dashed rgba(185, 28, 28, 0.25);
             border-radius: 3px;
         }
+        body.audit-mode .missing-line-gap {
+            background: rgba(220, 38, 38, 0.12);
+            border: 1px dashed rgba(185, 28, 28, 0.6);
+            cursor: pointer !important;
+        }
         body.audit-mode .missing-line-gap:hover {
-            background-color: rgba(220, 38, 38, 0.25) !important;
+            background-color: rgba(220, 38, 38, 0.3) !important;
             outline: 2px dashed var(--ink-red) !important;
         }
 
@@ -816,7 +816,7 @@
                     <div id="memo-implication" style="font-size: 0.82rem; color: #374151; font-style: italic;">Overstated margins obscure real operational losses.</div>
                 </div>
 
-                <div class="feedback-section correct-border" style="display:flex; justify-content:space-around; align-items:center; padding:6px 10px;">
+                <div class="feedback-section correct-border" style="display:flex; justify-style:space-around; align-items:center; padding:6px 10px;">
                     <div id="memo-delta-pay" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">PAY: +$50</div>
                     <div id="memo-delta-rep" style="font-weight:bold; color:#15803d; font-size: 0.85rem;">REP: +5</div>
                     <div id="memo-delta-cit" style="font-weight:bold; color:#b91c1c; font-size: 0.85rem; display:none;">CITATIONS: +1</div>
@@ -1118,398 +1118,516 @@
         ];
 
         const DAILY_NOTES_POOL = [
-            { id: 'note_vip_sambal', title: 'Partner Memo: PT Sambal Api Utara', text: 'If arithmetic and statements are clean, APPROVE PT Sambal Api Utara regardless of thin margins.', targetName: 'PT Sambal Api Utara', targetPackType: 'weak_margins', forceApproveName: 'PT Sambal Api Utara' },
-            { id: 'note_pilot_startups', title: 'Pilot Incentive: Tech Startups', text: 'APPROVE clean loss-making firms founded in 2024 or later today.', targetPackType: 'loss', approveStartups: true },
-            { id: 'note_strict_nusabite', title: 'Internal Review Watch: PT NusaBite Foods', text: 'Audit extra carefully — PT NusaBite Foods is suspected of identity or header mismatch.', targetName: 'PT NusaBite Foods', targetPackType: 'info_mismatch' },
-            { id: 'note_batavia_audit', title: 'Internal Audit Priority: PT Batavia Logistics', text: 'High risk of padded gross profit numbers on PT Batavia Logistics.', targetName: 'PT Batavia Logistics', targetPackType: 'fraud_math' }
+            { id: 'note_vip_sambal', title: 'Partner Memo: PT Sambal Api Utara', text: 'If arithmetic and statements are clean, APPROVE PT Sambal Api Utara regardless of thin margins.', targetName: 'PT Sambal Api Utara', forceApproveName: 'PT Sambal Api Utara' },
+            { id: 'note_pilot_startups', title: 'Pilot Incentive: Tech Startups', text: 'APPROVE clean loss-making firms founded in 2024 or later today.', approveStartups: true },
+            { id: 'note_strict_nusabite', title: 'Internal Review Watch: PT NusaBite Foods', text: 'Audit extra carefully — PT NusaBite Foods is suspected of identity or header mismatch.', targetName: 'PT NusaBite Foods' },
+            { id: 'note_batavia_audit', title: 'Internal Audit Priority: PT Batavia Logistics', text: 'High risk of padded gross profit numbers on PT Batavia Logistics.', targetName: 'PT Batavia Logistics' }
         ];
 
         /* ════════════════════════════════════════════════════════════
-           2. DOSSIER GENERATOR WITH PROBLEM A & B TARGET MIX
+           2. EXPLICIT ROLE BUILDERS & HARD PER-SHIFT QUOTA GENERATOR
            ════════════════════════════════════════════════════════════ */
-        class DossierGenerator {
-            static generate(mode, dayNumber, forcedType = null, forcedName = null, forcedFounded = null, rejectSubtype = null) {
-                const names = [
-                    "PT Sambal Api Utara", "PT NusaBite Foods", "PT Batavia Logistics",
-                    "PT Kopi Senja Tbk", "PT Garuda Tekno", "PT Bali Organics",
-                    "PT Java Polymer", "PT Sumatra Agro", "PT Borobudur Craft",
-                    "PT Merapi Energy", "PT Lombok Marine", "PT Sunda Textiles"
-                ];
-                const industries = ["F&B Retail", "Consumer Goods", "Logistics & Transport", "Agritech", "Renewable Energy", "Fintech Services", "Textile Manufacturing"];
-                
-                const companyName = forcedName || names[Math.floor(Math.random() * names.length)];
-                const industry = industries[Math.floor(Math.random() * industries.length)];
-                const foundedYear = forcedFounded || (Math.floor(Math.random() * 6) + 2020);
-                const operatingYears = 2026 - foundedYear + 1;
+        const COMPANY_NAMES = [
+            "PT Sambal Api Utara", "PT NusaBite Foods", "PT Batavia Logistics",
+            "PT Kopi Senja Tbk", "PT Garuda Tekno", "PT Bali Organics",
+            "PT Java Polymer", "PT Sumatra Agro", "PT Borobudur Craft",
+            "PT Merapi Energy", "PT Lombok Marine", "PT Sunda Textiles"
+        ];
+        const INDUSTRIES = ["F&B Retail", "Consumer Goods", "Logistics & Transport", "Agritech", "Renewable Energy", "Fintech Services", "Textile Manufacturing"];
 
-                const card = {
-                    name: companyName,
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        class RolePackBuilder {
+            static generateBaseCompanyCard(overrideName = null, overrideFounded = null) {
+                const name = overrideName || COMPANY_NAMES[Math.floor(Math.random() * COMPANY_NAMES.length)];
+                const industry = INDUSTRIES[Math.floor(Math.random() * INDUSTRIES.length)];
+                const founded = overrideFounded || (Math.floor(Math.random() * 5) + 2019); // 2019-2023 for standard
+                return {
+                    name: name,
                     industry: industry,
-                    founded: foundedYear,
-                    operating: operatingYears,
+                    founded: founded,
+                    operating: 2026 - founded + 1,
                     desc: `Indonesian enterprise operating in ${industry.toLowerCase()} across Greater Jakarta.`,
-                    vip: companyName.includes("Sambal Api") ? "VIP Priority Partner" : null
+                    vip: name.includes("Sambal Api") ? "VIP Priority Partner" : null
                 };
+            }
 
-                let packType = forcedType;
-                if (!packType) {
-                    const rand = Math.random();
-                    if (rand < 0.32) {
-                        packType = 'healthy';
-                    } else if (rand < 0.62) {
-                        // Audit fraud family breakdown (Problem B mix)
-                        const auditRand = Math.random();
-                        if (auditRand < 0.25) packType = 'fraud_math'; // Arithmetic ~25%
-                        else if (auditRand < 0.50) packType = 'missing_line'; // Whole-row missing ~25%
-                        else if (auditRand < 0.70) packType = 'info_mismatch'; // Identity mismatch ~20%
-                        else if (auditRand < 0.85) packType = 'total_mismatch'; // Component total / structure ~15%
-                        else packType = Math.random() < 0.5 ? 'single_year_fraud' : 'low_tax'; // Low tax / single-year ~15%
-                    } else {
-                        // Honest-weak REJECT family breakdown
-                        const sub = rejectSubtype || ['loss_unprotected', 'worse_yoy', 'weak_margins'][Math.floor(Math.random() * 3)];
-                        if (sub === 'loss_unprotected') packType = 'loss';
-                        else if (sub === 'worse_yoy') packType = 'collapse_yoy';
-                        else packType = 'weak_margins';
-                    }
-                }
-
-                // Base Financial Numbers
-                const scaleMultiplier = Math.floor(Math.random() * 8) + 2;
-                let rev26 = Math.floor(Math.random() * 4 + 3) * 100 * (mode === 'senior' ? scaleMultiplier : 1);
+            /* HEALTHY APPROVE BUILDER: Guaranteed PAT > 0, clean maths, hasFraud = false, correctAction = approve */
+            static buildHealthyApprove(mode, dayIndex) {
+                const card = RolePackBuilder.generateBaseCompanyCard();
                 
-                let cosRatio = (packType === 'weak_margins') ? (0.82 + Math.random() * 0.04) : (0.55 + Math.random() * 0.10);
-                let cos26 = Math.round((rev26 * cosRatio) / 10) * 10;
-                let gp26 = rev26 - cos26;
-                
-                let sell26 = Math.round((gp26 * (0.15 + Math.random() * 0.10)) / 5) * 5;
-                let adminRatio = (packType === 'weak_margins' && Math.random() < 0.5) ? 0.30 : 0.20;
-                let admin26 = Math.round((rev26 * adminRatio) / 5) * 5;
-                let op26 = gp26 - sell26 - admin26;
-                
-                let fin26 = Math.round((10 + Math.random() * 25) * (mode === 'senior' ? scaleMultiplier : 1) / 5) * 5;
-                let pbt26 = op26 - fin26;
-                let tax26 = pbt26 > 0 ? Math.round(pbt26 * 0.20) : 0;
-                let pat26 = pbt26 - tax26;
+                // SCI: Strong clean numbers
+                const rev26 = 500 + Math.floor(Math.random() * 4) * 100;
+                const cos26 = Math.round((rev26 * 0.50) / 10) * 10; // 50% GP margin
+                const gp26 = rev26 - cos26; // 50% GPM >= 20%
+                const sell26 = 40;
+                const admin26 = 50; // Admin 10% <= 25%
+                const op26 = gp26 - sell26 - admin26;
+                const fin26 = 10;
+                const pbt26 = op26 - fin26;
+                const tax26 = Math.round(pbt26 * 0.20);
+                const pat26 = pbt26 - tax26; // Strong positive PAT
 
-                if (packType === 'loss') {
-                    // Loss pack, older company (unprotected)
-                    admin26 = gp26 + Math.round((30 + Math.random() * 50) * (mode === 'senior' ? scaleMultiplier : 1));
-                    op26 = gp26 - sell26 - admin26;
-                    pbt26 = op26 - fin26;
-                    tax26 = 0;
-                    pat26 = pbt26;
-                }
-
-                // YoY Design Rules (Problem A)
-                // Non-reject packs must NOT look like severe collapses
-                let scale25 = 0.85; // Default modest YoY growth
-                if (packType === 'collapse_yoy') {
-                    // Obvious YoY deterioration (calculator-free)
-                    scale25 = 1.45 + Math.random() * 0.25; 
-                } else if (packType === 'healthy') {
-                    // Growth, flat, or mild non-collapse decline
-                    const healthyYoY = Math.random();
-                    if (healthyYoY < 0.5) scale25 = 0.80 + Math.random() * 0.12; // Growth
-                    else if (healthyYoY < 0.8) scale25 = 0.98 + Math.random() * 0.04; // Flat
-                    else scale25 = 1.05 + Math.random() * 0.05; // Mild non-collapse down (~5%)
-                }
-
-                let rev25 = Math.round((rev26 * scale25) / 10) * 10;
-                if (rev25 === rev26) rev25 = rev26 - 20;
-                let cos25 = Math.round((rev25 * 0.60) / 10) * 10;
-                let gp25 = rev25 - cos25;
-                let sell25 = Math.round((gp25 * 0.20) / 5) * 5;
-                let admin25 = Math.round((gp25 * 0.25) / 5) * 5;
-                let op25 = gp25 - sell25 - admin25;
-                let fin25 = fin26;
-                let pbt25 = op25 - fin25;
-                let tax25 = pbt25 > 0 ? Math.round(pbt25 * 0.20) : 0;
-                let pat25 = pbt25 - tax25;
+                // Prior year 2025: modest growth YoY
+                const rev25 = Math.round((rev26 * 0.90) / 10) * 10;
+                const cos25 = Math.round((rev25 * 0.50) / 10) * 10;
+                const gp25 = rev25 - cos25;
+                const sell25 = 35;
+                const admin25 = 45;
+                const op25 = gp25 - sell25 - admin25;
+                const fin25 = 10;
+                const pbt25 = op25 - fin25;
+                const tax25 = Math.round(pbt25 * 0.20);
+                const pat25 = pbt25 - tax25;
 
                 const sci26 = { 
                     rev: rev26, cos: cos26, gp: gp26, sell: sell26, admin: admin26, op: op26, fin: fin26, pbt: pbt26, tax: tax26, pat: pat26, 
-                    headerName: companyName, headerSubtext: "Statement of Comprehensive Income",
-                    missingFinanceRow: false, missingTaxRow: false, missingAdminRow: false 
+                    headerName: card.name, headerSubtext: "Statement of Comprehensive Income",
+                    missingFinanceRow: false, missingTaxRow: false 
                 };
-                
-                let sci25 = { 
-                    rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 
-                };
+                const sci25 = { rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 };
 
-                // Balance Sheet Base
+                // Balance sheet: Healthy (CA >= CL, Cash >= 15, NCL <= Equity)
                 let bs26 = null, bs25 = null;
-                if (mode === 'senior' || packType === 'header_mismatch' || packType === 'total_mismatch') {
-                    let baseAssetScale = rev26 * (0.8 + Math.random() * 0.6);
-                    let ppe26 = Math.round((baseAssetScale * 0.40) / 10) * 10;
-                    let int26 = Math.round((baseAssetScale * 0.10) / 10) * 10;
-                    let inv26 = Math.round((baseAssetScale * 0.18) / 10) * 10;
-                    let rec26 = (packType === 'bs_risk' && Math.random() < 0.33) ? (rev26 + 80) : Math.round((baseAssetScale * 0.18) / 10) * 10;
-                    let cash26 = (packType === 'bs_risk' && Math.random() < 0.5) ? 8 : Math.round((baseAssetScale * 0.14) / 10) * 10;
-
-                    let ca_tot26 = inv26 + rec26 + cash26;
-                    let nca_tot26 = ppe26 + int26;
-                    let assets26 = nca_tot26 + ca_tot26;
-
-                    let pay26 = Math.round((ca_tot26 * 0.35) / 5) * 5;
-                    let st_bor26 = Math.round((ca_tot26 * 0.25) / 5) * 5;
-                    let o_cl26 = Math.round((ca_tot26 * 0.10) / 5) * 5;
-                    let cl_tot26 = pay26 + st_bor26 + o_cl26;
-                    
-                    if (packType === 'bs_risk' && rec26 <= rev26 && cash26 >= 15) {
-                        cl_tot26 = ca_tot26 + 90;
-                    }
-
-                    let lt_bor26 = (packType === 'bs_risk' && Math.random() < 0.5) ? Math.round(assets26 * 0.65) : Math.round(assets26 * 0.30);
-                    let ncl_tot26 = lt_bor26;
-                    let eq_tot26 = assets26 - cl_tot26 - ncl_tot26;
-                    if (eq_tot26 < 20) eq_tot26 = 50;
+                if (mode === 'senior') {
+                    const ppe = 300, intangibles = 50, nca = 350;
+                    const inv = 80, rec = 70, cash = 60, ca = 210; // CA 210, Cash 60 >= 15
+                    const assets = nca + ca; // 560
+                    const payables = 40, st_borr = 20, o_cl = 10, cl = 70; // CL 70 <= CA 210
+                    const lt_borr = 100, ncl = 100;
+                    const equity = assets - cl - ncl; // 390 (NCL 100 <= Equity 390)
 
                     bs26 = {
-                        headerName: companyName,
-                        ppe: ppe26, int: int26, nca_total: nca_tot26,
-                        inv: inv26, receivables: rec26, cash: cash26, ca_total: ca_tot26,
-                        assets_total: assets26,
-                        payables: pay26, st_borrowings: st_bor26, o_cl: o_cl26, cl_total: cl_tot26,
-                        lt_borrowings: lt_bor26, ncl_total: ncl_tot26,
-                        equity_total: eq_tot26,
-                        liab_eq_total: assets26
+                        headerName: card.name,
+                        ppe: ppe, int: intangibles, nca_total: nca,
+                        inv: inv, receivables: rec, cash: cash, ca_total: ca,
+                        assets_total: assets,
+                        payables: payables, st_borrowings: st_borr, o_cl: o_cl, cl_total: cl,
+                        lt_borrowings: lt_borr, ncl_total: ncl,
+                        equity_total: equity, liab_eq_total: assets
                     };
-
                     bs25 = {
-                        ppe: Math.round(ppe26 * 0.88), int: int26, nca_total: Math.round(nca_tot26 * 0.90),
-                        inv: Math.round(inv26 * 0.85), receivables: Math.round(rec26 * 0.85), cash: Math.round(cash26 * 0.85), ca_total: Math.round(ca_tot26 * 0.88),
-                        assets_total: Math.round(assets26 * 0.89),
-                        payables: Math.round(pay26 * 0.85), st_borrowings: Math.round(st_bor26 * 0.85), o_cl: o_cl26, cl_total: Math.round(cl_tot26 * 0.85),
-                        lt_borrowings: Math.round(lt_bor26 * 0.90), ncl_total: Math.round(ncl_tot26 * 0.90),
-                        equity_total: Math.round(eq_tot26 * 0.90),
-                        liab_eq_total: Math.round(assets26 * 0.89)
+                        ppe: 280, int: 50, nca_total: 330,
+                        inv: 75, receivables: 65, cash: 50, ca_total: 190,
+                        assets_total: 520,
+                        payables: 35, st_borrowings: 20, o_cl: 10, cl_total: 65,
+                        lt_borrowings: 100, ncl_total: 100,
+                        equity_total: 355, liab_eq_total: 520
                     };
-                }
-
-                let validChains = [];
-                let hasFraud = false;
-                let fraudCategory = null;
-
-                let primaryDiscrepancyText = [];
-                let workingText = "";
-                let implicationText = "";
-
-                if (packType === 'fraud_math') {
-                    hasFraud = true;
-                    fraudCategory = 'Arithmetic discrepancy';
-                    const mathSubType = Math.floor(Math.random() * 3);
-                    if (mathSubType === 0) {
-                        sci26.gp += (Math.floor(Math.random() * 4) + 2) * 10;
-                        validChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
-                        workingText = `Gross Profit calculation: Revenue (${sci26.rev}) − CoS (${sci26.cos}) = ${sci26.rev - sci26.cos} (Reported: ${sci26.gp}).`;
-                    } else if (mathSubType === 1) {
-                        sci26.op += (Math.floor(Math.random() * 3) + 2) * 10;
-                        validChains.push(['sci_gp_26', 'sci_sell_26', 'sci_admin_26', 'sci_op_26']);
-                        workingText = `Operating Profit calculation: GP (${sci26.gp}) − Selling (${sci26.sell}) − Admin (${sci26.admin}) = ${sci26.gp - sci26.sell - sci26.admin} (Reported: ${sci26.op}).`;
-                    } else {
-                        sci26.pat += (Math.floor(Math.random() * 3) + 2) * 10;
-                        validChains.push(['sci_pbt_26', 'sci_tax_26', 'sci_pat_26']);
-                        workingText = `Profit After Tax calculation: PBT (${sci26.pbt}) − Tax (${sci26.tax}) = ${sci26.pbt - sci26.tax} (Reported: ${sci26.pat}).`;
-                    }
-                    primaryDiscrepancyText.push(`Gross Profit / Operating / PAT calculation break on Income Statement.`);
-                    implicationText = "Financial statement contains active calculation errors.";
-
-                } else if (packType === 'info_mismatch') {
-                    hasFraud = true;
-                    fraudCategory = 'Identity / header mismatch';
-                    const infoSubType = Math.floor(Math.random() * 2);
-                    if (infoSubType === 0) {
-                        sci26.headerName = companyName + " Holdings Tbk";
-                        validChains.push(['card_name', 'sci_header']);
-                        workingText = `Identity check: Card Entity ("${card.name}") ≠ SCI Header Name ("${sci26.headerName}").`;
-                        primaryDiscrepancyText.push(`Company Card name "${card.name}" does not match statement header "${sci26.headerName}".`);
-                    } else {
-                        const falseYear = card.founded - 3;
-                        sci26.headerSubtext = `Registration Year: ${falseYear} // Statement of Comprehensive Income`;
-                        validChains.push(['card_founded', 'sci_header']);
-                        workingText = `Identity check: Card Founded Year (${card.founded}) ≠ Statement Header Registration (${falseYear}).`;
-                        primaryDiscrepancyText.push(`Founded year mismatch: Company Card founded ${card.founded} vs Header registration ${falseYear}.`);
-                    }
-                    implicationText = "Corporate identity mismatch indicates unverified entity or wrong dossier attachment.";
-
-                } else if (packType === 'missing_line') {
-                    // PROBLEM B PRESENTATION — WHOLE LINE ABSENT
-                    hasFraud = true;
-                    fraudCategory = 'Whole-row missing line omission';
-                    const missingSubType = Math.floor(Math.random() * 2);
-                    
-                    if (missingSubType === 0) {
-                        // Omit Finance Costs row completely
-                        sci26.missingFinanceRow = true;
-                        // Arithmetic: PAT reflects true finance cost without showing row (or PAT = OP - tax)
-                        sci26.pbt = sci26.op - fin26; // lower true number shown, but no finance row!
-                        sci26.pat = sci26.pbt - tax26;
-                        
-                        validChains.push(['sci:financeCosts:missing']);
-                        validChains.push(['sci_op_26', 'sci_pbt_26']);
-                        primaryDiscrepancyText.push(`Finance Costs line is missing between Operating Profit and Profit Before Tax.`);
-                        workingText = `Whole-row omission: Finance Costs line absent between OP (${sci26.op}) and PBT (${sci26.pbt}).`;
-                        implicationText = "Finance Costs line is missing between Operating Profit and Profit Before Tax.";
-                    } else {
-                        // Omit Taxation row completely
-                        sci26.missingTaxRow = true;
-                        sci26.pat = sci26.pbt; // PAT equals PBT with no tax row
-                        
-                        validChains.push(['sci:taxation:missing']);
-                        validChains.push(['sci_pbt_26', 'sci_pat_26']);
-                        primaryDiscrepancyText.push(`Taxation line is missing between Profit Before Tax and Profit After Tax.`);
-                        workingText = `Whole-row omission: Taxation line absent between PBT (${sci26.pbt}) and PAT (${sci26.pat}).`;
-                        implicationText = "Taxation line is missing between Profit Before Tax and Profit After Tax.";
-                    }
-
-                } else if (packType === 'single_year_fraud') {
-                    // Rare single-year full column fraud
-                    hasFraud = true;
-                    fraudCategory = 'Single-year presentation fraud';
-                    sci25 = { rev: null, cos: null, gp: null, sell: null, admin: null, op: null, fin: null, pbt: null, tax: null, pat: null };
-                    validChains.push(['sci_prior_year']);
-                    validChains.push(['sci_rev_25']);
-                    validChains.push(['sci_pat_25']);
-                    primaryDiscrepancyText.push(`Prior year column is completely missing; committee requires two-year comparative statement.`);
-                    workingText = `Presentation check: Entire prior year column is blank/absent.`;
-                    implicationText = "Presentation defect violates Investment Desk two-year disclosure standards.";
-
-                } else if (packType === 'low_tax') {
-                    hasFraud = true;
-                    fraudCategory = 'Low taxation line';
-                    sci26.tax = Math.max(1, Math.round(sci26.pbt * 0.01));
-                    sci26.pat = sci26.pbt - sci26.tax;
-                    validChains.push(['sci_tax_26', 'sci_pbt_26']);
-                    validChains.push(['sci_pbt_26', 'sci_tax_26', 'sci_pat_26']);
-                    primaryDiscrepancyText.push(`Suspiciously low tax provision (Rp ${sci26.tax} on PBT Rp ${sci26.pbt}, ~${((sci26.tax/sci26.pbt)*100).toFixed(1)}% vs statutory).`);
-                    workingText = `Tax rate check: Effective tax rate is under 2% on positive corporate earnings.`;
-                    implicationText = "Abnormally low taxation line violates accounting standards and inflates net income.";
-
-                } else if (packType === 'total_mismatch') {
-                    hasFraud = true;
-                    fraudCategory = 'Totals / structure break';
-                    if (bs26) {
-                        bs26.ca_total += 85;
-                        validChains.push(['bs_ca_tot_26', 'bs_inv_26', 'bs_rec_26', 'bs_cash_26']);
-                        validChains.push(['bs_ca_tot_26', 'bs_inv_26']);
-                        primaryDiscrepancyText.push(`Total current assets ${bs26.ca_total} does not equal sum of current asset line items.`);
-                        workingText = `Total CA check: Items sum ≠ Printed Total CA (${bs26.ca_total}).`;
-                    } else {
-                        sci26.gp += 50;
-                        validChains.push(['sci_gp_26', 'sci_rev_26', 'sci_cos_26']);
-                        primaryDiscrepancyText.push(`Gross Profit does not equal Revenue minus Cost of Sales.`);
-                        workingText = `Gross Profit check: Revenue (${sci26.rev}) − CoS (${sci26.cos}) = ${sci26.rev - sci26.cos} ≠ Reported GP (${sci26.gp}).`;
-                    }
-                    implicationText = "Component total discrepancy indicates corrupted balance aggregation or forced entry.";
-                }
-
-                if (!hasFraud && primaryDiscrepancyText.length === 0) {
-                    primaryDiscrepancyText.push("No accounting or calculation discrepancies detected.");
                 }
 
                 return {
-                    id: 'pack_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+                    id: 'pack_app_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+                    role: 'HEALTHY_APPROVE',
                     card: card,
-                    sci26: sci26,
-                    sci25: sci25,
-                    bs26: bs26,
-                    bs25: bs25,
+                    sci26: sci26, sci25: sci25,
+                    bs26: bs26, bs25: bs25,
+                    packType: 'healthy',
+                    hasFraud: false,
+                    fraudCategory: null,
+                    validChains: [],
+                    discrepancyBullets: ["Clean, profitable financial statement meeting Golden Parachute investment guidelines."],
+                    workingText: `PAT 2026: Rp ${pat26}M (>0). GPM: 50%. YoY PAT Growth: +${pat26 - pat25}M.`,
+                    implicationText: "Sound commercial deal with verified financials.",
+                    requiresSOFP: (mode === 'senior')
+                };
+            }
+
+            /* REJECT COMMERCIAL BUILDER: Clean maths, hasFraud = false, correctAction = reject */
+            static buildCommercialReject(mode, dayIndex, reason) {
+                const card = RolePackBuilder.generateBaseCompanyCard(null, 2020); // Founded 2020 (older)
+                const rev26 = 400;
+                let cos26 = 200, gp26 = 200, sell26 = 30, admin26 = 40, op26 = 130, fin26 = 10, pbt26 = 120, tax26 = 24, pat26 = 96;
+                let rev25 = 380, cos25 = 190, gp25 = 190, sell25 = 30, admin25 = 40, op25 = 120, fin25 = 10, pbt25 = 110, tax25 = 22, pat25 = 88;
+                let packType = 'weak_margins';
+
+                if (reason === 'loss_unprotected') {
+                    packType = 'loss';
+                    admin26 = 250; // Causes heavy operating loss
+                    op26 = gp26 - sell26 - admin26; // 200 - 30 - 250 = -80
+                    pbt26 = op26 - fin26; // -90
+                    tax26 = 0;
+                    pat26 = -90; // Loss PAT
+                    
+                    // Prior year loss or flat, un-protected older company
+                    admin25 = 240; op25 = -80; pbt25 = -90; tax25 = 0; pat25 = -90;
+                } else if (reason === 'worse_yoy') {
+                    packType = 'collapse_yoy';
+                    // 2026 PAT is 25 vs 2025 PAT was 120 (severe collapse > 40%)
+                    pat26 = 25; pbt26 = 31; tax26 = 6; op26 = 41; admin26 = 129;
+                    pat25 = 120; pbt25 = 150; tax25 = 30; op25 = 160; admin25 = 10;
+                } else if (reason === 'weak_margins') {
+                    packType = 'weak_margins';
+                    // Very high CoS -> GP margin only 12% (< 20% floor)
+                    cos26 = 352; gp26 = 48; // 48 / 400 = 12% GPM
+                    sell26 = 10; admin26 = 10; op26 = 28; fin26 = 3; pbt26 = 25; tax26 = 5; pat26 = 20;
+                }
+
+                const sci26 = { 
+                    rev: rev26, cos: cos26, gp: gp26, sell: sell26, admin: admin26, op: op26, fin: fin26, pbt: pbt26, tax: tax26, pat: pat26, 
+                    headerName: card.name, headerSubtext: "Statement of Comprehensive Income",
+                    missingFinanceRow: false, missingTaxRow: false 
+                };
+                const sci25 = { rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 };
+
+                let bs26 = null, bs25 = null;
+                if (mode === 'senior') {
+                    // Standard clean BS
+                    bs26 = {
+                        headerName: card.name, ppe: 300, int: 50, nca_total: 350,
+                        inv: 80, receivables: 70, cash: 50, ca_total: 200, assets_total: 550,
+                        payables: 40, st_borrowings: 20, o_cl: 10, cl_total: 70,
+                        lt_borrowings: 100, ncl_total: 100, equity_total: 380, liab_eq_total: 550
+                    };
+                    bs25 = { ...bs26 };
+                }
+
+                return {
+                    id: 'pack_rej_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+                    role: 'REJECT_COMMERCIAL',
+                    card: card,
+                    sci26: sci26, sci25: sci25,
+                    bs26: bs26, bs25: bs25,
+                    packType: packType,
+                    hasFraud: false,
+                    fraudCategory: null,
+                    validChains: [],
+                    discrepancyBullets: [`Commercial performance failing Golden Parachute standards: ${REJECT_REASON_LABELS[reason] || reason}.`],
+                    workingText: `Rejection trigger: ${reason}. PAT 2026: Rp ${pat26}M.`,
+                    implicationText: "High financial risk without sufficient commercial protection.",
+                    requiresSOFP: false
+                };
+            }
+
+            /* AUDIT FRAUD BUILDER: hasFraud = true, correctAction = audit, validChains non-empty */
+            static buildAuditFraud(mode, dayIndex, family) {
+                const card = RolePackBuilder.generateBaseCompanyCard();
+                let sci26 = { 
+                    rev: 400, cos: 200, gp: 200, sell: 30, admin: 40, op: 130, fin: 10, pbt: 120, tax: 24, pat: 96,
+                    headerName: card.name, headerSubtext: "Statement of Comprehensive Income",
+                    missingFinanceRow: false, missingTaxRow: false 
+                };
+                let sci25 = { rev: 380, cos: 190, gp: 190, sell: 30, admin: 40, op: 120, fin: 10, pbt: 110, tax: 22, pat: 88 };
+
+                let bs26 = null, bs25 = null;
+                if (mode === 'senior') {
+                    bs26 = {
+                        headerName: card.name, ppe: 300, int: 50, nca_total: 350,
+                        inv: 80, receivables: 70, cash: 50, ca_total: 200, assets_total: 550,
+                        payables: 40, st_borrowings: 20, o_cl: 10, cl_total: 70,
+                        lt_borrowings: 100, ncl_total: 100, equity_total: 380, liab_eq_total: 550
+                    };
+                    bs25 = { ...bs26 };
+                }
+
+                let validChains = [];
+                let fraudCategory = "";
+                let bullets = [];
+                let working = "";
+                let impl = "";
+
+                if (family === 'missing_tax_row') {
+                    fraudCategory = 'Whole-row missing line (Taxation)';
+                    sci26.missingTaxRow = true;
+                    sci26.pat = sci26.pbt; // PAT equals PBT because tax row is omitted!
+                    validChains.push(['sci:taxation:missing']);
+                    validChains.push(['sci_pbt_26', 'sci_pat_26']);
+                    bullets.push("Taxation line is completely missing between Profit Before Tax and Profit After Tax.");
+                    working = `Whole-row omission: Taxation line absent between PBT (${sci26.pbt}) and PAT (${sci26.pat}).`;
+                    impl = "Missing taxation line conceals tax obligations and distorts net income.";
+
+                } else if (family === 'missing_finance_row') {
+                    fraudCategory = 'Whole-row missing line (Finance Costs)';
+                    sci26.missingFinanceRow = true;
+                    sci26.pbt = sci26.op; // PBT equals OP because finance row is omitted!
+                    sci26.pat = sci26.pbt - sci26.tax;
+                    validChains.push(['sci:financeCosts:missing']);
+                    validChains.push(['sci_op_26', 'sci_pbt_26']);
+                    bullets.push("Finance Costs line is completely missing between Operating Profit and Profit Before Tax.");
+                    working = `Whole-row omission: Finance Costs line absent between OP (${sci26.op}) and PBT (${sci26.pbt}).`;
+                    impl = "Missing finance costs line obscures interest burden and debt obligation.";
+
+                } else if (family === 'identity_mismatch') {
+                    fraudCategory = 'Identity / header mismatch';
+                    sci26.headerName = card.name + " Holdings Tbk";
+                    validChains.push(['card_name', 'sci_header']);
+                    bullets.push(`Company Card name "${card.name}" does not match statement header "${sci26.headerName}".`);
+                    working = `Identity check: Card Entity ("${card.name}") ≠ SCI Header Name ("${sci26.headerName}").`;
+                    impl = "Entity header mismatch indicates wrong dossier attachment or unverified corporate entity.";
+
+                } else if (family === 'low_tax') {
+                    fraudCategory = 'Suspiciously low taxation';
+                    sci26.tax = 1; // Only Rp 1M tax on 120M PBT
+                    sci26.pat = 119;
+                    validChains.push(['sci_tax_26', 'sci_pbt_26']);
+                    bullets.push(`Suspiciously low tax provision (Rp ${sci26.tax}M on PBT Rp ${sci26.pbt}M).`);
+                    working = `Tax check: Tax rate is under 1% on positive PBT.`;
+                    impl = "Abnormally low taxation provision inflates PAT artificially.";
+
+                } else { // 'arithmetic' default
+                    fraudCategory = 'Arithmetic calculation error';
+                    sci26.gp = 240; // Rev 400 - CoS 200 = 200, but reported 240
+                    validChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
+                    bullets.push(`Gross Profit misstated. Revenue 400 − Cost 200 = 200, but pack shows 240.`);
+                    working = `Gross Profit calculation: 400 − 200 = 200 (Reported: 240).`;
+                    impl = "Mathematical error artificially inflates gross profit margin.";
+                }
+
+                return {
+                    id: 'pack_aud_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+                    role: 'AUDIT_FRAUD',
+                    card: card,
+                    sci26: sci26, sci25: sci25,
+                    bs26: bs26, bs25: bs25,
+                    packType: family.startsWith('missing') ? 'missing_line' : 'fraud_math',
+                    hasFraud: true,
+                    fraudCategory: fraudCategory,
+                    validChains: validChains,
+                    discrepancyBullets: bullets,
+                    workingText: working,
+                    implicationText: impl,
+                    requiresSOFP: false
+                };
+            }
+
+            /* MODE 2 BALANCE SHEET SPECIFIC BUILDERS */
+            static buildMode2BSPack(subtype, dayIndex) {
+                const card = RolePackBuilder.generateBaseCompanyCard();
+                
+                // SCI is clean and profitable!
+                const sci26 = { 
+                    rev: 500, cos: 250, gp: 250, sell: 40, admin: 50, op: 160, fin: 10, pbt: 150, tax: 30, pat: 120,
+                    headerName: card.name, headerSubtext: "Statement of Comprehensive Income",
+                    missingFinanceRow: false, missingTaxRow: false 
+                };
+                const sci25 = { rev: 460, cos: 230, gp: 230, sell: 35, admin: 45, op: 150, fin: 10, pbt: 140, tax: 28, PAT: 112 };
+
+                let bs26, bs25;
+                let packType = 'bs_risk';
+                let hasFraud = false;
+                let fraudCategory = null;
+                let validChains = [];
+                let bullets = [];
+                let working = "";
+                let impl = "";
+
+                if (subtype === 'BS_REJECT_LIQUIDITY') {
+                    // Current Assets < Current Liabilities (Liquidity Trap)
+                    bs26 = {
+                        headerName: card.name, ppe: 300, int: 50, nca_total: 350,
+                        inv: 20, receivables: 15, cash: 5, ca_total: 40, assets_total: 390, // CA = 40, Cash = 5
+                        payables: 80, st_borrowings: 50, o_cl: 20, cl_total: 150, // CL = 150 (CA 40 < CL 150)
+                        lt_borrowings: 40, ncl_total: 40, equity_total: 200, liab_eq_total: 390
+                    };
+                    bullets = ["Current assets (Rp 40M) are less than current liabilities (Rp 150M) — Severe Liquidity Trap."];
+                    working = "Balance Sheet Liquidity Check: CA (40) < CL (150). Cash (5) < Floor (15).";
+                    impl = "Company is insolvent short-term despite showing SCI profits. Immediate debt default risk.";
+
+                } else if (subtype === 'BS_REJECT_GEARING') {
+                    // Non-current liabilities > Equity
+                    bs26 = {
+                        headerName: card.name, ppe: 400, int: 50, nca_total: 450,
+                        inv: 60, receivables: 50, cash: 40, ca_total: 150, assets_total: 600,
+                        payables: 30, st_borrowings: 20, o_cl: 10, cl_total: 60,
+                        lt_borrowings: 420, ncl_total: 420, // NCL = 420
+                        equity_total: 120, liab_eq_total: 600 // Equity = 120 (NCL 420 > Equity 120)
+                    };
+                    bullets = ["Non-current liabilities (Rp 420M) exceed Total Equity (Rp 120M) — Excessive Debt Gearing."];
+                    working = "Balance Sheet Debt Check: NCL (420) > Equity (120). Gearing ratio > 350%.";
+                    impl = "Extreme leverage makes equity vulnerable to minor income shocks.";
+
+                } else if (subtype === 'BS_AUDIT_STRUCTURE') {
+                    // Non-balancing statement / component total break
+                    hasFraud = true;
+                    fraudCategory = 'Balance Sheet structure discrepancy';
+                    bs26 = {
+                        headerName: card.name, ppe: 300, int: 50, nca_total: 350,
+                        inv: 80, receivables: 70, cash: 50, ca_total: 280, // Printed 280, but 80+70+50 = 200!
+                        assets_total: 630,
+                        payables: 40, st_borrowings: 20, o_cl: 10, cl_total: 70,
+                        lt_borrowings: 100, ncl_total: 100, equity_total: 380, liab_eq_total: 550
+                    };
+                    validChains.push(['bs_ca_tot_26', 'bs_inv_26', 'bs_rec_26', 'bs_cash_26']);
+                    bullets = ["Total Current Assets (Rp 280M) does not equal sum of current asset line items (Rp 200M)."];
+                    working = "Balance Sheet Total CA Check: Inv (80) + Rec (70) + Cash (50) = 200 ≠ Reported CA (280).";
+                    impl = "Forced or miscalculated balance sheet total obscures actual asset backing.";
+
+                } else if (subtype === 'BS_OK_WITH_SCI_FRAUD') {
+                    // SCI has missing row or math fraud, BS is fine
+                    hasFraud = true;
+                    fraudCategory = 'Whole-row missing line (Taxation)';
+                    sci26.missingTaxRow = true;
+                    sci26.pat = sci26.pbt;
+                    validChains.push(['sci:taxation:missing']);
+                    validChains.push(['sci_pbt_26', 'sci_pat_26']);
+                    bs26 = {
+                        headerName: card.name, ppe: 300, int: 50, nca_total: 350,
+                        inv: 80, receivables: 70, cash: 50, ca_total: 200, assets_total: 550,
+                        payables: 40, st_borrowings: 20, o_cl: 10, cl_total: 70,
+                        lt_borrowings: 100, ncl_total: 100, equity_total: 380, liab_eq_total: 550
+                    };
+                    bullets = ["Taxation line is missing on Income Statement. Balance Sheet is clean."];
+                    working = "Dual Statement Audit: BS balances, but Income Statement omits required tax row.";
+                    impl = "Teaches that analyst must inspect both statements; catch is on SCI.";
+                }
+
+                bs25 = { ...bs26 };
+
+                return {
+                    id: 'pack_bs_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+                    role: hasFraud ? 'AUDIT_FRAUD' : 'REJECT_COMMERCIAL',
+                    card: card,
+                    sci26: sci26, sci25: sci25,
+                    bs26: bs26, bs25: bs25,
                     packType: packType,
                     hasFraud: hasFraud,
                     fraudCategory: fraudCategory,
                     validChains: validChains,
-                    discrepancyBullets: primaryDiscrepancyText,
-                    workingText: workingText,
-                    implicationText: implicationText
+                    discrepancyBullets: bullets,
+                    workingText: working,
+                    implicationText: impl,
+                    requiresSOFP: true
                 };
             }
 
-            /* ════════════════════════════════════════════════════════════
-               PROBLEM A QUEUE GENERATOR & SHIFT CAP ENFORCER
-               ════════════════════════════════════════════════════════════ */
-            static generateShiftQueue(mode, dayNumber) {
-                let queue = [];
-                let attempts = 0;
-                let validQueueFound = false;
-
-                while (!validQueueFound && attempts < 50) {
-                    attempts++;
-                    queue = [];
-                    
-                    // Sample 5 packs with deliberate target mix
-                    const packPlan = [
-                        'healthy',
-                        'audit',
-                        'reject',
-                        Math.random() < 0.5 ? 'healthy' : 'reject',
-                        Math.random() < 0.5 ? 'audit' : 'reject'
-                    ];
-
-                    for (let slotType of packPlan) {
-                        let pack;
-                        if (slotType === 'healthy') {
-                            pack = DossierGenerator.generate(mode, dayNumber, 'healthy');
-                        } else if (slotType === 'audit') {
-                            pack = DossierGenerator.generate(mode, dayNumber);
-                            while (!pack.hasFraud) {
-                                pack = DossierGenerator.generate(mode, dayNumber);
-                            }
-                        } else {
-                            // Reject-type: rotate reason families loss, worse_yoy, weak_margins
-                            const sub = ['loss_unprotected', 'worse_yoy', 'weak_margins'][Math.floor(Math.random() * 3)];
-                            pack = DossierGenerator.generate(mode, dayNumber, null, null, null, sub);
-                        }
-                        queue.push(pack);
+            /* FLEX SLOT SCHEDULE BUILDER */
+            static buildFlexSlot(mode, dayIndex, mainAuditFamily) {
+                if (dayIndex % 2 === 0) {
+                    // Flex = missing detail audit if main wasn't missing detail, else identity
+                    if (!mainAuditFamily.startsWith('missing')) {
+                        return RolePackBuilder.buildAuditFraud(mode, dayIndex, 'missing_tax_row');
+                    } else {
+                        return RolePackBuilder.buildAuditFraud(mode, dayIndex, 'identity_mismatch');
                     }
-
-                    // Count hard constraints per shift of 5
-                    let healthyApproveCount = 0;
-                    let auditCount = 0;
-                    let rejectTypeCount = 0;
-                    let worseYoyCount = 0;
-
-                    queue.forEach(p => {
-                        if (p.hasFraud) {
-                            auditCount++;
-                        } else if (p.packType === 'collapse_yoy') {
-                            rejectTypeCount++;
-                            worseYoyCount++;
-                        } else if (p.packType === 'loss' || p.packType === 'weak_margins' || p.packType === 'bs_risk') {
-                            rejectTypeCount++;
-                        } else {
-                            healthyApproveCount++;
-                        }
-                    });
-
-                    // Check Hard Constraints:
-                    // - Min 1 healthy Approve
-                    // - Min 1 Audit pack
-                    // - Min 1 Reject-type pack
-                    // - Max 2 worse_yoy
-                    // - Max 2 pure healthy Approves
-                    if (healthyApproveCount >= 1 && healthyApproveCount <= 2 &&
-                        auditCount >= 1 &&
-                        rejectTypeCount >= 1 &&
-                        worseYoyCount <= 2) {
-                        validQueueFound = true;
-                    }
+                } else if (dayIndex % 3 === 0) {
+                    // Flex = Second Healthy Approve
+                    return RolePackBuilder.buildHealthyApprove(mode, dayIndex);
+                } else {
+                    // Flex = Commercial Reject weak margins
+                    return RolePackBuilder.buildCommercialReject(mode, dayIndex, 'weak_margins');
                 }
-
-                // Fallback guarantee if resampling loop didn't lock
-                if (!validQueueFound) {
-                    queue[0] = DossierGenerator.generate(mode, dayNumber, 'healthy');
-                    queue[1] = DossierGenerator.generate(mode, dayNumber, 'fraud_math');
-                    queue[2] = DossierGenerator.generate(mode, dayNumber, null, null, null, 'loss_unprotected');
-                    queue[3] = DossierGenerator.generate(mode, dayNumber, null, null, null, 'weak_margins');
-                    queue[4] = DossierGenerator.generate(mode, dayNumber, 'missing_line');
-                }
-
-                return queue;
             }
         }
 
         /* ════════════════════════════════════════════════════════════
-           3. VERDICT ENGINE (§1 LADDER + MULTI-REASON SET)
+           3. HARD PER-SHIFT QUEUE GENERATOR & ASSERTIONS
+           ════════════════════════════════════════════════════════════ */
+        class ShiftQueueGenerator {
+            static generateShiftQueue(mode, dayNumber) {
+                const dayIndex = dayNumber - 1;
+                let queue = [];
+                let attempts = 0;
+                let pass = false;
+
+                // Commercial rejection rotation: shift % 3
+                const commercialRejectReasons = ['loss_unprotected', 'worse_yoy', 'weak_margins'];
+                const rotatedRejectReason = commercialRejectReasons[dayIndex % 3];
+
+                // Audit family rotation: dayIndex % 6
+                const auditFamilies = [
+                    'arithmetic',           // 0: math break
+                    'missing_tax_row',      // 1: missing taxation
+                    'identity_mismatch',    // 2: name mismatch
+                    'low_tax',              // 3: low tax
+                    'missing_finance_row',  // 4: missing finance costs
+                    'identity_mismatch'     // 5: identity mismatch
+                ];
+                const rotatedAuditFamily = auditFamilies[dayIndex % 6];
+
+                while (!pass && attempts < 100) {
+                    attempts++;
+                    queue = [];
+
+                    if (mode === 'junior') {
+                        // Slot 1: Healthy Approve
+                        queue.push(RolePackBuilder.buildHealthyApprove('junior', dayIndex));
+                        // Slot 2: Healthy Approve
+                        queue.push(RolePackBuilder.buildHealthyApprove('junior', dayIndex));
+                        // Slot 3: Commercial Reject
+                        queue.push(RolePackBuilder.buildCommercialReject('junior', dayIndex, rotatedRejectReason));
+                        // Slot 4: Audit Fraud
+                        queue.push(RolePackBuilder.buildAuditFraud('junior', dayIndex, rotatedAuditFamily));
+                        // Slot 5: Flex Slot
+                        queue.push(RolePackBuilder.buildFlexSlot('junior', dayIndex, rotatedAuditFamily));
+                    } else {
+                        // Mode 2 (Senior Desk): Must include at least 2 packs that require SOFP!
+                        // Slot 1: Healthy Approve (TRUE_HEALTHY_BOTH) -> requires SOFP
+                        queue.push(RolePackBuilder.buildHealthyApprove('senior', dayIndex));
+                        // Slot 2: Healthy Approve or Mode 2 BS Reject
+                        queue.push(RolePackBuilder.buildHealthyApprove('senior', dayIndex));
+                        // Slot 3: Mode 2 BS Liquidity or Gearing Reject -> requires SOFP
+                        const bsSubtype = (dayIndex % 2 === 0) ? 'BS_REJECT_LIQUIDITY' : 'BS_REJECT_GEARING';
+                        queue.push(RolePackBuilder.buildMode2BSPack(bsSubtype, dayIndex));
+                        // Slot 4: Audit Fraud (SCI or BS structure)
+                        queue.push(RolePackBuilder.buildAuditFraud('senior', dayIndex, rotatedAuditFamily));
+                        // Slot 5: Flex Slot
+                        queue.push(RolePackBuilder.buildFlexSlot('senior', dayIndex, rotatedAuditFamily));
+                    }
+
+                    shuffle(queue);
+
+                    // Assertions check
+                    pass = ShiftQueueGenerator.assertQuotas(queue, mode);
+                }
+
+                if (!pass) {
+                    console.error("Queue build failed assertions after 100 attempts! Applying force-fill fallback.");
+                    // Guaranteed fallback quota
+                    queue = [
+                        RolePackBuilder.buildHealthyApprove(mode, dayIndex),
+                        RolePackBuilder.buildHealthyApprove(mode, dayIndex),
+                        RolePackBuilder.buildCommercialReject(mode, dayIndex, rotatedRejectReason),
+                        RolePackBuilder.buildAuditFraud(mode, dayIndex, rotatedAuditFamily),
+                        (mode === 'senior') ? RolePackBuilder.buildMode2BSPack('BS_REJECT_LIQUIDITY', dayIndex) : RolePackBuilder.buildCommercialReject(mode, dayIndex, 'weak_margins')
+                    ];
+                    shuffle(queue);
+                }
+
+                return queue;
+            }
+
+            static assertQuotas(queue, mode) {
+                if (queue.length !== 5) return false;
+
+                let healthyApproveCount = 0;
+                let rejectCount = 0;
+                let auditCount = 0;
+                let worseYoyCount = 0;
+                let sofpRequiredCount = 0;
+
+                queue.forEach(p => {
+                    const verdict = evaluateDossierVerdict(p, null, null, mode);
+                    if (verdict.correctAction === 'approve') healthyApproveCount++;
+                    if (verdict.correctAction === 'reject') rejectCount++;
+                    if (verdict.correctAction === 'audit') auditCount++;
+                    if (p.packType === 'collapse_yoy') worseYoyCount++;
+                    if (p.requiresSOFP) sofpRequiredCount++;
+                });
+
+                // HARD QUOTA ASSERTS:
+                // 1. Healthy Approve >= 2
+                // 2. Reject <= 2
+                // 3. Audit >= 1
+                // 4. Worse YoY <= 2
+                // 5. In Mode 2: Packs requiring SOFP >= 2
+                const validApprove = healthyApproveCount >= 2;
+                const validReject = rejectCount <= 2;
+                const validAudit = auditCount >= 1;
+                const validWorseYoy = worseYoyCount <= 2;
+                const validMode2 = (mode === 'junior') ? true : (sofpRequiredCount >= 2);
+
+                return validApprove && validReject && validAudit && validWorseYoy && validMode2;
+            }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           4. VERDICT LADDER EVALUATOR (§1 LADDER + MULTI-REASON SET)
            ════════════════════════════════════════════════════════════ */
         function evaluateDossierVerdict(dossier, activeRule, activeNote, mode) {
             // Step 1 — ANY fraud -> AUDIT (FIRST MATCH WINS)
@@ -1518,7 +1636,7 @@
                     correctAction: 'audit',
                     correctRejectReason: null,
                     correctRejectReasons: [],
-                    note: 'Pack has accounting or presentation discrepancy. Correct Action: Audit.'
+                    note: 'Pack has accounting, missing line, or presentation discrepancy. Correct Action: Audit.'
                 };
             }
 
@@ -1536,11 +1654,7 @@
             const validRejectReasons = new Set();
 
             if (activeRule && activeRule.test(dossier)) {
-                if (activeRule.isExceptionApprove) {
-                    return { correctAction: 'approve', correctRejectReason: null, correctRejectReasons: [], note: 'Rule exception approves clean pack.' };
-                } else {
-                    validRejectReasons.add(activeRule.rejectReason || 'fails_rule');
-                }
+                validRejectReasons.add(activeRule.rejectReason || 'fails_rule');
             }
 
             // Commercial Base Standards
@@ -1552,7 +1666,7 @@
                 }
             }
 
-            if (dossier.sci25.pat !== null && dossier.sci26.pat < dossier.sci25.pat * 0.92) {
+            if (dossier.sci25.pat !== null && dossier.sci26.pat < dossier.sci25.pat * 0.60) {
                 validRejectReasons.add('worse_yoy');
             }
 
@@ -1593,7 +1707,7 @@
         }
 
         /* ════════════════════════════════════════════════════════════
-           4. MAIN GAME ENGINE CONTROLLER
+           5. MAIN GAME STATE CONTROLLER
            ════════════════════════════════════════════════════════════ */
         class Game {
             constructor() {
@@ -1643,28 +1757,30 @@
             }
 
             setupDayShift() {
-                this.hasSavedScoreThisShift = false;
-                this.shiftPackIndex = 0;
-
+                // Pick Rule of the Day
                 const pool = (this.mode === 'senior') ? RULES_POOL_SENIOR : RULES_POOL_JUNIOR;
                 this.activeRule = pool[(this.day - 1) % pool.length];
 
-                if (this.day > 1 && Math.random() < 0.6) {
-                    this.activeNote = DAILY_NOTES_POOL[(this.day - 1) % DAILY_NOTES_POOL.length];
+                // Pick Partner Note on every 2nd day
+                if (this.day % 2 === 0) {
+                    this.activeNote = DAILY_NOTES_POOL[(this.day / 2) % DAILY_NOTES_POOL.length];
                 } else {
                     this.activeNote = null;
                 }
 
-                // Problem A: Enforce 5-pack distribution per shift
-                this.currentQueue = DossierGenerator.generateShiftQueue(this.mode, this.day);
+                // Generate Queue with Hard Assertions
+                this.currentQueue = ShiftQueueGenerator.generateShiftQueue(this.mode, this.day);
+                this.shiftPackIndex = 0;
+                this.hasSavedScoreThisShift = false;
 
-                document.getElementById('briefing-date').innerText = `DAY ${this.day}`;
+                // Show Briefing Overlay
+                document.getElementById('briefing-date').innerText = `DAY ${this.day} (${this.mode.toUpperCase()})`;
                 document.getElementById('briefing-rule-text').innerText = this.activeRule.text;
-                
+
                 const noteBox = document.getElementById('briefing-note-box');
                 if (this.activeNote) {
                     noteBox.style.display = 'block';
-                    document.getElementById('briefing-note-text').innerText = `${this.activeNote.title}: ${this.activeNote.text}`;
+                    document.getElementById('briefing-note-text').innerText = `${this.activeNote.title}: "${this.activeNote.text}"`;
                 } else {
                     noteBox.style.display = 'none';
                 }
@@ -1674,338 +1790,314 @@
 
             startShiftQueue() {
                 document.getElementById('briefing-overlay').style.display = 'none';
-                
+
+                // Pinned Strip
                 document.getElementById('pinned-rule').innerText = `📌 RULE OF THE DAY: ${this.activeRule.text}`;
                 const pinnedNote = document.getElementById('pinned-note');
                 if (this.activeNote) {
                     pinnedNote.style.display = 'block';
-                    pinnedNote.innerText = `✉️ PARTNER DIRECTIVE: ${this.activeNote.text}`;
+                    pinnedNote.innerText = `✉️ PARTNER NOTE: ${this.activeNote.text}`;
                 } else {
                     pinnedNote.style.display = 'none';
                 }
 
+                // Timer setup
                 this.timerSeconds = 130 + (this.inventory.coffee * 30);
                 this.startTimer();
-                this.loadCurrentDossier();
+
+                this.loadCurrentPack();
             }
 
             startTimer() {
-                clearInterval(this.timerInterval);
+                if (this.timerInterval) clearInterval(this.timerInterval);
                 this.timerInterval = setInterval(() => {
                     this.timerSeconds--;
-                    this.updateHUD();
+                    const mins = Math.floor(this.timerSeconds / 60);
+                    const secs = this.timerSeconds % 60;
+                    document.getElementById('hud-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
                     if (this.timerSeconds <= 0) {
                         clearInterval(this.timerInterval);
-                        showToast("⏳ Shift Timer Expired! Time penalty applied.");
-                        this.citations++;
-                        this.updateHUD();
-                        if (this.citations >= this.maxCitations) {
-                            this.triggerGameOver("Shift timer expired and citation threshold was exceeded.");
-                        }
+                        showToast("⏰ Shift time expired! Desk auto-submitted.");
+                        this.submitApprove(); // Default auto action
                     }
                 }, 1000);
             }
 
-            updateHUD() {
+            loadCurrentPack() {
+                if (this.shiftPackIndex >= 5) {
+                    this.endShift();
+                    return;
+                }
+
+                const currentPack = this.currentQueue[this.shiftPackIndex];
+                this.auditMode = false;
+                this.markedTargets.clear();
+                document.body.classList.remove('audit-mode');
+                this.updateAuditUI();
+
+                // Clear stamps
+                document.querySelectorAll('.stamp-mark').forEach(s => s.classList.remove('visible'));
+
+                // Update HUD
                 document.getElementById('hud-day').innerText = this.day;
                 document.getElementById('hud-file-progress').innerText = `FILE ${this.shiftPackIndex + 1}/5`;
-                
-                const mins = Math.floor(this.timerSeconds / 60);
-                const secs = this.timerSeconds % 60;
-                document.getElementById('hud-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                
                 document.getElementById('hud-wage').innerText = this.cash;
                 document.getElementById('hud-rep').innerText = this.rep;
                 document.getElementById('hud-citations').innerText = `${this.citations}/${this.maxCitations}`;
 
-                // Update items in shop/tray
+                // Update Item Buttons
+                document.getElementById('btn-shredder').style.display = (this.inventory.shredder > 0) ? 'inline-block' : 'none';
                 document.getElementById('shredder-count').innerText = this.inventory.shredder;
+                document.getElementById('btn-golden-stamp').style.display = (this.inventory.goldstamp > 0) ? 'inline-block' : 'none';
                 document.getElementById('gold-stamp-count').innerText = this.inventory.goldstamp;
-                document.getElementById('btn-shredder').style.display = this.inventory.shredder > 0 ? 'inline-block' : 'none';
-                document.getElementById('btn-golden-stamp').style.display = this.inventory.goldstamp > 0 ? 'inline-block' : 'none';
+
+                // Render Dossier Card
+                document.getElementById('card-company-name').innerText = currentPack.card.name;
+                document.getElementById('card-industry').innerText = currentPack.card.industry;
+                document.getElementById('card-founded').innerText = currentPack.card.founded;
+                document.getElementById('card-operating').innerText = `${currentPack.card.operating} yrs operating`;
+                document.getElementById('card-desc').innerText = currentPack.card.desc;
+                document.getElementById('card-minimized-summary').innerText = `• Founded: ${currentPack.card.founded}`;
+
+                const vipBox = document.getElementById('card-vip-container');
+                if (currentPack.card.vip) {
+                    vipBox.innerHTML = `<span style="background:#b45309; color:#fff; font-size:0.72rem; padding:2px 6px; border-radius:3px; font-weight:bold;">★ ${currentPack.card.vip}</span>`;
+                } else {
+                    vipBox.innerHTML = '';
+                }
+
+                // Render SCI Table
+                this.renderSCITable(currentPack);
+
+                // Render BS Table
+                const bsPaper = document.getElementById('doc-bs');
+                const tabBar = document.getElementById('doc-tab-bar');
+
+                if (this.mode === 'senior' && currentPack.bs26) {
+                    bsPaper.style.display = 'block';
+                    this.renderBSTable(currentPack);
+
+                    // Responsive Tab or Side-by-Side
+                    if (window.innerWidth < 1024) {
+                        tabBar.style.display = 'flex';
+                        this.switchTab('sci');
+                    } else {
+                        tabBar.style.display = 'none';
+                        document.getElementById('doc-sci').style.display = 'block';
+                        document.getElementById('doc-bs').style.display = 'block';
+                    }
+                } else {
+                    bsPaper.style.display = 'none';
+                    tabBar.style.display = 'none';
+                    document.getElementById('doc-sci').style.display = 'block';
+                }
+
+                this.attachAuditClickHandlers();
             }
 
-            loadCurrentDossier() {
-                if (this.shiftPackIndex >= 5) {
-                    this.finishShift();
-                    return;
-                }
+            renderSCITable(pack) {
+                document.getElementById('sci-company-name').innerText = pack.sci26.headerName;
+                document.getElementById('sci-subtext').innerText = pack.sci26.headerSubtext;
 
-                const dossier = this.currentQueue[this.shiftPackIndex];
-                this.markedTargets.clear();
-                this.auditMode = false;
-                document.body.classList.remove('audit-mode');
-                
-                // Reset Tool Tray buttons
-                document.getElementById('btn-approve').style.display = 'inline-block';
-                document.getElementById('btn-reject').style.display = 'inline-block';
-                document.getElementById('btn-audit').style.display = 'inline-block';
-                document.getElementById('btn-cancel-audit').style.display = 'none';
-                document.getElementById('btn-stamp-audit').style.display = 'none';
+                const s26 = pack.sci26;
+                const s25 = pack.sci25;
 
-                // Reset Stamps
-                document.getElementById('stamp-sci-app').classList.remove('visible');
-                document.getElementById('stamp-sci-den').classList.remove('visible');
-                document.getElementById('stamp-bs-app').classList.remove('visible');
-                document.getElementById('stamp-bs-den').classList.remove('visible');
-
-                // Render Company Card
-                document.getElementById('card-company-name').innerText = dossier.card.name;
-                document.getElementById('card-industry').innerText = dossier.card.industry;
-                document.getElementById('card-founded').innerText = dossier.card.founded;
-                document.getElementById('card-operating').innerText = `${dossier.card.operating} yrs operating`;
-                document.getElementById('card-desc').innerText = dossier.card.desc;
-                document.getElementById('card-minimized-summary').innerText = `• Founded: ${dossier.card.founded} (${dossier.card.industry})`;
-                
-                const vipContainer = document.getElementById('card-vip-container');
-                if (dossier.card.vip) {
-                    vipContainer.innerHTML = `<span style="background:#b45309; color:#fff; font-size:0.7rem; font-weight:bold; padding:2px 6px; border-radius:3px;">⭐ ${dossier.card.vip}</span>`;
-                } else {
-                    vipContainer.innerHTML = '';
-                }
-
-                // Render Income Statement Table (Problem B: Whole line absent when missing)
-                document.getElementById('sci-company-name').innerText = dossier.sci26.headerName || "[BLANK]";
-                document.getElementById('sci-subtext').innerText = dossier.sci26.headerSubtext;
-                
-                const fmt = (v) => (v === null || v === undefined) ? '—' : Number(v).toLocaleString();
-
-                let sciHtml = `
+                let html = `
                     <thead>
-                        <tr style="border-bottom: 2px solid var(--ink);">
-                            <th style="text-align:left; padding:4px;">(Rp million)</th>
-                            <th style="text-align:right; padding:4px;" data-audit-target="sci_year_26">2026</th>
-                            <th style="text-align:right; padding:4px;" data-audit-target="sci_prior_year">2025</th>
+                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
+                            <th style="text-align:left; padding-bottom: 4px;">Line Item (Rp M)</th>
+                            <th style="text-align:right; width: 80px;" data-audit-target="sci_rev_26">2026</th>
+                            <th style="text-align:right; width: 80px;" data-audit-target="sci_rev_25">2025</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Revenue</td>
-                            <td class="num" data-audit-target="sci_rev_26">${fmt(dossier.sci26.rev)}</td>
-                            <td class="num" data-audit-target="sci_rev_25">${fmt(dossier.sci25.rev)}</td>
-                        </tr>
-                        <tr>
-                            <td>Cost of Sales</td>
-                            <td class="num" data-audit-target="sci_cos_26">${fmt(dossier.sci26.cos)}</td>
-                            <td class="num" data-audit-target="sci_cos_25">${fmt(dossier.sci25.cos)}</td>
-                        </tr>
-                        <tr class="subtotal">
-                            <td>Gross Profit</td>
-                            <td class="num" data-audit-target="sci_gp_26">${fmt(dossier.sci26.gp)}</td>
-                            <td class="num" data-audit-target="sci_gp_25">${fmt(dossier.sci25.gp)}</td>
-                        </tr>
-                        <tr class="indent">
-                            <td>Selling Expenses</td>
-                            <td class="num" data-audit-target="sci_sell_26">${fmt(dossier.sci26.sell)}</td>
-                            <td class="num" data-audit-target="sci_sell_25">${fmt(dossier.sci25.sell)}</td>
-                        </tr>
+                        <tr><td>Revenue</td><td class="num" data-audit-target="sci_rev_26">${s26.rev ?? '-'}</td><td class="num" data-audit-target="sci_rev_25">${s25.rev ?? '-'}</td></tr>
+                        <tr><td>Cost of Sales</td><td class="num" data-audit-target="sci_cos_26">(${s26.cos ?? '-'})</td><td class="num" data-audit-target="sci_cos_25">(${s25.cos ?? '-'})</td></tr>
+                        <tr class="subtotal"><td>Gross Profit</td><td class="num" data-audit-target="sci_gp_26">${s26.gp ?? '-'}</td><td class="num" data-audit-target="sci_gp_25">${s25.gp ?? '-'}</td></tr>
+                        <tr class="indent"><td>Selling & Distribution</td><td class="num" data-audit-target="sci_sell_26">(${s26.sell ?? '-'})</td><td class="num" data-audit-target="sci_sell_25">(${s25.sell ?? '-'})</td></tr>
+                        <tr class="indent"><td>Administrative Expenses</td><td class="num" data-audit-target="sci_admin_26">(${s26.admin ?? '-'})</td><td class="num" data-audit-target="sci_admin_25">(${s25.admin ?? '-'})</td></tr>
+                        <tr class="subtotal"><td>Operating Profit</td><td class="num" data-audit-target="sci_op_26">${s26.op ?? '-'}</td><td class="num" data-audit-target="sci_op_25">${s25.op ?? '-'}</td></tr>
                 `;
 
-                if (!dossier.sci26.missingAdminRow) {
-                    sciHtml += `
-                        <tr class="indent">
-                            <td>Administrative Expenses</td>
-                            <td class="num" data-audit-target="sci_admin_26">${fmt(dossier.sci26.admin)}</td>
-                            <td class="num" data-audit-target="sci_admin_25">${fmt(dossier.sci25.admin)}</td>
-                        </tr>
-                    `;
-                }
-
-                sciHtml += `
-                    <tr class="subtotal">
-                        <td>Operating Profit (EBIT)</td>
-                        <td class="num" data-audit-target="sci_op_26">${fmt(dossier.sci26.op)}</td>
-                        <td class="num" data-audit-target="sci_op_25">${fmt(dossier.sci25.op)}</td>
-                    </tr>
-                `;
-
-                // PROBLEM B1: WHOLE ROW ABSENT FOR FINANCE COSTS
-                if (dossier.sci26.missingFinanceRow) {
-                    // Omit row completely, provide interactive gap target
-                    sciHtml += `
+                // MISSING FINANCE COSTS ROW PRESENTATION
+                if (s26.missingFinanceRow) {
+                    html += `
                         <tr class="missing-line-gap" data-audit-target="sci:financeCosts:missing">
-                            <td colspan="3" style="font-size:0.65rem; color:#b91c1c; text-align:center; padding:1px; cursor:pointer;"></td>
+                            <td colspan="3" style="text-align:center; font-style:italic; font-size:0.7rem; color:#b91c1c;">[ GAP: FINANCE COSTS LINE OMITTED ]</td>
                         </tr>
                     `;
                 } else {
-                    sciHtml += `
-                        <tr class="indent">
-                            <td>Finance Costs</td>
-                            <td class="num" data-audit-target="sci_fin_26">${fmt(dossier.sci26.fin)}</td>
-                            <td class="num" data-audit-target="sci_fin_25">${fmt(dossier.sci25.fin)}</td>
-                        </tr>
+                    html += `
+                        <tr class="indent"><td>Finance Costs</td><td class="num" data-audit-target="sci_fin_26">(${s26.fin ?? '-'})</td><td class="num" data-audit-target="sci_fin_25">(${s25.fin ?? '-'})</td></tr>
                     `;
                 }
 
-                sciHtml += `
-                    <tr class="subtotal">
-                        <td>Profit Before Tax (PBT)</td>
-                        <td class="num" data-audit-target="sci_pbt_26">${fmt(dossier.sci26.pbt)}</td>
-                        <td class="num" data-audit-target="sci_pbt_25">${fmt(dossier.sci25.pbt)}</td>
-                    </tr>
+                html += `
+                    <tr class="subtotal"><td>Profit Before Tax</td><td class="num" data-audit-target="sci_pbt_26">${s26.pbt ?? '-'}</td><td class="num" data-audit-target="sci_pbt_25">${s25.pbt ?? '-'}</td></tr>
                 `;
 
-                // PROBLEM B2: WHOLE ROW ABSENT FOR TAXATION
-                if (dossier.sci26.missingTaxRow) {
-                    // Omit row completely, provide interactive gap target
-                    sciHtml += `
+                // MISSING TAXATION ROW PRESENTATION
+                if (s26.missingTaxRow) {
+                    html += `
                         <tr class="missing-line-gap" data-audit-target="sci:taxation:missing">
-                            <td colspan="3" style="font-size:0.65rem; color:#b91c1c; text-align:center; padding:1px; cursor:pointer;"></td>
+                            <td colspan="3" style="text-align:center; font-style:italic; font-size:0.7rem; color:#b91c1c;">[ GAP: TAXATION LINE OMITTED ]</td>
                         </tr>
                     `;
                 } else {
-                    sciHtml += `
-                        <tr class="indent">
-                            <td>Taxation Expense</td>
-                            <td class="num" data-audit-target="sci_tax_26">${fmt(dossier.sci26.tax)}</td>
-                            <td class="num" data-audit-target="sci_tax_25">${fmt(dossier.sci25.tax)}</td>
-                        </tr>
+                    html += `
+                        <tr class="indent"><td>Taxation Provision</td><td class="num" data-audit-target="sci_tax_26">(${s26.tax ?? '-'})</td><td class="num" data-audit-target="sci_tax_25">(${s25.tax ?? '-'})</td></tr>
                     `;
                 }
 
-                sciHtml += `
-                    <tr class="total">
-                        <td>Profit After Tax (PAT)</td>
-                        <td class="num" data-audit-target="sci_pat_26">${fmt(dossier.sci26.pat)}</td>
-                        <td class="num" data-audit-target="sci_pat_25">${fmt(dossier.sci25.pat)}</td>
-                    </tr>
+                html += `
+                        <tr class="total"><td>Profit After Tax</td><td class="num" data-audit-target="sci_pat_26">${s26.pat ?? '-'}</td><td class="num" data-audit-target="sci_pat_25">${s25.pat ?? '-'}</td></tr>
                     </tbody>
                 `;
 
-                document.getElementById('sci-table').innerHTML = sciHtml;
-
-                // Mode 2 Senior Desk Side-by-Side Balance Sheet
-                const bsDoc = document.getElementById('doc-bs');
-                const tabBar = document.getElementById('doc-tab-bar');
-
-                if (this.mode === 'senior' && dossier.bs26) {
-                    bsDoc.style.display = 'block';
-                    tabBar.style.display = (window.innerWidth < 1024) ? 'flex' : 'none';
-
-                    document.getElementById('bs-company-name').innerText = dossier.bs26.headerName || "[BLANK]";
-                    
-                    document.getElementById('bs-table').innerHTML = `
-                        <thead>
-                            <tr style="border-bottom: 2px solid var(--ink);">
-                                <th style="text-align:left; padding:4px;">ASSETS (Rp mil)</th>
-                                <th style="text-align:right; padding:4px;" data-audit-target="bs_year_26">2026</th>
-                                <th style="text-align:right; padding:4px;" data-audit-target="bs_prior_year">2025</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="section-head"><td colspan="3">Non-Current Assets</td></tr>
-                            <tr class="indent"><td>Property, Plant & Equip</td><td class="num" data-audit-target="bs_ppe_26">${fmt(dossier.bs26.ppe)}</td><td class="num">${fmt(dossier.bs25.ppe)}</td></tr>
-                            <tr class="indent"><td>Intangibles</td><td class="num" data-audit-target="bs_int_26">${fmt(dossier.bs26.int)}</td><td class="num">${fmt(dossier.bs25.int)}</td></tr>
-                            <tr class="subtotal"><td>Total Non-Current Assets</td><td class="num" data-audit-target="bs_nca_tot_26">${fmt(dossier.bs26.nca_total)}</td><td class="num">${fmt(dossier.bs25.nca_total)}</td></tr>
-                            
-                            <tr class="section-head"><td colspan="3">Current Assets</td></tr>
-                            <tr class="indent"><td>Inventories</td><td class="num" data-audit-target="bs_inv_26">${fmt(dossier.bs26.inv)}</td><td class="num">${fmt(dossier.bs25.inv)}</td></tr>
-                            <tr class="indent"><td>Trade Receivables</td><td class="num" data-audit-target="bs_rec_26">${fmt(dossier.bs26.receivables)}</td><td class="num">${fmt(dossier.bs25.receivables)}</td></tr>
-                            <tr class="indent"><td>Cash & Equivalents</td><td class="num" data-audit-target="bs_cash_26">${fmt(dossier.bs26.cash)}</td><td class="num">${fmt(dossier.bs25.cash)}</td></tr>
-                            <tr class="subtotal"><td>Total Current Assets</td><td class="num" data-audit-target="bs_ca_tot_26">${fmt(dossier.bs26.ca_total)}</td><td class="num">${fmt(dossier.bs25.ca_total)}</td></tr>
-                            
-                            <tr class="total"><td>TOTAL ASSETS</td><td class="num" data-audit-target="bs_assets_tot_26">${fmt(dossier.bs26.assets_total)}</td><td class="num">${fmt(dossier.bs25.assets_total)}</td></tr>
-
-                            <tr class="section-head"><td colspan="3">LIABILITIES & EQUITY</td></tr>
-                            <tr class="indent"><td>Trade Payables</td><td class="num" data-audit-target="bs_pay_26">${fmt(dossier.bs26.payables)}</td><td class="num">${fmt(dossier.bs25.payables)}</td></tr>
-                            <tr class="indent"><td>Short-term Borrowings</td><td class="num" data-audit-target="bs_st_bor_26">${fmt(dossier.bs26.st_borrowings)}</td><td class="num">${fmt(dossier.bs25.st_borrowings)}</td></tr>
-                            <tr class="subtotal"><td>Total Current Liabilities</td><td class="num" data-audit-target="bs_cl_tot_26">${fmt(dossier.bs26.cl_total)}</td><td class="num">${fmt(dossier.bs25.cl_total)}</td></tr>
-                            
-                            <tr class="indent"><td>Long-term Borrowings (NCL)</td><td class="num" data-audit-target="bs_lt_bor_26">${fmt(dossier.bs26.lt_borrowings)}</td><td class="num">${fmt(dossier.bs25.lt_borrowings)}</td></tr>
-                            <tr class="subtotal"><td>Total Equity</td><td class="num" data-audit-target="bs_eq_tot_26">${fmt(dossier.bs26.equity_total)}</td><td class="num">${fmt(dossier.bs25.equity_total)}</td></tr>
-                            
-                            <tr class="total"><td>TOTAL LIABILITIES & EQUITY</td><td class="num" data-audit-target="bs_liab_eq_tot_26">${fmt(dossier.bs26.liab_eq_total)}</td><td class="num">${fmt(dossier.bs25.liab_eq_total)}</td></tr>
-                        </tbody>
-                    `;
-                } else {
-                    bsDoc.style.display = 'none';
-                    tabBar.style.display = 'none';
-                }
-
-                this.bindAuditClickEvents();
-                this.updateHUD();
+                document.getElementById('sci-table').innerHTML = html;
             }
 
-            bindAuditClickEvents() {
-                const targets = document.querySelectorAll('[data-audit-target]');
-                targets.forEach(el => {
-                    el.onclick = (e) => {
+            renderBSTable(pack) {
+                if (!pack.bs26) return;
+                document.getElementById('bs-company-name').innerText = pack.bs26.headerName;
+
+                const b26 = pack.bs26;
+                const b25 = pack.bs25;
+
+                const html = `
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
+                            <th style="text-align:left; padding-bottom: 4px;">Balance Sheet Item (Rp M)</th>
+                            <th style="text-align:right; width: 80px;" data-audit-target="bs_assets_26">2026</th>
+                            <th style="text-align:right; width: 80px;" data-audit-target="bs_assets_25">2025</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="section-head"><td colspan="3">Non-Current Assets</td></tr>
+                        <tr class="indent"><td>Property, Plant & Equip.</td><td class="num" data-audit-target="bs_ppe_26">${b26.ppe}</td><td class="num">${b25.ppe}</td></tr>
+                        <tr class="indent"><td>Intangibles & Goodwill</td><td class="num" data-audit-target="bs_int_26">${b26.int}</td><td class="num">${b25.int}</td></tr>
+                        <tr class="subtotal"><td>Total Non-Current Assets</td><td class="num" data-audit-target="bs_nca_tot_26">${b26.nca_total}</td><td class="num">${b25.nca_total}</td></tr>
+
+                        <tr class="section-head"><td colspan="3">Current Assets</td></tr>
+                        <tr class="indent"><td>Inventories</td><td class="num" data-audit-target="bs_inv_26">${b26.inv}</td><td class="num">${b25.inv}</td></tr>
+                        <tr class="indent"><td>Trade Receivables</td><td class="num" data-audit-target="bs_rec_26">${b26.receivables}</td><td class="num">${b25.receivables}</td></tr>
+                        <tr class="indent"><td>Cash & Equivalents</td><td class="num" data-audit-target="bs_cash_26">${b26.cash}</td><td class="num">${b25.cash}</td></tr>
+                        <tr class="subtotal"><td>Total Current Assets</td><td class="num" data-audit-target="bs_ca_tot_26">${b26.ca_total}</td><td class="num">${b25.ca_total}</td></tr>
+                        <tr class="total"><td>TOTAL ASSETS</td><td class="num" data-audit-target="bs_assets_tot_26">${b26.assets_total}</td><td class="num">${b25.assets_total}</td></tr>
+
+                        <tr class="section-head"><td colspan="3">Current Liabilities</td></tr>
+                        <tr class="indent"><td>Trade Payables</td><td class="num" data-audit-target="bs_pay_26">${b26.payables}</td><td class="num">${b25.payables}</td></tr>
+                        <tr class="indent"><td>Short-Term Debt</td><td class="num" data-audit-target="bs_st_26">${b26.st_borrowings}</td><td class="num">${b25.st_borrowings}</td></tr>
+                        <tr class="subtotal"><td>Total Current Liabilities</td><td class="num" data-audit-target="bs_cl_tot_26">${b26.cl_total}</td><td class="num">${b25.cl_total}</td></tr>
+
+                        <tr class="section-head"><td colspan="3">Non-Current Liabilities & Equity</td></tr>
+                        <tr class="indent"><td>Long-Term Liabilities</td><td class="num" data-audit-target="bs_ncl_tot_26">${b26.ncl_total}</td><td class="num">${b25.ncl_total}</td></tr>
+                        <tr class="indent"><td>Total Shareholder Equity</td><td class="num" data-audit-target="bs_eq_tot_26">${b26.equity_total}</td><td class="num">${b25.equity_total}</td></tr>
+                        <tr class="total"><td>TOTAL LIABILITIES & EQUITY</td><td class="num" data-audit-target="bs_liab_eq_26">${b26.liab_eq_total}</td><td class="num">${b25.liab_eq_total}</td></tr>
+                    </tbody>
+                `;
+
+                document.getElementById('bs-table').innerHTML = html;
+            }
+
+            switchTab(tab) {
+                document.getElementById('tab-card').classList.toggle('active', tab === 'card');
+                document.getElementById('tab-sci').classList.toggle('active', tab === 'sci');
+                document.getElementById('tab-bs').classList.toggle('active', tab === 'bs');
+
+                document.getElementById('card-dock-row').style.display = (tab === 'card' || window.innerWidth >= 1024) ? 'block' : 'none';
+                document.getElementById('doc-sci').style.display = (tab === 'sci' || window.innerWidth >= 1024) ? 'block' : 'none';
+                document.getElementById('doc-bs').style.display = (tab === 'bs' || window.innerWidth >= 1024) ? 'block' : 'none';
+            }
+
+            toggleCompanyCard(e) {
+                if (e) e.stopPropagation();
+                const card = document.getElementById('company-card-box');
+                const btn = document.getElementById('btn-toggle-card');
+                card.classList.toggle('minimized');
+                btn.innerText = card.classList.contains('minimized') ? 'Expand +' : 'Minimize −';
+            }
+
+            toggleAuditMode() {
+                this.auditMode = !this.auditMode;
+                document.body.classList.toggle('audit-mode', this.auditMode);
+                this.updateAuditUI();
+
+                if (this.auditMode) {
+                    showToast("🔍 AUDIT MODE ACTIVE: Click numbers, gaps, or card details to highlight discrepancy.");
+                }
+            }
+
+            updateAuditUI() {
+                document.getElementById('btn-approve').style.display = this.auditMode ? 'none' : 'inline-block';
+                document.getElementById('btn-reject').style.display = this.auditMode ? 'none' : 'inline-block';
+                document.getElementById('btn-audit').style.display = this.auditMode ? 'none' : 'inline-block';
+                document.getElementById('btn-cancel-audit').style.display = this.auditMode ? 'inline-block' : 'none';
+                document.getElementById('btn-stamp-audit').style.display = this.auditMode ? 'inline-block' : 'none';
+            }
+
+            attachAuditClickHandlers() {
+                document.querySelectorAll('[data-audit-target]').forEach(elem => {
+                    elem.onclick = (e) => {
                         if (!this.auditMode) return;
                         e.stopPropagation();
-                        const id = el.getAttribute('data-audit-target');
-                        if (this.markedTargets.has(id)) {
-                            this.markedTargets.delete(id);
-                            el.classList.remove('marked-discrepancy');
+                        const targetId = elem.getAttribute('data-audit-target');
+                        if (this.markedTargets.has(targetId)) {
+                            this.markedTargets.delete(targetId);
+                            elem.classList.remove('marked-discrepancy');
                         } else {
-                            this.markedTargets.add(id);
-                            el.classList.add('marked-discrepancy');
+                            this.markedTargets.add(targetId);
+                            elem.classList.add('marked-discrepancy');
                         }
                     };
                 });
             }
 
-            toggleAuditMode() {
-                this.auditMode = !this.auditMode;
-                if (this.auditMode) {
-                    document.body.classList.add('audit-mode');
-                    document.getElementById('btn-approve').style.display = 'none';
-                    document.getElementById('btn-reject').style.display = 'none';
-                    document.getElementById('btn-audit').style.display = 'none';
-                    document.getElementById('btn-cancel-audit').style.display = 'inline-block';
-                    document.getElementById('btn-stamp-audit').style.display = 'inline-block';
-                    showToast("🔍 AUDIT MODE ACTIVE: Click misstated items or missing-line gaps.");
-                } else {
-                    document.body.classList.remove('audit-mode');
-                    document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
-                    this.markedTargets.clear();
-                    
-                    document.getElementById('btn-approve').style.display = 'inline-block';
-                    document.getElementById('btn-reject').style.display = 'inline-block';
-                    document.getElementById('btn-audit').style.display = 'inline-block';
-                    document.getElementById('btn-cancel-audit').style.display = 'none';
-                    document.getElementById('btn-stamp-audit').style.display = 'none';
-                }
-            }
-
+            /* ════════════════════════════════════════════════════════════
+               SUBMISSION HANDLERS
+               ════════════════════════════════════════════════════════════ */
             submitApprove() {
-                document.getElementById('stamp-sci-app').classList.add('visible');
-                setTimeout(() => this.processVerdict('approve', null), 400);
+                const currentPack = this.currentQueue[this.shiftPackIndex];
+                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
+                this.processVerdict('approve', null, expected);
             }
 
             openRejectModal() {
-                this.selectedRejectReason = null;
-                const container = document.getElementById('reject-reasons-list');
-                container.innerHTML = '';
+                const modal = document.getElementById('reject-modal');
+                const list = document.getElementById('reject-reasons-list');
+                list.innerHTML = '';
 
-                const options = [
-                    { id: 'loss_unprotected', title: 'Loss — no protection', desc: 'Unprotected operational loss without startup / trajectory immunity.' },
-                    { id: 'worse_yoy', title: 'Worse than last year', desc: 'Clear YoY deterioration in net profits.' },
-                    { id: 'weak_margins', title: 'Weak margins', desc: 'Gross margin < 20% or PAT margin < 5%.' },
-                    { id: 'fails_rule', title: 'Failed Rule of the Day', desc: 'Violates daily desk directive rule.' },
-                    { id: 'bs_risk', title: 'Balance Sheet risk', desc: 'Insolvency, liquidity deficiency, or high gearing.' }
+                const availableReasons = [
+                    { id: 'loss_unprotected', title: 'Loss — no protection', desc: 'Net loss (PAT <= 0) without trajectory or startup protection.' },
+                    { id: 'worse_yoy', title: 'Worse than last year', desc: 'Severe YoY earnings collapse (>40% drop).' },
+                    { id: 'weak_margins', title: 'Weak margins', desc: 'Thin Gross Margin (<20%) or Net Margin (<5%).' },
+                    { id: 'fails_rule', title: 'Failed Rule of the Day', desc: 'Violates daily Investment Committee directive.' },
+                    { id: 'bs_risk', title: 'Balance Sheet risk', desc: 'Current liabilities exceed current assets, cash floor breach, or gearing risk.' }
                 ];
 
-                options.forEach(opt => {
+                availableReasons.forEach((r, idx) => {
                     const div = document.createElement('div');
-                    div.className = 'reject-option';
+                    div.className = `reject-option ${idx === 0 ? 'selected' : ''}`;
+                    div.dataset.reason = r.id;
                     div.innerHTML = `
-                        <input type="radio" name="reject_reason" value="${opt.id}" id="rr_${opt.id}" style="margin-top:2px;">
+                        <input type="radio" name="rej_reason_rad" value="${r.id}" ${idx === 0 ? 'checked' : ''} style="margin-top:2px;">
                         <div>
-                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">${opt.title}</div>
-                            <div style="font-size:0.75rem; color:#4b5563;">${opt.desc}</div>
+                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">${r.title}</div>
+                            <div style="font-size:0.75rem; color:#4b5563;">${r.desc}</div>
                         </div>
                     `;
                     div.onclick = () => {
-                        document.querySelectorAll('.reject-option').forEach(o => o.classList.remove('selected'));
+                        document.querySelectorAll('.reject-option').forEach(opt => opt.classList.remove('selected'));
                         div.classList.add('selected');
-                        const radio = document.getElementById(`rr_${opt.id}`);
-                        if (radio) radio.checked = true;
-                        this.selectedRejectReason = opt.id;
+                        div.querySelector('input').checked = true;
+                        this.selectedRejectReason = r.id;
                     };
-                    container.appendChild(div);
+                    list.appendChild(div);
                 });
 
-                document.getElementById('reject-modal').style.display = 'flex';
+                this.selectedRejectReason = 'loss_unprotected';
+                modal.style.display = 'flex';
             }
 
             closeRejectModal() {
@@ -2013,256 +2105,249 @@
             }
 
             confirmReject() {
-                if (!this.selectedRejectReason) {
-                    showToast("⚠️ Select a rejection reason first.");
-                    return;
-                }
                 this.closeRejectModal();
-                document.getElementById('stamp-sci-den').classList.add('visible');
-                setTimeout(() => this.processVerdict('reject', this.selectedRejectReason), 400);
+                const currentPack = this.currentQueue[this.shiftPackIndex];
+                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
+                this.processVerdict('reject', this.selectedRejectReason, expected);
             }
 
             submitAuditStamp() {
-                if (this.markedTargets.size === 0) {
-                    showToast("⚠️ Mark at least one discrepancy or missing line gap in Audit Mode!");
-                    return;
-                }
-                document.getElementById('stamp-sci-den').classList.add('visible');
-                setTimeout(() => this.processVerdict('audit', null, Array.from(this.markedTargets)), 400);
-            }
+                const currentPack = this.currentQueue[this.shiftPackIndex];
+                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
 
-            processVerdict(userAction, userRejectReason = null, userMarkedTargets = []) {
-                const dossier = this.currentQueue[this.shiftPackIndex];
-                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
-
-                let isCorrect = false;
-                let deltaPay = 0;
-                let deltaRep = 0;
-                let citationAdded = false;
-
-                if (userAction === 'approve') {
-                    if (verdict.correctAction === 'approve') {
-                        isCorrect = true;
-                        deltaPay = 50;
-                        deltaRep = 5;
-                    } else {
-                        citationAdded = true;
-                        deltaPay = -20;
-                        deltaRep = -5;
-                    }
-                } else if (userAction === 'reject') {
-                    if (verdict.correctAction === 'reject') {
-                        // Multi-reason match credit
-                        if (verdict.correctRejectReasons.includes(userRejectReason) || userRejectReason === verdict.correctRejectReason) {
-                            isCorrect = true;
-                            deltaPay = 50;
-                            deltaRep = 5;
-                        } else {
-                            // Correct reject, but wrong bucket
-                            isCorrect = false;
-                            citationAdded = true;
-                            deltaPay = 10; // Partial payout
-                            deltaRep = 0;
-                        }
-                    } else {
-                        citationAdded = true;
-                        deltaPay = -20;
-                        deltaRep = -5;
-                    }
-                } else if (userAction === 'audit') {
-                    if (verdict.correctAction === 'audit') {
-                        // Check if marked targets match any valid chain
-                        let chainMatched = false;
-                        verdict.validChains = dossier.validChains || [];
-
-                        for (let chain of verdict.validChains) {
-                            if (chain.every(t => userMarkedTargets.includes(t))) {
-                                chainMatched = true;
+                // Verify marked targets match validChains
+                let auditSuccess = false;
+                if (currentPack.hasFraud) {
+                    const markedArray = Array.from(this.markedTargets);
+                    if (markedArray.length > 0) {
+                        for (let chain of currentPack.validChains) {
+                            if (chain.some(target => markedArray.includes(target))) {
+                                auditSuccess = true;
                                 break;
                             }
                         }
-
-                        if (chainMatched || userMarkedTargets.length > 0) {
-                            isCorrect = true;
-                            deltaPay = 80; // Full audit bounty
-                            deltaRep = 10;
-                        } else {
-                            citationAdded = true;
-                            deltaPay = -20;
-                            deltaRep = -5;
-                        }
-                    } else {
-                        citationAdded = true;
-                        deltaPay = -20;
-                        deltaRep = -5;
                     }
                 }
 
-                // Check Shield Protection
-                if (citationAdded && this.inventory.shield > 0) {
-                    this.inventory.shield--;
-                    citationAdded = false;
-                    showToast("🛡️ Internal Review Shield absorbed 1 citation penalty!");
-                }
-
-                if (citationAdded) this.citations++;
-
-                this.cash = Math.max(0, this.cash + deltaPay);
-                this.rep = Math.max(0, this.rep + deltaRep);
-
-                this.showVerdictMemo(isCorrect, userAction, verdict, dossier, deltaPay, deltaRep, citationAdded);
+                this.processVerdict('audit', auditSuccess ? 'VALID_AUDIT_STAMP' : 'INVALID_AUDIT_STAMP', expected);
             }
 
-            showVerdictMemo(isCorrect, userAction, verdict, dossier, deltaPay, deltaRep, citationAdded) {
-                const statusLine = document.getElementById('memo-status-line');
-                if (isCorrect) {
-                    statusLine.className = 'memo-status-CORRECT';
-                    statusLine.innerText = 'STATUS: CORRECT VERDICT';
-                } else if (deltaPay > 0) {
-                    statusLine.className = 'memo-status-WARNING';
-                    statusLine.innerText = 'STATUS: WRONG REASON BUCKET';
+            useShredder() {
+                if (this.inventory.shredder <= 0) return;
+                this.inventory.shredder--;
+                showToast("🗑️ Dossier shredded! Safely skipped without citation.");
+                this.shiftPackIndex++;
+                this.loadCurrentPack();
+            }
+
+            useGoldenStamp() {
+                if (this.inventory.goldstamp <= 0) return;
+                this.inventory.goldstamp--;
+                showToast("🌟 Golden Pass Stamp used! Auto-cleared deal pack.");
+                const currentPack = this.currentQueue[this.shiftPackIndex];
+                const expected = evaluateDossierVerdict(currentPack, this.activeRule, this.activeNote, this.mode);
+                this.processVerdict(expected.correctAction, expected.correctRejectReason, expected, true);
+            }
+
+            processVerdict(userAction, userReason, expected, isGoldenStamp = false) {
+                let isCorrect = false;
+                let payDelta = 0;
+                let repDelta = 0;
+                let isCitation = false;
+
+                if (isGoldenStamp) {
+                    isCorrect = true;
+                    payDelta = 50;
+                    repDelta = 5;
+                } else if (userAction === expected.correctAction) {
+                    if (userAction === 'reject') {
+                        // Multi-reason acceptance
+                        if (expected.correctRejectReasons.includes(userReason) || expected.correctRejectReason === userReason) {
+                            isCorrect = true;
+                            payDelta = 50;
+                            repDelta = 5;
+                        } else {
+                            isCorrect = false;
+                            payDelta = -20;
+                            repDelta = -5;
+                            isCitation = true;
+                        }
+                    } else if (userAction === 'audit') {
+                        if (userReason === 'VALID_AUDIT_STAMP') {
+                            isCorrect = true;
+                            payDelta = 75; // Audit bounty
+                            repDelta = 10;
+                        } else {
+                            isCorrect = false;
+                            payDelta = -20;
+                            repDelta = -5;
+                            isCitation = true;
+                        }
+                    } else { // approve
+                        isCorrect = true;
+                        payDelta = 50;
+                        repDelta = 5;
+                    }
                 } else {
-                    statusLine.className = 'memo-status-INCORRECT';
-                    statusLine.innerText = 'STATUS: INTERNAL REVIEW CITATION';
+                    isCorrect = false;
+                    payDelta = -20;
+                    repDelta = -5;
+                    isCitation = true;
                 }
 
-                document.getElementById('memo-correct-action').innerText = verdict.correctAction.toUpperCase();
+                // Handle Citation Shield
+                if (isCitation && this.inventory.shield > 0) {
+                    this.inventory.shield--;
+                    isCitation = false;
+                    payDelta = 0;
+                    showToast("🛡️ Internal Review Shield absorbed citation penalty!");
+                }
+
+                if (isCitation) {
+                    this.citations++;
+                }
+
+                this.cash += payDelta;
+                this.rep += repDelta;
+
+                // Show Stamp Animation
+                const appStamp = document.getElementById('stamp-sci-app');
+                const denStamp = document.getElementById('stamp-sci-den');
+                if (userAction === 'approve') appStamp.classList.add('visible');
+                else denStamp.classList.add('visible');
+
+                setTimeout(() => {
+                    this.showVerdictMemo(isCorrect, userAction, expected, payDelta, repDelta, isCitation);
+                }, 300);
+            }
+
+            showVerdictMemo(isCorrect, userAction, expected, payDelta, repDelta, isCitation) {
+                const currentPack = this.currentQueue[this.shiftPackIndex];
+                const memo = document.getElementById('memo-overlay');
                 
-                const bucketWrapper = document.getElementById('memo-reason-bucket-wrapper');
-                if (verdict.correctAction === 'reject') {
-                    bucketWrapper.style.display = 'block';
-                    const allowedLabels = verdict.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(' OR ');
-                    document.getElementById('memo-reason-bucket').innerText = allowedLabels;
+                const statusLine = document.getElementById('memo-status-line');
+                statusLine.className = isCorrect ? 'memo-status-CORRECT' : 'memo-status-INCORRECT';
+                statusLine.innerText = isCorrect ? 'STATUS: VERDICT ACCEPTEABLE' : 'STATUS: INTERNAL REVIEW CITATION';
+
+                document.getElementById('memo-correct-action').innerText = expected.correctAction.toUpperCase();
+                
+                const reasonBucket = document.getElementById('memo-reason-bucket-wrapper');
+                if (expected.correctAction === 'reject') {
+                    reasonBucket.style.display = 'block';
+                    document.getElementById('memo-reason-bucket').innerText = expected.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(' / ');
                 } else {
-                    bucketWrapper.style.display = 'none';
+                    reasonBucket.style.display = 'none';
                 }
 
                 const bulletsList = document.getElementById('memo-discrepancy-bullets');
-                bulletsList.innerHTML = dossier.discrepancyBullets.map(b => `<li>${b}</li>`).join('');
+                bulletsList.innerHTML = '';
+                currentPack.discrepancyBullets.forEach(b => {
+                    const li = document.createElement('li');
+                    li.innerText = b;
+                    bulletsList.appendChild(li);
+                });
 
-                document.getElementById('memo-working').innerText = dossier.workingText || "All line items and totals validated.";
-                document.getElementById('memo-implication').innerText = dossier.implicationText || "Pack complies with committee financial guidelines.";
+                document.getElementById('memo-working').innerText = currentPack.workingText || "N/A";
+                document.getElementById('memo-implication').innerText = currentPack.implicationText || "N/A";
 
-                document.getElementById('memo-delta-pay').innerText = `PAY: ${deltaPay >= 0 ? '+' : ''}$${deltaPay}`;
-                document.getElementById('memo-delta-rep').innerText = `REP: ${deltaRep >= 0 ? '+' : ''}${deltaRep}`;
+                document.getElementById('memo-delta-pay').innerText = `PAY: ${payDelta >= 0 ? '+' : ''}$${payDelta}`;
+                document.getElementById('memo-delta-rep').innerText = `REP: ${repDelta >= 0 ? '+' : ''}${repDelta}`;
                 
-                const citDelta = document.getElementById('memo-delta-cit');
-                if (citationAdded) {
-                    citDelta.style.display = 'inline-block';
-                    citDelta.innerText = `CITATIONS: +1 (${this.citations}/${this.maxCitations})`;
-                } else {
-                    citDelta.style.display = 'none';
-                }
+                const citElem = document.getElementById('memo-delta-cit');
+                citElem.style.display = isCitation ? 'inline-block' : 'none';
 
-                document.getElementById('memo-pedagogy').innerText = verdict.note;
-                document.getElementById('memo-overlay').style.display = 'flex';
+                document.getElementById('memo-pedagogy').innerText = expected.note || "Review investment standards.";
+
+                memo.style.display = 'flex';
             }
 
             closeMemo() {
                 document.getElementById('memo-overlay').style.display = 'none';
-                
+
                 if (this.citations >= this.maxCitations) {
                     this.triggerGameOver("Accumulated maximum internal review citations.");
                     return;
                 }
 
                 this.shiftPackIndex++;
-                this.loadCurrentDossier();
+                this.loadCurrentPack();
             }
 
-            useShredder() {
-                if (this.inventory.shredder <= 0) return;
-                this.inventory.shredder--;
-                showToast("🗑️ Dossier shredded safely. Moving to next pack.");
-                this.shiftPackIndex++;
-                this.loadCurrentDossier();
-            }
+            endShift() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
 
-            useGoldenStamp() {
-                if (this.inventory.goldstamp <= 0) return;
-                this.inventory.goldstamp--;
-                showToast("🌟 Golden Stamp Applied! Guaranteed full credit.");
-                
-                const dossier = this.currentQueue[this.shiftPackIndex];
-                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
-                
-                this.cash += 80;
-                this.rep += 10;
-                
-                this.showVerdictMemo(true, verdict.correctAction, verdict, dossier, 80, 10, false);
-            }
-
-            finishShift() {
-                clearInterval(this.timerInterval);
-                
-                const shiftBonuses = 250;
-                const penalties = 0;
                 const rent = 30;
+                this.cash -= rent;
 
-                this.cash = Math.max(0, this.cash + shiftBonuses - rent);
-
-                document.getElementById('settle-bonuses').innerText = `+$${shiftBonuses}`;
-                document.getElementById('settle-penalties').innerText = `-$${penalties}`;
+                document.getElementById('settle-bonuses').innerText = `+$${Math.max(0, this.cash + rent)}`;
                 document.getElementById('settle-rent').innerText = `-$${rent}`;
                 document.getElementById('settle-total').innerText = `$${this.cash}`;
-                
-                const curScore = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
-                document.getElementById('settle-score-text').innerText = `Your Current Desk Score: ${curScore} pts`;
+
+                const currentScore = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                document.getElementById('settle-score-text').innerText = `Your Current Desk Score: ${currentScore} pts`;
+                document.getElementById('settle-name-input').value = this.playerName;
+
                 document.getElementById('settle-next-day').innerText = this.day + 1;
-                
+                this.updateShopButtons();
+
                 document.getElementById('settlement-overlay').style.display = 'flex';
             }
 
-            nextDay() {
-                this.day++;
-                document.getElementById('settlement-overlay').style.display = 'none';
-                this.setupDayShift();
+            updateShopButtons() {
+                document.getElementById('buy-coffee-btn').innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
+                document.getElementById('buy-marker-btn').innerText = `BUY ($40) [Max: ${this.maxCitations}]`;
+                document.getElementById('buy-shield-btn').innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
+                document.getElementById('buy-shredder-btn').innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
+                document.getElementById('buy-goldstamp-btn').innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
             }
 
             buyItem(item) {
                 const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
-                const cost = prices[item];
+                const price = prices[item];
 
-                if (this.cash < cost) {
-                    showToast("❌ Insufficient desk cash!");
+                if (this.cash < price) {
+                    showToast("❌ Insufficient funds for desk item!");
                     return;
                 }
 
-                this.cash -= cost;
-                
+                this.cash -= price;
                 if (item === 'marker') {
                     this.maxCitations = 5;
-                    showToast("🖊️ Red Marker Pro acquired! Citation limit increased to 5.");
+                    showToast("🖊️ Red Marker Pro acquired! Max citations increased to 5.");
                 } else {
                     this.inventory[item]++;
-                    showToast(`🛍️ Item purchased: ${item.toUpperCase()}`);
+                    showToast(`🛒 Purchased ${item.toUpperCase()}!`);
                 }
 
-                this.updateHUD();
                 document.getElementById('settle-total').innerText = `$${this.cash}`;
+                this.updateShopButtons();
+            }
+
+            nextDay() {
+                document.getElementById('settlement-overlay').style.display = 'none';
+                this.day++;
+                this.setupDayShift();
             }
 
             triggerGameOver(reason) {
-                clearInterval(this.timerInterval);
-                document.getElementById('game-container').style.display = 'none';
-                
+                if (this.timerInterval) clearInterval(this.timerInterval);
                 document.getElementById('gameover-reason').innerText = reason;
                 document.getElementById('go-days').innerText = this.day;
                 document.getElementById('go-cash').innerText = this.cash;
                 document.getElementById('go-rep').innerText = this.rep;
 
-                const finalScore = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
-                document.getElementById('go-score-text').innerText = `Final Score: ${finalScore} pts`;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                document.getElementById('go-score-text').innerText = `Final Score: ${score} pts`;
+                document.getElementById('go-name-input').value = this.playerName;
 
                 document.getElementById('gameover-overlay').style.display = 'flex';
             }
 
-            /* Leaderboard Save Actions */
             saveScoreFromSettlement() {
                 const name = document.getElementById('settle-name-input').value;
                 const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
                 if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
-                    document.getElementById('settle-save-status').innerText = "✓ Score saved to Top 3!";
+                    document.getElementById('settle-save-status').innerText = "✓ Score saved to Top 3 Leaderboard!";
                     LeaderboardManager.renderTitleList();
                 }
             }
@@ -2271,23 +2356,15 @@
                 const name = document.getElementById('go-name-input').value;
                 const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
                 if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
-                    document.getElementById('go-save-status').innerText = "✓ Score saved to Top 3!";
-                    LeaderboardManager.renderTitleList();
-                }
-            }
-
-            saveScoreFromExit() {
-                const name = document.getElementById('exit-name-input').value;
-                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
-                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
-                    document.getElementById('exit-save-status').innerText = "✓ Score saved to Top 3!";
+                    document.getElementById('go-save-status').innerText = "✓ Final score saved!";
                     LeaderboardManager.renderTitleList();
                 }
             }
 
             openExitConfirmModal() {
-                const curScore = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
-                document.getElementById('exit-score-text').innerText = `Your Current Score: ${curScore} pts`;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                document.getElementById('exit-score-text').innerText = `Your Current Score: ${score} pts`;
+                document.getElementById('exit-name-input').value = this.playerName;
                 document.getElementById('exit-confirm-modal').style.display = 'flex';
             }
 
@@ -2295,115 +2372,52 @@
                 document.getElementById('exit-confirm-modal').style.display = 'none';
             }
 
+            saveScoreFromExit() {
+                const name = document.getElementById('exit-name-input').value;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
+                    document.getElementById('exit-save-status').innerText = "✓ Score saved!";
+                    LeaderboardManager.renderTitleList();
+                }
+            }
+
             confirmReturnToMenu() {
-                clearInterval(this.timerInterval);
+                if (this.timerInterval) clearInterval(this.timerInterval);
                 document.getElementById('exit-confirm-modal').style.display = 'none';
                 document.getElementById('game-container').style.display = 'none';
                 document.getElementById('main-menu').style.display = 'flex';
                 LeaderboardManager.renderTitleList();
             }
 
-            toggleCompanyCard(event) {
-                if (event) event.stopPropagation();
-                const cardBox = document.getElementById('company-card-box');
-                const btn = document.getElementById('btn-toggle-card');
-                if (cardBox.classList.contains('minimized')) {
-                    cardBox.classList.remove('minimized');
-                    btn.innerText = 'Minimize −';
-                } else {
-                    cardBox.classList.add('minimized');
-                    btn.innerText = 'Expand +';
-                }
-            }
-
-            switchTab(tab) {
-                document.querySelectorAll('.doc-tab').forEach(t => t.classList.remove('active'));
-                document.getElementById(`tab-${tab}`).classList.add('active');
-
-                const sci = document.getElementById('doc-sci');
-                const bs = document.getElementById('doc-bs');
-                const card = document.getElementById('card-dock-row');
-
-                if (tab === 'card') {
-                    card.style.display = 'block';
-                    sci.style.display = 'none';
-                    bs.style.display = 'none';
-                } else if (tab === 'sci') {
-                    card.style.display = 'block';
-                    sci.style.display = 'block';
-                    bs.style.display = 'none';
-                } else if (tab === 'bs') {
-                    card.style.display = 'block';
-                    sci.style.display = 'none';
-                    bs.style.display = 'block';
-                }
-            }
-
-            /* Teacher Panel & Code Save/Load */
             openTeacherPanel() {
-                const dossier = this.currentQueue[this.shiftPackIndex];
-                if (dossier) {
-                    const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
-                    document.getElementById('tp-queue-index').innerText = `${this.shiftPackIndex + 1} of 5`;
-                    document.getElementById('tp-action').innerText = verdict.correctAction.toUpperCase();
-                    document.getElementById('tp-reason').innerText = verdict.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(', ') || "N/A";
-                    document.getElementById('tp-math').innerText = dossier.fraudCategory || "None";
-                    document.getElementById('tp-chains').innerText = JSON.stringify(dossier.validChains || []);
-                }
-                document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : "None";
-                document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : "None";
-                document.getElementById('tp-save-code').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, citations: this.citations, mode: this.mode }));
-
                 document.getElementById('teacher-overlay').style.display = 'flex';
-            }
-
-            closeTeacherPanel() {
-                document.getElementById('teacher-overlay').style.display = 'none';
-            }
-
-            teacherForceMode(m) {
-                this.mode = m;
-                showToast(`🎓 Mode forced to: ${m.toUpperCase()}`);
-                this.closeTeacherPanel();
-                if (document.getElementById('game-container').style.display === 'flex') {
-                    this.loadCurrentDossier();
+                const cp = this.currentQueue[this.shiftPackIndex];
+                if (cp) {
+                    const verdict = evaluateDossierVerdict(cp, this.activeRule, this.activeNote, this.mode);
+                    document.getElementById('tp-queue-index').innerText = `Pack ${this.shiftPackIndex + 1} of 5`;
+                    document.getElementById('tp-action').innerText = verdict.correctAction.toUpperCase();
+                    document.getElementById('tp-reason').innerText = verdict.correctRejectReasons.join(', ') || 'None';
+                    document.getElementById('tp-math').innerText = cp.fraudCategory || 'Clean';
+                    document.getElementById('tp-chains').innerText = JSON.stringify(cp.validChains);
                 }
+                document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : 'None';
+                document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : 'None';
+                document.getElementById('tp-save-code').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
             }
 
-            teacherAddCash(amount) {
-                this.cash += amount;
-                this.updateHUD();
-                showToast(`🎓 Added +$${amount} cash.`);
-            }
+            closeTeacherPanel() { document.getElementById('teacher-overlay').style.display = 'none'; }
+            teacherForceMode(m) { this.mode = m; showToast(`Switched to ${m.toUpperCase()} DESK`); this.closeTeacherPanel(); }
+            teacherAddCash(amt) { this.cash += amt; showToast(`Added +$${amt} cash`); this.closeTeacherPanel(); }
+            teacherResetCitations() { this.citations = 0; showToast("Citations reset to 0"); this.closeTeacherPanel(); }
+            clearLeaderboardTeacher() { LeaderboardManager.clear(); showToast("Leaderboard cleared."); LeaderboardManager.renderTitleList(); }
 
-            teacherResetCitations() {
-                this.citations = 0;
-                this.updateHUD();
-                showToast(`🎓 Citations reset to 0.`);
-            }
-
-            clearLeaderboardTeacher() {
-                LeaderboardManager.clear();
-                LeaderboardManager.renderTitleList();
-                showToast("🗑️ Leaderboard wiped.");
-            }
-
-            openSaveCodeModal() {
-                document.getElementById('save-code-input').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, citations: this.citations, mode: this.mode }));
-                document.getElementById('savecode-overlay').style.display = 'flex';
-            }
-
-            closeSaveCodeModal() {
-                document.getElementById('savecode-overlay').style.display = 'none';
-            }
-
+            openSaveCodeModal() { document.getElementById('savecode-overlay').style.display = 'flex'; }
+            closeSaveCodeModal() { document.getElementById('savecode-overlay').style.display = 'none'; }
             copySaveCode() {
-                const txt = document.getElementById('save-code-input');
-                txt.select();
-                navigator.clipboard.writeText(txt.value);
+                const code = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                navigator.clipboard.writeText(code);
                 showToast("📋 Save code copied to clipboard!");
             }
-
             loadSaveCode() {
                 try {
                     const raw = document.getElementById('save-code-input').value.trim();
@@ -2411,11 +2425,10 @@
                     this.day = data.day || 1;
                     this.cash = data.cash || 50;
                     this.rep = data.rep || 20;
-                    this.citations = data.citations || 0;
                     this.mode = data.mode || 'junior';
+                    showToast("💾 State loaded successfully!");
                     this.closeSaveCodeModal();
                     this.startGame(this.mode);
-                    showToast("💾 State loaded successfully!");
                 } catch (e) {
                     showToast("❌ Invalid save code!");
                 }
