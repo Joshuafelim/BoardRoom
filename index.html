@@ -5,40 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Audit Desk: Golden Parachute</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Firebase Setup for High Scores -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'golden-parachute-desk';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "demo", authDomain: "demo.firebaseapp.com", projectId: "demo"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.appId = appId;
-
-        window.authReady = new Promise(async (resolve) => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                window.auth = auth;
-                resolve(auth.currentUser);
-            } catch (err) {
-                console.warn("Auth running in local mode:", err);
-                resolve(null);
-            }
-        });
-    </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=VT323&family=Inter:wght@400;600;700&display=swap');
@@ -73,7 +39,7 @@
             overflow-x: hidden;
         }
 
-        /* Toast Container */
+        /* Toast Notifications */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -104,7 +70,7 @@
             transform: translateY(0);
         }
 
-        /* Screen Styling */
+        /* Screen Container */
         .screen-container {
             width: 100%; 
             min-height: 100vh;
@@ -136,7 +102,7 @@
             z-index: 10;
         }
 
-        /* HUD & Strip */
+        /* HUD Bar */
         #hud {
             width: 100%; 
             min-height: 52px; 
@@ -160,7 +126,6 @@
         
         .hud-stat { display: flex; align-items: center; gap: 6px; }
         .hud-value { color: #f3f4f6; font-weight: bold; }
-        .hud-warning { color: #ef4444; text-shadow: 0 0 6px rgba(239, 68, 68, 0.6); }
 
         #pinned-strip {
             width: 100%;
@@ -174,14 +139,15 @@
             gap: 4px;
             z-index: 45;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            transition: background-color 0.3s;
         }
 
-        /* Desk Surface & Layout */
+        /* Desk Surface */
         #desk-surface {
             flex-grow: 1; 
             position: relative; 
             overflow-y: auto;
-            padding: 15px 12px 180px 12px;
+            padding: 12px 12px 180px 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -191,27 +157,31 @@
         .dossier-layout {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
             width: 100%;
             max-width: 1200px;
             align-items: center;
         }
 
-        /* Minimizable & Draggable Company Card */
+        /* CARD DOCK ROW */
+        #card-dock-row {
+            width: 100%;
+            max-width: 1100px;
+            flex-shrink: 0;
+            z-index: 40;
+            position: relative;
+        }
+
         .company-card {
             width: 100%;
-            max-width: 900px;
             background: #232825;
             border: 2px solid #4b5563;
             border-radius: 6px;
-            padding: 12px 14px;
+            padding: 10px 14px;
             color: #e5e7eb;
             font-size: 0.82rem;
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            flex-shrink: 0;
-            position: relative;
-            transition: all 0.2s ease-in-out;
-            z-index: 30;
+            transition: border-color 0.2s, background-color 0.2s;
         }
 
         .company-card-header {
@@ -220,19 +190,16 @@
             align-items: center;
             border-bottom: 1px solid #4b5563;
             padding-bottom: 6px;
-            margin-bottom: 8px;
-            cursor: grab;
-        }
-
-        .company-card-header:active {
-            cursor: grabbing;
+            margin-bottom: 6px;
         }
 
         .company-card .card-title {
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: bold;
             color: #f59e0b;
             text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 3px;
         }
 
         .card-controls {
@@ -252,50 +219,13 @@
             font-family: inherit;
         }
 
-        .card-toggle-btn:hover {
-            background: #4b5563;
-            color: #fff;
-        }
+        .card-toggle-btn:hover { background: #4b5563; color: #fff; }
 
-        .company-card.minimized {
-            padding: 6px 12px;
-            max-width: 900px;
-        }
-
-        .company-card.minimized .company-card-header {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .company-card.minimized .card-details {
-            display: none;
-        }
-
-        .company-card.minimized .minimized-summary {
-            display: inline-block;
-            color: #9ca3af;
-            font-size: 0.8rem;
-            margin-left: 10px;
-            font-weight: normal;
-        }
-
-        .company-card:not(.minimized) .minimized-summary {
-            display: none;
-        }
-
-        .vip-badge {
-            background: #92400e;
-            color: #fef3c7;
-            font-size: 0.72rem;
-            font-weight: bold;
-            padding: 3px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 8px;
-            text-transform: uppercase;
-            border: 1px solid #f59e0b;
-        }
+        .company-card.minimized { padding: 6px 12px; }
+        .company-card.minimized .company-card-header { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .company-card.minimized .card-details { display: none; }
+        .company-card.minimized .minimized-summary { display: inline-block; color: #9ca3af; font-size: 0.8rem; margin-left: 10px; }
+        .company-card:not(.minimized) .minimized-summary { display: none; }
 
         /* Paper Dossiers & Side-by-Side Layout */
         .document-area {
@@ -308,28 +238,13 @@
             width: 100%;
         }
 
-        .senior-side-by-side {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            width: 100%;
-            max-width: 1100px;
-        }
-
-        @media (max-width: 900px) {
-            .senior-side-by-side {
-                display: flex;
-                flex-direction: column;
-            }
-        }
-
         .paper {
             width: 100%;
             max-width: 520px; 
-            min-height: 520px; 
+            min-height: 500px; 
             background: var(--paper-main);
             box-shadow: 4px 4px 16px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.03);
-            padding: 20px 16px; 
+            padding: 18px 16px; 
             position: relative; 
             transition: transform 0.3s ease, opacity 0.25s ease;
             border-radius: 2px;
@@ -348,30 +263,49 @@
         .paper.in { transform: translateY(0) scale(1); opacity: 1; }
         .paper.out { transform: translateY(-40px) scale(0.96); opacity: 0; }
         
-        .doc-header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 6px; margin-bottom: 10px; position: relative; z-index: 2; border-radius: 4px;}
+        .doc-header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 6px; margin-bottom: 10px; position: relative; z-index: 2; border-radius: 4px; padding: 4px; }
         .doc-header h1 { margin: 0; font-size: 1.05rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
         .doc-header p { margin: 2px 0 0 0; font-size: 0.72rem; line-height: 1.2; color: #374151; }
 
         .doc-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; position: relative; z-index: 2; }
         .doc-table tr { border-radius: 3px; }
-        .doc-table td { padding: 3px 4px; border-bottom: 1px dotted rgba(0,0,0,0.18); }
+        .doc-table td { padding: 4px 6px; border-bottom: 1px dotted rgba(0,0,0,0.18); }
         .doc-table td.num { text-align: right; font-weight: 600; font-family: 'Courier Prime', monospace; }
         .doc-table tr.subtotal td { border-top: 1px solid var(--ink); border-bottom: none; font-weight: bold; padding-top: 5px; }
         .doc-table tr.total td { border-top: 3px double var(--ink); border-bottom: none; font-weight: bold; font-size: 0.82rem; padding-top: 5px; }
         .doc-table tr.section-head td { font-weight: bold; padding-top: 8px; border-bottom: none; text-decoration: underline; text-transform: uppercase; font-size: 0.73rem; }
         .indent td:first-child { padding-left: 10px; }
 
-        body.audit-mode .doc-table tr:hover, 
-        body.audit-mode .doc-header:hover,
-        body.audit-mode .company-card-selectable:hover {
-            background-color: rgba(185, 28, 28, 0.22);
-            outline: 2px dashed var(--ink-red);
-            cursor: crosshair;
+        /* AUDIT MODE INTERACTIVE HIGHLIGHTING */
+        body.audit-mode [data-audit-target] {
+            cursor: pointer !important;
+            transition: background-color 0.15s, outline 0.15s;
+            border-radius: 3px;
+        }
+        body.audit-mode [data-audit-target]:hover {
+            background-color: rgba(220, 38, 38, 0.2) !important;
+            outline: 2px dashed var(--ink-red) !important;
+        }
+
+        /* Dashed empty cell affordance for missing/blank lines */
+        .blank-target-cell {
+            min-width: 50px;
+            display: inline-block;
+            border: 1px dashed rgba(185, 28, 28, 0.6);
+            background: rgba(254, 226, 226, 0.5);
+            color: #991b1b;
+            font-style: italic;
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 1px 4px;
+            border-radius: 2px;
         }
 
         .marked-discrepancy {
-            background-color: rgba(220, 38, 38, 0.38) !important;
+            background-color: rgba(220, 38, 38, 0.4) !important;
             outline: 2px solid var(--ink-red) !important;
+            color: #7f1d1d !important;
+            font-weight: bold !important;
         }
 
         /* Tool Tray / Dock */
@@ -390,7 +324,7 @@
             gap: 10px;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             z-index: 100;
             max-width: 96vw;
             flex-wrap: wrap;
@@ -398,28 +332,16 @@
 
         @media (max-width: 640px) {
             #tool-tray {
-                position: fixed; 
-                bottom: 0; 
-                left: 0; 
-                right: 0;
-                transform: none;
-                width: 100%; 
-                max-width: 100%;
-                flex-direction: row; 
-                justify-content: center;
-                border-radius: 0; 
-                border-top: 3px solid #374151; 
-                border-left: none; border-right: none; border-bottom: none;
-                padding: 8px 6px; 
-                gap: 6px;
-                z-index: 100;
-                flex-wrap: wrap;
+                position: fixed; bottom: 0; left: 0; right: 0;
+                transform: none; width: 100%; max-width: 100%;
+                border-radius: 0; border-top: 3px solid #374151; border-left: none; border-right: none; border-bottom: none;
+                padding: 8px 6px; gap: 6px; z-index: 100;
             }
             #desk-surface { padding-bottom: 210px; }
         }
 
         .action-btn {
-            min-width: 100px; 
+            min-width: 96px; 
             min-height: 44px;
             font-family: 'Courier Prime', monospace;
             font-weight: bold; 
@@ -431,7 +353,7 @@
             text-transform: uppercase;
             box-shadow: 0 3px 0 #000; 
             transition: transform 0.1s, box-shadow 0.1s;
-            padding: 0 12px;
+            padding: 0 10px;
             touch-action: manipulation;
         }
         .action-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
@@ -481,7 +403,6 @@
             width: 100%; 
             max-width: 560px; 
             max-height: calc(100vh - 32px);
-            max-height: calc(100dvh - 32px);
             margin: auto;
             display: flex;
             flex-direction: column;
@@ -505,11 +426,10 @@
             padding-bottom: 4px; 
             font-weight: bold;
             font-size: 0.82rem;
-            flex-shrink: 0;
         }
-        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;}
-        .memo-status-WARNING { color: var(--ink-gold); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;}
-        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; flex-shrink: 0;}
+        .memo-status-CORRECT { color: var(--ink-green); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; }
+        .memo-status-WARNING { color: var(--ink-gold); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; }
+        .memo-status-INCORRECT { color: var(--ink-red); font-size: 1.15rem; font-weight: bold; margin-bottom: 6px; }
         
         .memo-body { 
             margin-bottom: 12px; 
@@ -518,7 +438,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            flex-grow: 1;
         }
         .memo-btn { 
             background: #1f2937; 
@@ -530,18 +449,11 @@
             font-weight: bold; 
             border-radius: 4px; 
             min-height: 44px;
-            flex-shrink: 0;
         }
         .memo-btn:hover { background: #374151; }
 
-        .feedback-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-        @media (max-width: 500px) {
-            .feedback-grid { grid-template-columns: 1fr; }
-        }
+        .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        @media (max-width: 500px) { .feedback-grid { grid-template-columns: 1fr; } }
 
         .feedback-section {
             background: #e5dfd3;
@@ -570,7 +482,7 @@
             font-family: inherit; 
             font-weight: bold;
             cursor: pointer; 
-            margin: 8px 0; 
+            margin: 6px 0; 
             transition: all 0.2s; 
             width: 100%; max-width: 420px;
             text-align: center; border-radius: 6px;
@@ -601,7 +513,38 @@
         }
         .reject-option:hover { border-color: #b91c1c; background: #fef2f2; }
         .reject-option.selected { border-color: #b91c1c; background: #fee2e2; box-shadow: 0 0 0 2px #b91c1c; }
-        .reject-radio { margin-top: 3px; accent-color: #b91c1c; }
+
+        .leaderboard-box {
+            background: #181d1a;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 12px;
+            width: 100%;
+            max-width: 420px;
+            margin-top: 14px;
+            text-align: left;
+        }
+        .leaderboard-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 4px;
+        }
+        .leaderboard-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            padding: 4px 0;
+            border-bottom: 1px dotted rgba(255,255,255,0.1);
+        }
+        .leaderboard-rank { font-weight: bold; color: #f59e0b; width: 24px; }
+        .leaderboard-name { color: #f3f4f6; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+        .leaderboard-score { font-weight: bold; color: #4ade80; }
+        .leaderboard-day { color: #9ca3af; font-size: 0.75rem; margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -610,16 +553,22 @@
 
     <!-- MAIN MENU SCREEN -->
     <div id="main-menu" class="screen-container">
-        <h1 style="font-size: clamp(2rem, 5vw, 3.2rem); font-weight: bold; font-family: 'VT323', monospace; color: #f59e0b;">GOLDEN PARACHUTE CAPITAL</h1>
-        <div style="font-size: clamp(0.9rem, 2.5vw, 1.2rem); margin-bottom: 18px; letter-spacing: 2px; color: #9ca3af;">GP CAPITAL DESK // JAKARTA NIGHT ANALYST SYSTEM</div>
-        <p style="max-width: 620px; margin-bottom: 22px; line-height: 1.5; font-size: 0.88rem; color: #d1d5db;">
+        <h1 style="font-size: clamp(2rem, 5vw, 3.2rem); font-weight: bold; font-family: 'VT323', monospace; color: #f59e0b; margin-bottom: 0;">GOLDEN PARACHUTE CAPITAL</h1>
+        
+        <div style="font-size: 0.95rem; font-style: italic; color: #f59e0b; transform: skewX(-8deg); display: inline-block; margin-top: -4px; margin-bottom: 14px; font-weight: 600; text-shadow: 0 0 8px rgba(245, 158, 11, 0.3);">
+            by Mr. Felim
+        </div>
+
+        <div style="font-size: clamp(0.85rem, 2.2vw, 1.1rem); margin-bottom: 18px; letter-spacing: 2px; color: #9ca3af;">GP CAPITAL DESK // JAKARTA NIGHT ANALYST SYSTEM</div>
+        
+        <p style="max-width: 620px; margin-bottom: 20px; line-height: 1.5; font-size: 0.88rem; color: #d1d5db;">
             You are a night-shift analyst at Golden Parachute Capital (Jakarta, 2026).<br>
             Review deal packs before the morning Investment Committee meets.<br>
             <strong>APPROVE</strong> sound, compliant deals. <strong>REJECT</strong> weak or risky packs with a clear reason.<br>
-            <strong>AUDIT MODE</strong> to flag accounting fraud, mathematical discrepancies, or identity mismatches.
+            <strong>AUDIT MODE</strong> to flag accounting fraud, mathematical discrepancies, missing lines, or identity mismatches.
         </p>
 
-        <div style="margin-bottom: 18px; width: 100%; max-width: 340px; text-align: left;">
+        <div style="margin-bottom: 16px; width: 100%; max-width: 340px; text-align: left;">
             <label for="player-name-input" style="display: block; font-size: 0.75rem; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; font-weight: bold;">Analyst Badge / Name:</label>
             <input type="text" id="player-name-input" placeholder="e.g. Analyst Vance" value="Analyst 88" style="width: 100%; background: #1f2937; color: #f3f4f6; border: 1px solid #4b5563; border-radius: 4px; padding: 10px; font-family: inherit; font-size: 0.92rem; outline: none;">
         </div>
@@ -634,10 +583,12 @@
             <span class="mode-desc">Inspect SCI + 2-Year Statement of Financial Position Side-by-Side.<br>Cross-check Liquidity, Gearing, Receivables & Identity.</span>
         </button>
 
+        <div class="leaderboard-box">
+            <div class="leaderboard-title">🏆 TOP 3 DESK SCORES</div>
+            <div id="title-leaderboard-list"></div>
+        </div>
+
         <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; justify-content: center;">
-            <button onclick="game.openLeaderboard()" style="background: transparent; border: 1px solid #4b5563; color: #d1d5db; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.85rem; min-height: 44px;">
-                🏆 HALL OF FAME
-            </button>
             <button onclick="game.openSaveCodeModal()" style="background: transparent; border: 1px solid #4b5563; color: #d1d5db; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.85rem; min-height: 44px;">
                 💾 LOAD CODE
             </button>
@@ -668,12 +619,13 @@
             </div>
 
             <div style="font-size: 0.8rem; color: #4b5563; margin-bottom: 14px; line-height: 1.4;">
+                • <strong>Shift Load:</strong> Exactly 5 deal packs per desk shift.<br>
                 • <strong>Approve</strong> sound deals.<br>
                 • <strong>Reject</strong> weak deals (pick any valid rejection reason).<br>
-                • <strong>Audit Mode</strong> to isolate fraud or identity mismatches for full bounty.
+                • <strong>Audit Mode</strong> to isolate fraud, math errors, missing lines, or identity mismatches for full bounty.
             </div>
 
-            <button onclick="game.startShiftQueue()" class="memo-btn" style="width: 100%; font-size: 0.95rem; background: #15803d;">OPEN DEAL QUEUE ➔</button>
+            <button onclick="game.startShiftQueue()" class="memo-btn" style="width: 100%; font-size: 0.95rem; background: #15803d;">OPEN DEAL QUEUE (5 PACKS) ➔</button>
         </div>
     </div>
 
@@ -682,8 +634,9 @@
         <!-- HUD -->
         <div id="hud">
             <div class="hud-stat">📅 DAY <span id="hud-day" class="hud-value">1</span></div>
+            <div class="hud-stat">📁 PACK: <span id="hud-file-progress" class="hud-value" style="color:#f59e0b;">FILE 1/5</span></div>
             <div class="hud-stat">🕒 <span id="hud-clock" class="hud-value">09:00</span></div>
-            <div class="hud-stat" style="color: #f59e0b;">⏳ TIMER: <span id="hud-timer" class="hud-value" style="color:#f59e0b;">02:00</span></div>
+            <div class="hud-stat" style="color: #f59e0b;">⏳ TIMER: <span id="hud-timer" class="hud-value" style="color:#f59e0b;">02:10</span></div>
             <div class="hud-stat">💵 PAY: $<span id="hud-wage" class="hud-value">50</span></div>
             <div class="hud-stat">⭐ REP: <span id="hud-rep" class="hud-value">20</span></div>
             <div class="hud-stat">⚠️ CITATIONS: <span id="hud-citations" class="hud-value">0/4</span></div>
@@ -698,7 +651,6 @@
 
         <!-- DESK SURFACE -->
         <div id="desk-surface">
-            <!-- Mobile Switch Tabs (Senior Mode Mobile) -->
             <div id="doc-tab-bar" class="doc-tab-bar" style="display: none;">
                 <button id="tab-card" class="doc-tab" onclick="game.switchTab('card')">COMPANY CARD</button>
                 <button id="tab-sci" class="doc-tab active" onclick="game.switchTab('sci')">INCOME STATEMENT</button>
@@ -706,54 +658,56 @@
             </div>
 
             <div class="dossier-layout">
-                <!-- COMPANY CARD -->
-                <div class="company-card company-card-selectable" id="company-card-box">
-                    <div class="company-card-header" id="company-card-drag-handle" title="Drag to relocate card">
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="cursor:grab; font-size:0.9rem;">⋮⋮</span>
-                            <span class="card-title" id="card-company-name">PT NUSA BITE</span>
-                            <span class="minimized-summary" id="card-minimized-summary">• Founded: 2024</span>
+                <!-- DOCKED ROW FOR COMPANY CARD -->
+                <div id="card-dock-row">
+                    <div class="company-card" id="company-card-box">
+                        <div class="company-card-header">
+                            <div style="display:flex; align-items:center; gap:8px; flex-grow: 1;">
+                                <span class="card-title" id="card-company-name" data-audit-target="card_name">PT NUSA BITE</span>
+                                <span class="minimized-summary" id="card-minimized-summary">• Founded: 2024</span>
+                            </div>
+                            <div class="card-controls">
+                                <button type="button" class="card-toggle-btn" id="btn-toggle-card" onclick="game.toggleCompanyCard(event)">Minimize −</button>
+                            </div>
                         </div>
-                        <div class="card-controls">
-                            <button type="button" class="card-toggle-btn" id="btn-toggle-card" onclick="game.toggleCompanyCard(event)">Minimize −</button>
-                        </div>
-                    </div>
 
-                    <div class="card-details" id="card-details-body" onclick="game.auditClick('card_all')">
-                        <div style="margin-bottom: 6px;"><strong style="color:#9ca3af;">Industry:</strong> <span id="card-industry">F&B Retail</span></div>
-                        <div style="margin-bottom: 6px;"><strong style="color:#9ca3af;">Founded:</strong> <span id="card-founded">2024</span> (<span id="card-operating">2 yrs operating</span>)</div>
-                        <div style="margin-bottom: 8px; font-style: italic; color: #d1d5db;" id="card-desc">Indonesian artisanal snack chain operating in Jakarta malls.</div>
-                        <div id="card-vip-container"></div>
+                        <div class="card-details" id="card-details-body">
+                            <div style="margin-bottom: 6px;">
+                                <strong style="color:#9ca3af;">Industry:</strong> 
+                                <span id="card-industry" data-audit-target="card_industry">F&B Retail</span>
+                            </div>
+                            <div style="margin-bottom: 6px;">
+                                <strong style="color:#9ca3af;">Founded:</strong> 
+                                <span id="card-founded" data-audit-target="card_founded">2024</span> 
+                                (<span id="card-operating">2 yrs operating</span>)
+                            </div>
+                            <div style="margin-bottom: 8px; font-style: italic; color: #d1d5db;" id="card-desc">Indonesian artisanal snack chain operating in Jakarta malls.</div>
+                            <div id="card-vip-container"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- DOCUMENT AREA -->
+                <!-- STATEMENT DOCUMENT STAGE -->
                 <div class="document-area" id="document-area-container">
-                    <!-- STATEMENT OF COMPREHENSIVE INCOME (SCI) -->
                     <div class="paper in" id="doc-sci">
-                        <div class="doc-header company-card-selectable" id="sci-header" onclick="game.auditClick('sci_header')">
+                        <div class="doc-header" id="sci-header" data-audit-target="sci_header">
                             <h1 id="sci-company-name">PT NUSA BITE</h1>
-                            <p>Statement of Comprehensive Income<br>Years Ended 31 Dec (Rp million)</p>
+                            <p id="sci-subtext">Statement of Comprehensive Income<br>Years Ended 31 Dec (Rp million)</p>
                         </div>
                         
-                        <table class="doc-table" id="sci-table">
-                            <!-- Injected dynamically -->
-                        </table>
+                        <table class="doc-table" id="sci-table"></table>
                         
                         <div class="stamp-mark stamp-green" id="stamp-sci-app">CLEARED</div>
                         <div class="stamp-mark stamp-red" id="stamp-sci-den">REJECTED</div>
                     </div>
 
-                    <!-- STATEMENT OF FINANCIAL POSITION (SOFP / BS) -->
                     <div class="paper in" id="doc-bs" style="display:none;">
-                        <div class="doc-header company-card-selectable" id="bs-header" onclick="game.auditClick('bs_header')">
+                        <div class="doc-header" id="bs-header" data-audit-target="bs_header">
                             <h1 id="bs-company-name">PT NUSA BITE</h1>
-                            <p>Statement of Financial Position<br>As at 31 Dec (Rp million)</p>
+                            <p id="bs-subtext">Statement of Financial Position<br>As at 31 Dec (Rp million)</p>
                         </div>
                         
-                        <table class="doc-table" id="bs-table">
-                            <!-- Injected dynamically -->
-                        </table>
+                        <table class="doc-table" id="bs-table"></table>
                         
                         <div class="stamp-mark stamp-green" id="stamp-bs-app">CLEARED</div>
                         <div class="stamp-mark stamp-red" id="stamp-bs-den">REJECTED</div>
@@ -781,12 +735,10 @@
                 Why reject this deal pack?
             </h2>
             <p style="font-size: 0.8rem; color: #4b5563; margin-bottom: 10px;">
-                Pick the main reason for the Investment Committee.
+                Pick any commercially valid rejection reason for the Investment Committee:
             </p>
 
-            <div id="reject-reasons-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
-                <!-- Injected dynamically -->
-            </div>
+            <div id="reject-reasons-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;"></div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button onclick="game.closeRejectModal()" class="memo-btn" style="background: #6b7280;">Cancel</button>
@@ -802,8 +754,18 @@
                 <span>EXIT DESK CONFIRMATION</span>
             </div>
             <p style="font-size: 0.88rem; color: #111827; margin-bottom: 14px; line-height: 1.4;">
-                Leave the analyst desk? Progress and stats are saved locally. You can resume anytime.
+                Leave the analyst desk? You can save your current score to the Top 3 leaderboard before returning to the main menu.
             </p>
+
+            <div style="background: #e5dfd3; padding: 10px; border-radius: 4px; margin-bottom: 12px;" id="exit-save-score-section">
+                <div style="font-weight: bold; font-size: 0.82rem; margin-bottom: 4px;" id="exit-score-text">Your Current Score: 0</div>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <input type="text" id="exit-name-input" placeholder="Analyst" maxlength="12" style="flex-grow: 1; padding: 6px; border: 1px solid #9ca3af; border-radius: 4px; font-family: inherit; font-size: 0.82rem;">
+                    <button type="button" onclick="game.saveScoreFromExit()" class="memo-btn" style="background: #f59e0b; color: #000; padding: 6px 12px; min-height: 36px; font-size: 0.8rem;">Save to Top 3</button>
+                </div>
+                <div id="exit-save-status" style="font-size: 0.75rem; margin-top: 4px; color: #15803d; font-weight: bold;"></div>
+            </div>
+
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button onclick="game.closeExitConfirmModal()" class="memo-btn" style="background: #6b7280; flex: 1;">CANCEL (STAY)</button>
                 <button onclick="game.confirmReturnToMenu()" class="memo-btn" style="background: #b91c1c; flex: 1;">EXIT TO MENU</button>
@@ -811,7 +773,7 @@
         </div>
     </div>
 
-    <!-- SUPERVISOR / INTERNAL REVIEW MEMO -->
+    <!-- INTERNAL REVIEW VERDICT MEMO -->
     <div id="memo-overlay" class="modal-overlay">
         <div class="modal-card" id="memo-card">
             <div class="memo-header">
@@ -874,10 +836,19 @@
             </h2>
             
             <div style="background: #111312; border: 1px solid #374151; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; color: #d1d5db; font-size: 0.82rem; line-height: 1.7;">
-                <div style="display:flex; justify-content:space-between;"><span>Shift Deal Bonuses:</span> <span id="settle-bonuses" style="color:#4ade80; font-weight:bold;">+$0</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Shift Deal Bonuses (5 Packs):</span> <span id="settle-bonuses" style="color:#4ade80; font-weight:bold;">+$0</span></div>
                 <div style="display:flex; justify-content:space-between;"><span>Internal Review Citations Penalty:</span> <span id="settle-penalties" style="color:#f87171; font-weight:bold;">-$0</span></div>
                 <div style="display:flex; justify-content:space-between; border-top: 1px solid #374151; padding-top: 3px;"><span>Jakarta Office Desk Rent:</span> <span id="settle-rent" style="color:#f87171; font-weight:bold;">-$30</span></div>
                 <div style="display:flex; justify-content:space-between; border-top: 2px solid #4b5563; padding-top: 4px; font-weight:bold; font-size: 0.95rem;"><span>NET CUMULATIVE BALANCE:</span> <span id="settle-total" style="color:#f59e0b;">$50</span></div>
+            </div>
+
+            <div style="background: #e5dfd3; border: 1px solid #d1d5db; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
+                <div style="font-weight: bold; font-size: 0.82rem; color: #111827;" id="settle-score-text">Your Current Desk Score: 0</div>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <input type="text" id="settle-name-input" placeholder="Analyst" maxlength="12" style="flex-grow: 1; padding: 6px; border: 1px solid #9ca3af; border-radius: 4px; font-family: inherit; font-size: 0.82rem;">
+                    <button type="button" onclick="game.saveScoreFromSettlement()" class="memo-btn" style="background: #f59e0b; color: #000; padding: 6px 12px; min-height: 36px; font-size: 0.8rem;">Save to Top 3</button>
+                </div>
+                <div id="settle-save-status" style="font-size: 0.75rem; margin-top: 4px; color: #15803d; font-weight: bold;"></div>
             </div>
 
             <div style="font-size: 0.78rem; text-transform: uppercase; color: #4b5563; margin-bottom: 6px; font-weight: bold;">GP Capital Desk Supply Shop</div>
@@ -924,7 +895,7 @@
                 </div>
             </div>
 
-            <button onclick="game.nextDay()" class="memo-btn" style="width: 100%; font-size: 0.95rem; background: #15803d;">START NEXT SHIFT ➔</button>
+            <button onclick="game.nextDay()" class="memo-btn" style="width: 100%; font-size: 0.95rem; background: #15803d;">START NEXT SHIFT (DAY <span id="settle-next-day">2</span>) ➔</button>
         </div>
     </div>
 
@@ -938,11 +909,21 @@
             <div style="background: #e5dfd3; padding: 10px; border-radius: 4px; margin-bottom: 16px; font-size: 0.85rem;">
                 <strong>Final Stats:</strong> Days Survived: <span id="go-days">0</span> | Final Pay: $<span id="go-cash">0</span> | Rep: <span id="go-rep">0</span>
             </div>
-            <button onclick="location.reload()" class="memo-btn" style="background: #b91c1c; width: 100%;">RETURN TO MAIN MENU</button>
+
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 10px; border-radius: 6px; margin-bottom: 14px; text-align: left;">
+                <div style="font-weight: bold; font-size: 0.82rem; color: #991b1b;" id="go-score-text">Final Score: 0</div>
+                <div style="display: flex; gap: 6px; margin-top: 6px;">
+                    <input type="text" id="go-name-input" placeholder="Analyst" maxlength="12" style="flex-grow: 1; padding: 6px; border: 1px solid #9ca3af; border-radius: 4px; font-family: inherit; font-size: 0.82rem;">
+                    <button type="button" onclick="game.saveScoreFromGameOver()" class="memo-btn" style="background: #b91c1c; color: #fff; padding: 6px 12px; min-height: 36px; font-size: 0.8rem;">Save to Top 3</button>
+                </div>
+                <div id="go-save-status" style="font-size: 0.75rem; margin-top: 4px; color: #15803d; font-weight: bold;"></div>
+            </div>
+
+            <button onclick="location.reload()" class="memo-btn" style="background: #1f2937; width: 100%;">RETURN TO MAIN MENU</button>
         </div>
     </div>
 
-    <!-- TEACHER PANEL MODAL -->
+    <!-- TEACHER / AUDITOR PANEL MODAL -->
     <div id="teacher-overlay" class="modal-overlay">
         <div class="modal-card" style="max-width: 580px; border-left-color: #0891b2;">
             <div class="memo-header">
@@ -951,20 +932,18 @@
             </div>
             
             <div style="font-size: 0.8rem; color: #374151; margin-bottom: 10px;">
-                Inspect live queue parameters, current expected verdict, rule flags, and dossier mix distribution verification.
+                Inspect live queue parameters, expected verdicts, rule flags, and leaderboard controls.
             </div>
 
             <div style="background: #111827; color: #f3f4f6; padding: 10px; border-radius: 4px; font-size: 0.78rem; margin-bottom: 12px; text-align: left; max-height: 200px; overflow-y: auto;">
-                <div><strong>Current Day Queue Pack Types:</strong> <span id="tp-queue-mix" style="color:#4ade80;">-</span></div>
-                <div><strong>Target Healthy Share Band:</strong> <span style="color:#f59e0b;">32% – 35%</span></div>
-                <hr style="border-color:#374151; margin:6px 0;">
+                <div><strong>Queue Size:</strong> <span style="color:#4ade80;">5 Packs per Shift</span></div>
+                <div><strong>Current Pack Index:</strong> <span id="tp-queue-index" style="color:#f59e0b;">-</span></div>
                 <div><strong>Current Pack Expected Verdict:</strong> <span id="tp-action" style="color:#f59e0b;">-</span></div>
-                <div><strong>Expected Reject Reason Buckets:</strong> <span id="tp-reason" style="color:#f87171;">-</span></div>
-                <div><strong>Math Fraud Status:</strong> <span id="tp-math">-</span></div>
-                <div><strong>Info Mismatch Target:</strong> <span id="tp-info">-</span></div>
+                <div><strong>Acceptable Reject Reasons:</strong> <span id="tp-reason" style="color:#f87171;">-</span></div>
+                <div><strong>Fraud/Audit Category:</strong> <span id="tp-math">-</span></div>
+                <div><strong>Valid Audit Chains:</strong> <span id="tp-chains" style="color:#38bdf8;">-</span></div>
                 <div><strong>Active Rule Text:</strong> <span id="tp-rule">-</span></div>
                 <div><strong>Active Partner Note:</strong> <span id="tp-note">-</span></div>
-                <div><strong>Valid Audit Chains:</strong> <span id="tp-chains">-</span></div>
             </div>
 
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
@@ -972,6 +951,7 @@
                 <button onclick="game.teacherForceMode('senior')" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#374151;">Force Senior Desk</button>
                 <button onclick="game.teacherAddCash(100)" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#15803d;">+$100 Cash</button>
                 <button onclick="game.teacherResetCitations()" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#b45309;">Reset Citations</button>
+                <button onclick="game.clearLeaderboardTeacher()" class="memo-btn" style="padding: 4px 10px; font-size:0.75rem; background:#b91c1c;">Clear Leaderboard</button>
             </div>
 
             <div style="margin-bottom: 12px;">
@@ -1018,6 +998,105 @@
             }, duration);
         }
 
+        /* ════════════════════════════════════════════════════════════
+           1. LEADERBOARD LOCAL STORAGE SYSTEM
+           ════════════════════════════════════════════════════════════ */
+        const LEADERBOARD_STORAGE_KEY = 'gp_desk_leaderboard_v1';
+
+        class LeaderboardManager {
+            static getEntries() {
+                try {
+                    const raw = localStorage.getItem(LEADERBOARD_STORAGE_KEY);
+                    if (!raw) return [];
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) return parsed;
+                    return [];
+                } catch (e) {
+                    console.warn("Corrupt leaderboard data, resetting array:", e);
+                    return [];
+                }
+            }
+
+            static calculateScore(cash, rep, dayReached) {
+                return Math.max(0, cash) + (rep * 10) + (dayReached * 50);
+            }
+
+            static saveEntry(name, score, day, cash, rep) {
+                let entries = LeaderboardManager.getEntries();
+                const sanitizedName = (name || "Analyst").trim().substring(0, 12) || "Analyst";
+                
+                const newEntry = {
+                    id: 'lb_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+                    name: sanitizedName,
+                    score: Number(score) || 0,
+                    day: Number(day) || 1,
+                    cash: Number(cash) || 0,
+                    rep: Number(rep) || 0,
+                    ts: Date.now()
+                };
+
+                entries.push(newEntry);
+                entries.sort((a, b) => b.score - a.score);
+                entries = entries.slice(0, 20);
+
+                try {
+                    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(entries));
+                    return true;
+                } catch (e) {
+                    console.error("Leaderboard save failed:", e);
+                    return false;
+                }
+            }
+
+            static clear() {
+                try {
+                    localStorage.removeItem(LEADERBOARD_STORAGE_KEY);
+                } catch (e) {
+                    console.error("Failed to clear leaderboard:", e);
+                }
+            }
+
+            static renderTitleList() {
+                const container = document.getElementById('title-leaderboard-list');
+                if (!container) return;
+
+                const entries = LeaderboardManager.getEntries();
+                const top3 = entries.slice(0, 3);
+
+                if (top3.length === 0) {
+                    container.innerHTML = `<div style="font-size:0.78rem; color:#9ca3af; font-style:italic;">No scores yet — finish a full shift.</div>`;
+                    return;
+                }
+
+                let html = '';
+                top3.forEach((e, index) => {
+                    html += `
+                        <div class="leaderboard-row">
+                            <span class="leaderboard-rank">#${index + 1}</span>
+                            <span class="leaderboard-name">${e.name}</span>
+                            <span class="leaderboard-score">${e.score} pts</span>
+                            <span class="leaderboard-day">(Day ${e.day})</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           REJECT REASON LABELS MAP (ISSUE A REQUIREMENT)
+           ════════════════════════════════════════════════════════════ */
+        const REJECT_REASON_LABELS = {
+            'loss_unprotected': 'Loss — no protection',
+            'worse_yoy': 'Worse than last year',
+            'weak_margins': 'Weak margins',
+            'fails_rule': 'Failed Rule of the Day',
+            'bs_risk': 'Balance Sheet risk'
+        };
+
+        /* ════════════════════════════════════════════════════════════
+           RULES & DAILY NOTES POOLS
+           ════════════════════════════════════════════════════════════ */
         const RULES_POOL_JUNIOR = [
             { id: 'rule_gpm_20', text: 'Reject if Gross Profit is less than 20% of Revenue.', test: (d) => d.sci26.rev > 0 && (d.sci26.gp / d.sci26.rev) < 0.20, rejectReason: 'weak_margins' },
             { id: 'rule_pat_5', text: 'Reject if Profit After Tax (PAT) is less than 5% of Revenue.', test: (d) => d.sci26.rev > 0 && d.sci26.pat > 0 && (d.sci26.pat / d.sci26.rev) < 0.05, rejectReason: 'weak_margins' },
@@ -1030,19 +1109,23 @@
 
         const RULES_POOL_SENIOR = [
             { id: 'rule_ca_cl', text: 'Reject if Current Assets (CA) are less than Current Liabilities (CL).', test: (d) => d.bs26 && d.bs26.ca_total < d.bs26.cl_total, rejectReason: 'bs_risk' },
-            { id: 'rule_cash_floor_10', text: 'Reject if Cash & Cash Equivalents is less than Rp 10 million.', test: (d) => d.bs26 && d.bs26.cash < 10, rejectReason: 'bs_risk' },
+            { id: 'rule_cash_floor_15', text: 'Reject if Cash & Cash Equivalents is less than Rp 15 million.', test: (d) => d.bs26 && d.bs26.cash < 15, rejectReason: 'bs_risk' },
             { id: 'rule_ncl_equity', text: 'Reject if Non-Current Liabilities (NCL) exceed Total Equity.', test: (d) => d.bs26 && d.bs26.ncl_total > d.bs26.equity_total, rejectReason: 'bs_risk' },
             { id: 'rule_receivables_revenue', text: 'Reject if Trade Receivables exceed 2026 Annual Revenue.', test: (d) => d.bs26 && d.bs26.receivables > d.sci26.rev, rejectReason: 'bs_risk' }
         ];
 
         const DAILY_NOTES_POOL = [
-            { id: 'note_vip_sambal', title: 'Partner Memo: PT Sambal Api Utara', text: 'If arithmetic is clean, APPROVE PT Sambal Api Utara regardless of thin margins.', forceApproveName: 'PT Sambal Api Utara' },
-            { id: 'note_pilot_startups', title: 'Pilot Incentive: Tech Startups', text: 'APPROVE clean loss-making firms founded in 2024 or later today.', approveStartups: true },
-            { id: 'note_strict_nusabite', title: 'Internal Review Watch: NusaBite Foods', text: 'Audit extra carefully — do not APPROVE NusaBite Foods if any line mismatch exists.', flagExtraScrutiny: 'PT NusaBite' }
+            { id: 'note_vip_sambal', title: 'Partner Memo: PT Sambal Api Utara', text: 'If arithmetic and statements are clean, APPROVE PT Sambal Api Utara regardless of thin margins.', targetName: 'PT Sambal Api Utara', targetPackType: 'weak_margins', forceApproveName: 'PT Sambal Api Utara' },
+            { id: 'note_pilot_startups', title: 'Pilot Incentive: Tech Startups', text: 'APPROVE clean loss-making firms founded in 2024 or later today.', targetPackType: 'loss', approveStartups: true },
+            { id: 'note_strict_nusabite', title: 'Internal Review Watch: PT NusaBite Foods', text: 'Audit extra carefully — PT NusaBite Foods is suspected of identity or header mismatch.', targetName: 'PT NusaBite Foods', targetPackType: 'info_mismatch' },
+            { id: 'note_batavia_audit', title: 'Internal Audit Priority: PT Batavia Logistics', text: 'High risk of padded gross profit numbers on PT Batavia Logistics.', targetName: 'PT Batavia Logistics', targetPackType: 'fraud_math' }
         ];
 
+        /* ════════════════════════════════════════════════════════════
+           2. DOSSIER GENERATOR WITH ISSUE B FRAUD DISTRIBUTION
+           ════════════════════════════════════════════════════════════ */
         class DossierGenerator {
-            static generate(mode, dayNumber, forcedType = null) {
+            static generate(mode, dayNumber, forcedType = null, forcedName = null, forcedFounded = null) {
                 const names = [
                     "PT Sambal Api Utara", "PT NusaBite Foods", "PT Batavia Logistics",
                     "PT Kopi Senja Tbk", "PT Garuda Tekno", "PT Bali Organics",
@@ -1051,9 +1134,9 @@
                 ];
                 const industries = ["F&B Retail", "Consumer Goods", "Logistics & Transport", "Agritech", "Renewable Energy", "Fintech Services", "Textile Manufacturing"];
                 
-                const companyName = names[Math.floor(Math.random() * names.length)];
+                const companyName = forcedName || names[Math.floor(Math.random() * names.length)];
                 const industry = industries[Math.floor(Math.random() * industries.length)];
-                const foundedYear = Math.floor(Math.random() * 6) + 2020;
+                const foundedYear = forcedFounded || (Math.floor(Math.random() * 6) + 2020);
                 const operatingYears = 2026 - foundedYear + 1;
 
                 const card = {
@@ -1068,102 +1151,106 @@
                 let packType = forcedType;
                 if (!packType) {
                     if (dayNumber === 1 && mode === 'junior') {
-                        const day1Types = ['healthy', 'fraud_math', 'weak_margins', 'loss'];
+                        // Day 1 Mode 1 initial variety
+                        const day1Types = ['healthy', 'fraud_math', 'weak_margins', 'missing_line', 'single_year_fraud'];
                         packType = day1Types[Math.floor(Math.random() * day1Types.length)];
                     } else {
                         const rand = Math.random();
-                        if (rand < 0.34) {
-                            packType = 'healthy';
-                        } else if (rand < 0.62) {
-                            packType = 'weak_margins';
-                        } else if (rand < 0.76) {
-                            packType = 'fraud_math';
-                        } else if (rand < 0.89) {
-                            packType = 'info_mismatch';
-                        } else if (mode === 'senior' && Math.random() < 0.5) {
-                            packType = 'bs_risk';
+                        if (rand < 0.25) packType = 'healthy';
+                        else if (rand < 0.45) packType = 'weak_margins';
+                        else if (rand < 0.70) {
+                            /* ISSUE B REQUIRED MODE 1 AUDIT FRAUD MIX:
+                               - Arithmetic chain (GP/OP/PBT/PAT): ~25-30% (fraud_math)
+                               - Missing / blank critical line: ~25-30% (missing_line)
+                               - Identity mismatch: ~20-25% (info_mismatch)
+                               - Single-year presentation fraud: ~10-15% (single_year_fraud)
+                               - Low tax / odd tax line: ~10-15% (low_tax)
+                            */
+                            const auditRand = Math.random();
+                            if (auditRand < 0.28) packType = 'fraud_math';
+                            else if (auditRand < 0.55) packType = 'missing_line';
+                            else if (auditRand < 0.75) packType = 'info_mismatch';
+                            else if (auditRand < 0.88) packType = 'single_year_fraud';
+                            else packType = 'low_tax';
+                        } else if (mode === 'senior' && Math.random() < 0.60) {
+                            packType = Math.random() < 0.5 ? 'header_mismatch' : 'bs_risk';
                         } else {
                             packType = 'loss';
                         }
                     }
                 }
 
-                let rev26 = Math.floor(Math.random() * 4 + 2) * 100;
-                let cos26 = Math.round(rev26 * (packType === 'weak_margins' ? 0.82 : 0.60) / 10) * 10;
+                // Financial Numbers Base
+                const scaleMultiplier = Math.floor(Math.random() * 8) + 2;
+                let rev26 = Math.floor(Math.random() * 4 + 3) * 100 * (mode === 'senior' ? scaleMultiplier : 1);
+                let cosRatio = (packType === 'weak_margins') ? (0.81 + Math.random() * 0.05) : (0.55 + Math.random() * 0.10);
+                let cos26 = Math.round((rev26 * cosRatio) / 10) * 10;
                 let gp26 = rev26 - cos26;
                 
-                let sell26 = Math.round(gp26 * 0.20 / 5) * 5;
-                let admin26 = Math.round(gp26 * 0.30 / 5) * 5;
+                let sell26 = Math.round((gp26 * (0.15 + Math.random() * 0.10)) / 5) * 5;
+                let adminRatio = (packType === 'weak_margins' && Math.random() < 0.5) ? 0.32 : 0.20;
+                let admin26 = Math.round((rev26 * adminRatio) / 5) * 5;
                 let op26 = gp26 - sell26 - admin26;
                 
-                let fin26 = 10;
+                let fin26 = Math.round((10 + Math.random() * 30) * (mode === 'senior' ? scaleMultiplier : 1) / 5) * 5;
                 let pbt26 = op26 - fin26;
                 let tax26 = pbt26 > 0 ? Math.round(pbt26 * 0.20) : 0;
                 let pat26 = pbt26 - tax26;
 
                 if (packType === 'loss') {
-                    admin26 = gp26 + 30;
+                    admin26 = gp26 + Math.round((40 + Math.random() * 60) * (mode === 'senior' ? scaleMultiplier : 1));
                     op26 = gp26 - sell26 - admin26;
                     pbt26 = op26 - fin26;
                     tax26 = 0;
                     pat26 = pbt26;
                 }
 
-                let scale25 = (packType === 'collapse_yoy') ? 1.4 : 0.82;
+                let scale25 = (packType === 'collapse_yoy') ? (1.3 + Math.random() * 0.3) : (0.75 + Math.random() * 0.15);
                 let rev25 = Math.round((rev26 * scale25) / 10) * 10;
                 if (rev25 === rev26) rev25 = rev26 - 40;
-                let cos25 = Math.round(rev25 * 0.62 / 10) * 10;
+                let cos25 = Math.round((rev25 * 0.60) / 10) * 10;
                 let gp25 = rev25 - cos25;
-                let sell25 = Math.round(gp25 * 0.22 / 5) * 5;
-                let admin25 = Math.round(gp25 * 0.28 / 5) * 5;
+                let sell25 = Math.round((gp25 * 0.20) / 5) * 5;
+                let admin25 = Math.round((gp25 * 0.25) / 5) * 5;
                 let op25 = gp25 - sell25 - admin25;
-                let fin25 = 10;
+                let fin25 = fin26;
                 let pbt25 = op25 - fin25;
                 let tax25 = pbt25 > 0 ? Math.round(pbt25 * 0.20) : 0;
                 let pat25 = pbt25 - tax25;
 
-                const sci26 = { rev: rev26, cos: cos26, gp: gp26, sell: sell26, admin: admin26, op: op26, fin: fin26, pbt: pbt26, tax: tax26, pat: pat26 };
-                const sci25 = { rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 };
+                const sci26 = { rev: rev26, cos: cos26, gp: gp26, sell: sell26, admin: admin26, op: op26, fin: fin26, pbt: pbt26, tax: tax26, pat: pat26, headerName: companyName, headerSubtext: "Statement of Comprehensive Income" };
+                let sci25 = { rev: rev25, cos: cos25, gp: gp25, sell: sell25, admin: admin25, op: op25, fin: fin25, pbt: pbt25, tax: tax25, pat: pat25 };
 
+                // Balance Sheet Base
                 let bs26 = null, bs25 = null;
-                if (mode === 'senior') {
-                    let ppe26 = 250, int26 = 50, inv26 = 80;
-                    let ppe25 = 230, int25 = 50, inv25 = 70;
-                    
-                    let rec26 = (packType === 'bs_risk') ? rev26 + 50 : 60;
-                    let rec25 = 50;
-                    
-                    let cash26 = (packType === 'bs_risk' && Math.random() < 0.5) ? 5 : 40;
-                    let cash25 = 35;
+                if (mode === 'senior' || packType === 'header_mismatch' || packType === 'total_mismatch') {
+                    let baseAssetScale = rev26 * (0.8 + Math.random() * 0.6);
+                    let ppe26 = Math.round((baseAssetScale * 0.40) / 10) * 10;
+                    let int26 = Math.round((baseAssetScale * 0.10) / 10) * 10;
+                    let inv26 = Math.round((baseAssetScale * 0.18) / 10) * 10;
+                    let rec26 = (packType === 'bs_risk' && Math.random() < 0.33) ? (rev26 + 80) : Math.round((baseAssetScale * 0.18) / 10) * 10;
+                    let cash26 = (packType === 'bs_risk' && Math.random() < 0.5) ? 8 : Math.round((baseAssetScale * 0.14) / 10) * 10;
 
                     let ca_tot26 = inv26 + rec26 + cash26;
-                    let ca_tot25 = inv25 + rec25 + cash25;
-
                     let nca_tot26 = ppe26 + int26;
-                    let nca_tot25 = ppe25 + int25;
-
                     let assets26 = nca_tot26 + ca_tot26;
-                    let assets25 = nca_tot25 + ca_tot25;
 
-                    let pay26 = 70, st_bor26 = 30, o_cl26 = 10;
+                    let pay26 = Math.round((ca_tot26 * 0.35) / 5) * 5;
+                    let st_bor26 = Math.round((ca_tot26 * 0.25) / 5) * 5;
+                    let o_cl26 = Math.round((ca_tot26 * 0.10) / 5) * 5;
                     let cl_tot26 = pay26 + st_bor26 + o_cl26;
                     
-                    if (packType === 'bs_risk' && !rec26) {
-                        cl_tot26 = ca_tot26 + 50;
+                    if (packType === 'bs_risk' && rec26 <= rev26 && cash26 >= 15) {
+                        cl_tot26 = ca_tot26 + 90;
                     }
 
-                    let pay25 = 60, st_bor25 = 25, o_cl25 = 10;
-                    let cl_tot25 = pay25 + st_bor25 + o_cl25;
-
-                    let lt_bor26 = (packType === 'bs_risk') ? 350 : 120;
-                    let lt_bor25 = 110;
+                    let lt_bor26 = (packType === 'bs_risk' && Math.random() < 0.5) ? Math.round(assets26 * 0.65) : Math.round(assets26 * 0.30);
                     let ncl_tot26 = lt_bor26;
-                    let ncl_tot25 = lt_bor25;
-
                     let eq_tot26 = assets26 - cl_tot26 - ncl_tot26;
-                    let eq_tot25 = assets25 - cl_tot25 - ncl_tot25;
+                    if (eq_tot26 < 20) eq_tot26 = 50;
 
                     bs26 = {
+                        headerName: companyName,
                         ppe: ppe26, int: int26, nca_total: nca_tot26,
                         inv: inv26, receivables: rec26, cash: cash26, ca_total: ca_tot26,
                         assets_total: assets26,
@@ -1174,235 +1261,338 @@
                     };
 
                     bs25 = {
-                        ppe: ppe25, int: int25, nca_total: nca_tot25,
-                        inv: inv25, receivables: rec25, cash: cash25, ca_total: ca_tot25,
-                        assets_total: assets25,
-                        payables: pay25, st_borrowings: st_bor25, o_cl: o_cl25, cl_total: cl_tot25,
-                        lt_borrowings: lt_bor25, ncl_total: ncl_tot25,
-                        equity_total: eq_tot25,
-                        liab_eq_total: assets25
+                        ppe: Math.round(ppe26 * 0.88), int: int26, nca_total: Math.round(nca_tot26 * 0.90),
+                        inv: Math.round(inv26 * 0.85), receivables: Math.round(rec26 * 0.85), cash: Math.round(cash26 * 0.85), ca_total: Math.round(ca_tot26 * 0.88),
+                        assets_total: Math.round(assets26 * 0.89),
+                        payables: Math.round(pay26 * 0.85), st_borrowings: Math.round(st_bor26 * 0.85), o_cl: o_cl26, cl_total: Math.round(cl_tot26 * 0.85),
+                        lt_borrowings: Math.round(lt_bor26 * 0.90), ncl_total: Math.round(ncl_tot26 * 0.90),
+                        equity_total: Math.round(eq_tot26 * 0.90),
+                        liab_eq_total: Math.round(assets26 * 0.89)
                     };
                 }
 
-                let auditChains = [];
-                let isFraudMath = false;
-                let isInfoMismatch = false;
-
-                if (packType === 'fraud_math') {
-                    isFraudMath = true;
-                    sci26.gp += 40;
-                    auditChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
-                } else if (packType === 'info_mismatch') {
-                    isInfoMismatch = true;
-                    sci26.headerName = companyName + " Holdings Ltd";
-                    auditChains.push(['card_all', 'sci_header']);
-                }
+                let validChains = [];
+                let hasFraud = false;
+                let fraudCategory = null;
 
                 let primaryDiscrepancyText = [];
                 let workingText = "";
                 let implicationText = "";
 
                 if (packType === 'fraud_math') {
-                    const expectedGp = sci26.rev - sci26.cos;
-                    primaryDiscrepancyText.push(`Gross Profit line is misstated. Revenue ${sci26.rev} − Cost of Sales ${sci26.cos} = ${expectedGp}, but statement displays ${sci26.gp}.`);
-                    workingText = `Identity: Revenue (${sci26.rev}) − Cost of Sales (${sci26.cos}) = ${expectedGp} vs Reported (${sci26.gp}).`;
-                    implicationText = "Statement contains active math fraud. Investment Committee must decline misrepresented financials.";
-                } else if (packType === 'info_mismatch') {
-                    primaryDiscrepancyText.push(`Company Card legal entity name is "${card.name}", but Statement Header reads "${sci26.headerName}".`);
-                    workingText = `Identity check: Card ("${card.name}") ≠ Statement Header ("${sci26.headerName}").`;
-                    implicationText = "Mismatching corporate entities suggests fraudulent documentation or wrong legal entity submission.";
-                } else if (packType === 'weak_margins') {
-                    const npm = ((sci26.pat / sci26.rev) * 100).toFixed(1);
-                    primaryDiscrepancyText.push(`Maths are clean, but profit margins are too thin. Net profit is only ${sci26.pat} on Revenue ${sci26.rev} (${npm}% margin) — below desk criteria.`);
-                    workingText = `Margin calculation: Net Profit (${sci26.pat}) / Revenue (${sci26.rev}) = ${npm}%.`;
-                    implicationText = "Insufficient margin cushion leaves the enterprise vulnerable to minor operating cost spikes.";
-                } else if (packType === 'loss') {
-                    primaryDiscrepancyText.push(`PAT is negative (${sci26.pat}) and no startup policy protection applies (Founded ${card.founded}).`);
-                    workingText = `Profitability check: PAT = (${Math.abs(sci26.pat)}) [Loss]. Unprotected legacy firm.`;
-                    implicationText = "Unprotected loss-making deals drain GP Capital reserves without offering structural growth trajectories.";
-                } else if (packType === 'bs_risk') {
-                    if (bs26 && bs26.ca_total < bs26.cl_total) {
-                        primaryDiscrepancyText.push(`Current Assets ${bs26.ca_total} are less than Current Liabilities ${bs26.cl_total} (Negative working capital).`);
-                        workingText = `Working Capital: CA (${bs26.ca_total}) − CL (${bs26.cl_total}) = ${bs26.ca_total - bs26.cl_total} [Deficit].`;
-                    } else if (bs26 && bs26.receivables > sci26.rev) {
-                        primaryDiscrepancyText.push(`Trade Receivables ${bs26.receivables} exceed total 2026 Annual Revenue ${sci26.rev}.`);
-                        workingText = `Receivables Ratio: Receivables (${bs26.receivables}) > Annual Revenue (${sci26.rev}).`;
+                    hasFraud = true;
+                    fraudCategory = 'Arithmetic discrepancy';
+                    const mathSubType = Math.floor(Math.random() * 3);
+                    if (mathSubType === 0) {
+                        sci26.gp += (Math.floor(Math.random() * 4) + 2) * 10;
+                        validChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
+                        workingText = `Gross Profit calculation: Revenue (${sci26.rev}) − CoS (${sci26.cos}) = ${sci26.rev - sci26.cos} (Reported: ${sci26.gp}).`;
+                    } else if (mathSubType === 1) {
+                        sci26.op += (Math.floor(Math.random() * 3) + 2) * 10;
+                        validChains.push(['sci_gp_26', 'sci_sell_26', 'sci_admin_26', 'sci_op_26']);
+                        workingText = `Operating Profit calculation: GP (${sci26.gp}) − Selling (${sci26.sell}) − Admin (${sci26.admin}) = ${sci26.gp - sci26.sell - sci26.admin} (Reported: ${sci26.op}).`;
                     } else {
-                        primaryDiscrepancyText.push(`Non-Current Liabilities ${bs26 ? bs26.ncl_total : 350} exceed Total Equity ${bs26 ? bs26.equity_total : 50} (Excessive gearing).`);
-                        workingText = `Gearing check: Long-Term Debt (${bs26 ? bs26.ncl_total : 350}) > Equity (${bs26 ? bs26.equity_total : 50}).`;
+                        sci26.pat += (Math.floor(Math.random() * 3) + 2) * 10;
+                        validChains.push(['sci_pbt_26', 'sci_tax_26', 'sci_pat_26']);
+                        workingText = `Profit After Tax calculation: PBT (${sci26.pbt}) − Tax (${sci26.tax}) = ${sci26.pbt - sci26.tax} (Reported: ${sci26.pat}).`;
                     }
-                    implicationText = "Balance sheet over-leverage or illiquidity poses imminent insolvency risk for GP Capital capital.";
-                } else {
-                    primaryDiscrepancyText.push(`All financial statements are mathematically clean, margins are sound (PAT ${sci26.pat} on Rev ${sci26.rev}), and YoY trajectory is positive.`);
-                    workingText = `Healthy Check: Revenue increased from ${sci25.rev} to ${sci26.rev}; PAT clean at ${sci26.pat}.`;
-                    implicationText = "Sound commercial deal pack meeting all Investment Committee return thresholds.";
+                    primaryDiscrepancyText.push(`Gross Profit / Operating / PAT calculation break on Income Statement.`);
+                    implicationText = "Financial statement contains active calculation errors.";
+
+                } else if (packType === 'info_mismatch') {
+                    hasFraud = true;
+                    fraudCategory = 'Identity / header mismatch';
+                    const infoSubType = Math.floor(Math.random() * 2);
+                    if (infoSubType === 0) {
+                        sci26.headerName = companyName + " Holdings Tbk";
+                        validChains.push(['card_name', 'sci_header']);
+                        workingText = `Identity check: Card Entity ("${card.name}") ≠ SCI Header Name ("${sci26.headerName}").`;
+                        primaryDiscrepancyText.push(`Company Card name "${card.name}" does not match the statement header "${sci26.headerName}".`);
+                    } else {
+                        const falseYear = card.founded - 3;
+                        sci26.headerSubtext = `Registration Year: ${falseYear} // Statement of Comprehensive Income`;
+                        validChains.push(['card_founded', 'sci_header']);
+                        workingText = `Identity check: Card Founded Year (${card.founded}) ≠ Statement Header Registration (${falseYear}).`;
+                        primaryDiscrepancyText.push(`Founded year mismatch: Company Card founded ${card.founded} vs Header registration ${falseYear}.`);
+                    }
+                    implicationText = "Corporate identity mismatch indicates unverified entity or wrong dossier attachment.";
+
+                } else if (packType === 'missing_line') {
+                    // ISSUE B1: Missing details
+                    hasFraud = true;
+                    fraudCategory = 'Missing critical line / detail';
+                    const missingSubType = Math.floor(Math.random() * 3);
+                    if (missingSubType === 0) {
+                        sci26.tax = null; // Tax cell empty or "—"
+                        sci26.pat = sci26.pbt;
+                        validChains.push(['sci_tax_26']);
+                        validChains.push(['sci_pbt_26', 'sci_tax_26', 'sci_pat_26']);
+                        primaryDiscrepancyText.push(`Taxation line is missing while PBT (${sci26.pbt}) and PAT (${sci26.pat}) are reported.`);
+                        workingText = `Taxation line is missing/blank while PBT and PAT are reported.`;
+                    } else if (missingSubType === 1) {
+                        sci26.fin = null; // Finance Costs blank
+                        sci26.pbt = sci26.op;
+                        validChains.push(['sci_fin_26']);
+                        validChains.push(['sci_op_26', 'sci_fin_26', 'sci_pbt_26']);
+                        primaryDiscrepancyText.push(`Finance Costs line is missing while OP (${sci26.op}) and PBT (${sci26.pbt}) are reported.`);
+                        workingText = `Finance Costs line is missing/blank while OP and PBT are reported.`;
+                    } else {
+                        sci26.admin = null; // Admin Costs blank
+                        sci26.op = sci26.gp - sci26.sell;
+                        validChains.push(['sci_admin_26']);
+                        validChains.push(['sci_gp_26', 'sci_sell_26', 'sci_admin_26', 'sci_op_26']);
+                        primaryDiscrepancyText.push(`Administrative Expenses line is missing/blank while Operating Profit is reported.`);
+                        workingText = `Administrative expenses line omitted on Income Statement.`;
+                    }
+                    implicationText = "Missing critical line conceals expense component or taxation liability.";
+
+                } else if (packType === 'single_year_fraud') {
+                    // ISSUE B2: Single-year presentation fraud
+                    hasFraud = true;
+                    fraudCategory = 'Single-year presentation fraud';
+                    const singleSub = Math.floor(Math.random() * 2);
+                    if (singleSub === 0) {
+                        // Entire 2025 column absent/blank
+                        sci25 = { rev: null, cos: null, gp: null, sell: null, admin: null, op: null, fin: null, pbt: null, tax: null, pat: null };
+                        validChains.push(['sci_prior_year']);
+                        validChains.push(['sci_rev_25']);
+                        validChains.push(['sci_pat_25']);
+                        primaryDiscrepancyText.push(`Prior year figures are missing; the committee needs two-year comparison.`);
+                        workingText = `Presentation check: Deal pack must present two years for comparison; prior year column is missing/blank.`;
+                    } else {
+                        // Company name missing on SCI header title
+                        sci26.headerName = ""; // blank header title
+                        validChains.push(['sci_header']);
+                        validChains.push(['card_name', 'sci_header']);
+                        primaryDiscrepancyText.push(`Company Card name does not match the statement header (Header title is blank).`);
+                        workingText = `Header check: Statement header title is missing company name.`;
+                    }
+                    implicationText = "Presentation/completeness defect violates Investment Desk two-year disclosure standards.";
+
+                } else if (packType === 'low_tax') {
+                    hasFraud = true;
+                    fraudCategory = 'Low taxation line';
+                    sci26.tax = Math.max(1, Math.round(sci26.pbt * 0.01));
+                    sci26.pat = sci26.pbt - sci26.tax;
+                    validChains.push(['sci_tax_26', 'sci_pbt_26']);
+                    validChains.push(['sci_pbt_26', 'sci_tax_26', 'sci_pat_26']);
+                    primaryDiscrepancyText.push(`Suspiciously low tax provision (Rp ${sci26.tax} on PBT Rp ${sci26.pbt}, ~${((sci26.tax/sci26.pbt)*100).toFixed(1)}% vs statutory).`);
+                    workingText = `Tax rate check: Effective tax rate is under 2% on positive corporate earnings.`;
+                    implicationText = "Abnormally low taxation line violates accounting standards and inflates net income.";
+
+                } else if (packType === 'total_mismatch') {
+                    hasFraud = true;
+                    fraudCategory = 'Totals / structure break';
+                    if (bs26) {
+                        bs26.ca_total += 85;
+                        validChains.push(['bs_ca_tot_26', 'bs_inv_26', 'bs_rec_26', 'bs_cash_26']);
+                        validChains.push(['bs_ca_tot_26', 'bs_inv_26']);
+                        primaryDiscrepancyText.push(`Total current assets ${bs26.ca_total} does not equal sum of current asset line items.`);
+                        workingText = `Total CA check: Items sum ≠ Printed Total CA (${bs26.ca_total}).`;
+                    } else {
+                        sci26.gp += 50;
+                        validChains.push(['sci_gp_26', 'sci_rev_26', 'sci_cos_26']);
+                        primaryDiscrepancyText.push(`Gross Profit does not equal Revenue minus Cost of Sales.`);
+                        workingText = `Gross Profit check: Revenue (${sci26.rev}) − CoS (${sci26.cos}) = ${sci26.rev - sci26.cos} ≠ Reported GP (${sci26.gp}).`;
+                    }
+                    implicationText = "Component total discrepancy indicates corrupted balance aggregation or forced entry.";
+
+                } else if (packType === 'header_mismatch' && bs26) {
+                    hasFraud = true;
+                    fraudCategory = 'Cross-statement header mismatch';
+                    bs26.headerName = companyName + " Trading Group";
+                    validChains.push(['sci_header', 'bs_header']);
+                    validChains.push(['card_name', 'bs_header']);
+                    primaryDiscrepancyText.push(`Company Card name does not match the statement header.`);
+                    workingText = `Cross-header check: SCI Header ("${sci26.headerName}") vs SOFP Header ("${bs26.headerName}").`;
+                    implicationText = "Dossier contains financial statements belonging to two different corporate entities.";
+                }
+
+                if (!hasFraud && primaryDiscrepancyText.length === 0) {
+                    primaryDiscrepancyText.push("No accounting or calculation discrepancies detected.");
                 }
 
                 return {
-                    id: 'pack_' + Math.random().toString(36).substring(2, 9),
+                    id: 'pack_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                     card: card,
                     sci26: sci26,
                     sci25: sci25,
                     bs26: bs26,
                     bs25: bs25,
                     packType: packType,
-                    isFraudMath: isFraudMath,
-                    isInfoMismatch: isInfoMismatch,
-                    auditChains: auditChains,
-                    primaryDiscrepancyText: primaryDiscrepancyText,
+                    hasFraud: hasFraud,
+                    fraudCategory: fraudCategory,
+                    validChains: validChains,
+                    discrepancyBullets: primaryDiscrepancyText,
                     workingText: workingText,
                     implicationText: implicationText
                 };
             }
         }
 
-        class GameEngine {
+        /* ════════════════════════════════════════════════════════════
+           3. VERDICT ENGINE (§1 LADDER + ISSUE A MULTI-REASON SET)
+           ════════════════════════════════════════════════════════════ */
+        function evaluateDossierVerdict(dossier, activeRule, activeNote, mode) {
+            // Step 1 — ANY fraud -> AUDIT (FIRST MATCH WINS)
+            if (dossier.hasFraud === true) {
+                return {
+                    correctAction: 'audit',
+                    correctRejectReason: null,
+                    correctRejectReasons: [],
+                    note: 'Pack has accounting or presentation discrepancy. Correct Action: Audit.'
+                };
+            }
+
+            // Step 2 — Daily Note (clean packs only)
+            if (activeNote) {
+                if (activeNote.forceApproveName && dossier.card.name === activeNote.forceApproveName) {
+                    return { correctAction: 'approve', correctRejectReason: null, correctRejectReasons: [], note: 'Partner note forced approval for clean pack.' };
+                }
+                if (activeNote.approveStartups && dossier.sci26.pat <= 0 && dossier.card.founded >= 2024) {
+                    return { correctAction: 'approve', correctRejectReason: null, correctRejectReasons: [], note: 'Partner startup incentive forced approval.' };
+                }
+            }
+
+            // ISSUE A: Collect ALL valid reject reasons into correctRejectReasons array
+            const validRejectReasons = new Set();
+
+            // Check Step 3: Rule of the Day (clean packs)
+            if (activeRule && activeRule.test(dossier)) {
+                if (activeRule.isExceptionApprove) {
+                    return { correctAction: 'approve', correctRejectReason: null, correctRejectReasons: [], note: 'Rule exception approves clean pack.' };
+                } else {
+                    validRejectReasons.add(activeRule.rejectReason || 'fails_rule');
+                }
+            }
+
+            // Check Step 4: Commercial Base Standards
+            // A. Loss & protection check
+            if (dossier.sci26.pat <= 0) {
+                const isStartupProtected = dossier.card.founded >= 2024;
+                const isTrajectoryProtected = dossier.sci25.pat !== null && dossier.sci26.pat > dossier.sci25.pat;
+                
+                if (!isStartupProtected && !isTrajectoryProtected) {
+                    validRejectReasons.add('loss_unprotected');
+                }
+            }
+
+            // B. Worse YoY / PAT collapse check
+            if (dossier.sci25.pat !== null && dossier.sci26.pat < dossier.sci25.pat) {
+                validRejectReasons.add('worse_yoy');
+            }
+
+            // C. Weak margins check
+            if (dossier.sci26.rev > 0) {
+                const gpMargin = dossier.sci26.gp / dossier.sci26.rev;
+                const patMargin = dossier.sci26.pat / dossier.sci26.rev;
+                if (gpMargin < 0.20 || (patMargin > 0 && patMargin < 0.05)) {
+                    validRejectReasons.add('weak_margins');
+                }
+            }
+
+            // D. Balance Sheet risk check (Senior mode / BS present)
+            if (mode === 'senior' && dossier.bs26) {
+                if (dossier.bs26.ca_total < dossier.bs26.cl_total || 
+                    (dossier.bs26.cash !== null && dossier.bs26.cash < 15) || 
+                    dossier.bs26.ncl_total > dossier.bs26.equity_total || 
+                    dossier.bs26.receivables > dossier.sci26.rev) {
+                    validRejectReasons.add('bs_risk');
+                }
+            }
+
+            const reasonArray = Array.from(validRejectReasons);
+
+            if (reasonArray.length > 0) {
+                return {
+                    correctAction: 'reject',
+                    correctRejectReason: reasonArray[0],
+                    correctRejectReasons: reasonArray,
+                    note: `Pack is commercially weak or violates directives. Acceptable reasons: ${reasonArray.map(r => REJECT_REASON_LABELS[r] || r).join(', ')}.`
+                };
+            }
+
+            return {
+                correctAction: 'approve',
+                correctRejectReason: null,
+                correctRejectReasons: [],
+                note: 'Clean, compliant pack that meets commercial investment guidelines.'
+            };
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           4. MAIN GAME STATE CONTROLLER
+           ════════════════════════════════════════════════════════════ */
+        class Game {
             constructor() {
-                this.mode = 'junior';
+                this.mode = 'junior'; // 'junior' or 'senior'
+                this.playerName = 'Analyst 88';
                 this.day = 1;
-                this.clockMinutes = 540;
                 this.cash = 50;
                 this.rep = 20;
                 this.citations = 0;
                 this.maxCitations = 4;
                 
-                this.queue = [];
-                this.currentDossierIndex = 0;
-                this.shiftTimer = null;
-                this.timeLeft = 120;
-
+                this.shiftPackIndex = 0;
+                this.currentQueue = [];
                 this.activeRule = null;
                 this.activeNote = null;
 
-                this.inventory = {
-                    coffee: 0,
-                    marker: false,
-                    shield: 0,
-                    shredder: 0,
-                    goldstamp: 0
-                };
+                this.auditMode = false;
+                this.markedTargets = new Set();
+                this.timerInterval = null;
+                this.timerSeconds = 130;
 
-                this.selectedAuditCells = new Set();
-                this.isAuditMode = false;
-                this.currentRejectReason = null;
-
-                this.isCardMinimized = false;
-                this.isDraggingCard = false;
-                this.dragOffset = { x: 0, y: 0 };
+                this.inventory = { coffee: 0, marker: 0, shield: 0, shredder: 0, goldstamp: 0 };
+                this.selectedRejectReason = null;
+                this.hasSavedScoreThisShift = false;
             }
 
-            startGame(mode) {
-                this.mode = mode;
+            init() {
+                LeaderboardManager.renderTitleList();
+            }
+
+            startGame(chosenMode) {
+                this.mode = chosenMode;
                 const nameInput = document.getElementById('player-name-input');
-                this.playerName = nameInput ? nameInput.value.trim() || 'Analyst 88' : 'Analyst 88';
+                this.playerName = (nameInput && nameInput.value) ? nameInput.value.trim() : 'Analyst 88';
+
+                this.day = 1;
+                this.cash = 50;
+                this.rep = 20;
+                this.citations = 0;
+                this.maxCitations = 4;
+                this.inventory = { coffee: 0, marker: 0, shield: 0, shredder: 0, goldstamp: 0 };
 
                 document.getElementById('main-menu').style.display = 'none';
                 document.getElementById('game-container').style.display = 'flex';
 
-                this.isCardMinimized = (this.mode === 'senior');
-
-                this.setupCardDrag();
-                this.setupDay();
+                this.setupDayShift();
             }
 
-            setupCardDrag() {
-                const cardBox = document.getElementById('company-card-box');
-                const dragHandle = document.getElementById('company-card-drag-handle');
-                if (!dragHandle || !cardBox) return;
+            setupDayShift() {
+                this.hasSavedScoreThisShift = false;
+                this.shiftPackIndex = 0;
 
-                dragHandle.onpointerdown = (e) => {
-                    if (e.target.closest('#btn-toggle-card')) return;
-                    this.isDraggingCard = true;
-                    
-                    const rect = cardBox.getBoundingClientRect();
-                    this.dragOffset.x = e.clientX - rect.left;
-                    this.dragOffset.y = e.clientY - rect.top;
+                // Pick Rule of Day
+                const pool = (this.mode === 'senior') ? RULES_POOL_SENIOR : RULES_POOL_JUNIOR;
+                this.activeRule = pool[(this.day - 1) % pool.length];
 
-                    cardBox.style.position = 'fixed';
-                    cardBox.style.zIndex = '200';
-                    cardBox.style.margin = '0';
-
-                    const onPointerMove = (ev) => {
-                        if (!this.isDraggingCard) return;
-                        let newX = ev.clientX - this.dragOffset.x;
-                        let newY = ev.clientY - this.dragOffset.y;
-
-                        newX = Math.max(10, Math.min(window.innerWidth - cardBox.offsetWidth - 10, newX));
-                        newY = Math.max(60, Math.min(window.innerHeight - cardBox.offsetHeight - 10, newY));
-
-                        cardBox.style.left = `${newX}px`;
-                        cardBox.style.top = `${newY}px`;
-                    };
-
-                    const onPointerUp = () => {
-                        this.isDraggingCard = false;
-                        window.removeEventListener('pointermove', onPointerMove);
-                        window.removeEventListener('pointerup', onPointerUp);
-                    };
-
-                    window.addEventListener('pointermove', onPointerMove);
-                    window.addEventListener('pointerup', onPointerUp);
-                };
-            }
-
-            toggleCompanyCard(e) {
-                if (e) e.stopPropagation();
-                this.isCardMinimized = !this.isCardMinimized;
-                this.renderCardMinimizedState();
-            }
-
-            renderCardMinimizedState() {
-                const cardBox = document.getElementById('company-card-box');
-                const btn = document.getElementById('btn-toggle-card');
-                if (!cardBox || !btn) return;
-
-                if (this.isCardMinimized) {
-                    cardBox.classList.add('minimized');
-                    btn.innerText = 'Expand ↗';
+                // Pick Partner Note on Day 2+
+                if (this.day > 1 && Math.random() < 0.6) {
+                    this.activeNote = DAILY_NOTES_POOL[(this.day - 1) % DAILY_NOTES_POOL.length];
                 } else {
-                    cardBox.classList.remove('minimized');
-                    btn.innerText = 'Minimize −';
-                }
-            }
-
-            setupDay() {
-                this.currentDossierIndex = 0;
-                this.selectedAuditCells.clear();
-                this.setAuditMode(false);
-
-                this.maxCitations = this.inventory.marker ? 5 : 4;
-
-                this.timeLeft = 120 + (this.inventory.coffee > 0 ? 30 : 0);
-                if (this.inventory.coffee > 0) {
-                    this.inventory.coffee--;
-                    showToast("☕ Used 1 Desk Espresso (+30s shift time)");
-                }
-
-                if (this.day === 1) {
-                    this.activeRule = { id: 'rule_day1', text: 'Day 1 Orientation: Inspect margins & clear sound deals. Standard rejection rules apply.' };
                     this.activeNote = null;
-                } else {
-                    const pool = (this.mode === 'senior' && Math.random() < 0.5) ? RULES_POOL_SENIOR : RULES_POOL_JUNIOR;
-                    this.activeRule = pool[Math.floor(Math.random() * pool.length)];
-
-                    if (Math.random() < 0.45) {
-                        this.activeNote = DAILY_NOTES_POOL[Math.floor(Math.random() * DAILY_NOTES_POOL.length)];
-                    } else {
-                        this.activeNote = null;
-                    }
                 }
 
-                this.queue = [];
-                for (let i = 0; i < 4; i++) {
-                    this.queue.push(DossierGenerator.generate(this.mode, this.day));
+                // Generate Queue of exactly 5 packs
+                this.currentQueue = [];
+                for (let i = 0; i < 5; i++) {
+                    this.currentQueue.push(DossierGenerator.generate(this.mode, this.day));
                 }
 
-                this.showBriefingModal();
-                this.updateHUD();
-            }
-
-            showBriefingModal() {
-                document.getElementById('briefing-date').innerText = `DAY ${this.day} // 09:00 AM`;
+                // Show Morning Briefing
+                document.getElementById('briefing-date').innerText = `DAY ${this.day}`;
                 document.getElementById('briefing-rule-text').innerText = this.activeRule.text;
                 
                 const noteBox = document.getElementById('briefing-note-box');
@@ -1419,706 +1609,559 @@
             startShiftQueue() {
                 document.getElementById('briefing-overlay').style.display = 'none';
                 
+                // Update Pinned Strip
                 document.getElementById('pinned-rule').innerText = `📌 RULE OF THE DAY: ${this.activeRule.text}`;
                 const pinnedNote = document.getElementById('pinned-note');
                 if (this.activeNote) {
                     pinnedNote.style.display = 'block';
-                    pinnedNote.innerText = `✉️ PARTNER NOTE: ${this.activeNote.text}`;
+                    pinnedNote.innerText = `✉️ PARTNER DIRECTIVE: ${this.activeNote.text}`;
                 } else {
                     pinnedNote.style.display = 'none';
                 }
 
+                this.timerSeconds = 130 + (this.inventory.coffee * 30);
                 this.startTimer();
                 this.loadCurrentDossier();
             }
 
             startTimer() {
-                clearInterval(this.shiftTimer);
-                this.shiftTimer = setInterval(() => {
-                    this.timeLeft--;
-                    this.clockMinutes += 1;
-                    this.updateHUD();
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    this.timerSeconds--;
+                    const m = Math.floor(this.timerSeconds / 60).toString().padStart(2, '0');
+                    const s = (this.timerSeconds % 60).toString().padStart(2, '0');
+                    document.getElementById('hud-timer').innerText = `${m}:${s}`;
 
-                    if (this.timeLeft <= 0) {
-                        clearInterval(this.shiftTimer);
-                        showToast("⏰ Shift time expired! Automatic EOD Settlement.");
-                        this.finishShift();
+                    if (this.timerSeconds <= 0) {
+                        clearInterval(this.timerInterval);
+                        showToast("⏳ Shift time expired! Investment Committee standard review applied.");
+                        this.handleTimeOut();
                     }
                 }, 1000);
             }
 
-            updateHUD() {
-                document.getElementById('hud-day').innerText = this.day;
-                
-                const hrs = Math.floor(this.clockMinutes / 60) % 24;
-                const mins = this.clockMinutes % 60;
-                document.getElementById('hud-clock').innerText = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-
-                const m = Math.floor(this.timeLeft / 60);
-                const s = this.timeLeft % 60;
-                document.getElementById('hud-timer').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-
-                document.getElementById('hud-wage').innerText = this.cash;
-                document.getElementById('hud-rep').innerText = this.rep;
-                
-                const citElem = document.getElementById('hud-citations');
-                citElem.innerText = `${this.citations}/${this.maxCitations}`;
-                if (this.citations >= this.maxCitations - 1) {
-                    citElem.classList.add('hud-warning');
-                } else {
-                    citElem.classList.remove('hud-warning');
-                }
-
-                document.getElementById('btn-shredder').style.display = this.inventory.shredder > 0 ? 'inline-block' : 'none';
-                document.getElementById('shredder-count').innerText = this.inventory.shredder;
-
-                document.getElementById('btn-golden-stamp').style.display = this.inventory.goldstamp > 0 ? 'inline-block' : 'none';
-                document.getElementById('gold-stamp-count').innerText = this.inventory.goldstamp;
+            handleTimeOut() {
+                this.submitApprove(); // Default submission on timeout
             }
 
             loadCurrentDossier() {
-                if (this.currentDossierIndex >= this.queue.length) {
-                    this.finishShift();
-                    return;
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                if (!dossier) return;
+
+                this.auditMode = false;
+                this.markedTargets.clear();
+                document.body.classList.remove('audit-mode');
+                document.getElementById('btn-stamp-audit').style.display = 'none';
+                document.getElementById('btn-cancel-audit').style.display = 'none';
+                document.getElementById('btn-audit').style.display = 'inline-block';
+                document.getElementById('btn-approve').style.display = 'inline-block';
+                document.getElementById('btn-reject').style.display = 'inline-block';
+
+                // Update Tool Tray Special Buttons
+                const btnShred = document.getElementById('btn-shredder');
+                const btnGold = document.getElementById('btn-golden-stamp');
+                
+                if (this.inventory.shredder > 0) {
+                    btnShred.style.display = 'inline-block';
+                    document.getElementById('shredder-count').innerText = this.inventory.shredder;
+                } else { btnShred.style.display = 'none'; }
+
+                if (this.inventory.goldstamp > 0) {
+                    btnGold.style.display = 'inline-block';
+                    document.getElementById('gold-stamp-count').innerText = this.inventory.goldstamp;
+                } else { btnGold.style.display = 'none'; }
+
+                // Clear Stamps
+                document.querySelectorAll('.stamp-mark').forEach(el => el.classList.remove('visible'));
+
+                // Render HUD
+                document.getElementById('hud-day').innerText = this.day;
+                document.getElementById('hud-file-progress').innerText = `FILE ${this.shiftPackIndex + 1}/5`;
+                document.getElementById('hud-wage').innerText = this.cash;
+                document.getElementById('hud-rep').innerText = this.rep;
+                document.getElementById('hud-citations').innerText = `${this.citations}/${this.maxCitations}`;
+
+                // Render Card
+                document.getElementById('card-company-name').innerText = dossier.card.name;
+                document.getElementById('card-industry').innerText = dossier.card.industry;
+                document.getElementById('card-founded').innerText = dossier.card.founded;
+                document.getElementById('card-operating').innerText = `${dossier.card.operating} yrs operating`;
+                document.getElementById('card-desc').innerText = dossier.card.desc;
+                document.getElementById('card-minimized-summary').innerText = `• Founded: ${dossier.card.founded} (${dossier.card.industry})`;
+
+                const vipContainer = document.getElementById('card-vip-container');
+                if (dossier.card.vip) {
+                    vipContainer.innerHTML = `<span class="vip-badge">🌟 ${dossier.card.vip}</span>`;
+                } else {
+                    vipContainer.innerHTML = '';
                 }
 
-                const d = this.queue[this.currentDossierIndex];
-                this.selectedAuditCells.clear();
-                this.setAuditMode(false);
+                // Render SCI
+                const sciNameEl = document.getElementById('sci-company-name');
+                sciNameEl.innerText = dossier.sci26.headerName || "— [BLANK COMPANY NAME]";
+                document.getElementById('sci-subtext').innerText = dossier.sci26.headerSubtext;
 
-                document.getElementById('card-company-name').innerText = d.card.name;
-                document.getElementById('card-minimized-summary').innerText = `• Founded: ${d.card.founded} (${d.card.industry})`;
-                document.getElementById('card-industry').innerText = d.card.industry;
-                document.getElementById('card-founded').innerText = d.card.founded;
-                document.getElementById('card-operating').innerText = `${d.card.operating} yrs operating`;
-                document.getElementById('card-desc').innerText = d.card.desc;
-                
-                const vipContainer = document.getElementById('card-vip-container');
-                vipContainer.innerHTML = d.card.vip ? `<span class="vip-badge">⭐ ${d.card.vip}</span>` : '';
-
-                this.renderCardMinimizedState();
-
-                const sciName = d.sci26.headerName || d.card.name;
-                document.getElementById('sci-company-name').innerText = sciName;
-                
                 const sciTable = document.getElementById('sci-table');
-                sciTable.innerHTML = `
+                sciTable.innerHTML = this.buildSciTableHtml(dossier);
+
+                // Render BS if Senior
+                const bsPaper = document.getElementById('doc-bs');
+                if (this.mode === 'senior' && dossier.bs26) {
+                    bsPaper.style.display = 'block';
+                    document.getElementById('bs-company-name').innerText = dossier.bs26.headerName || "— [BLANK COMPANY NAME]";
+                    document.getElementById('bs-table').innerHTML = this.buildBsTableHtml(dossier);
+                    
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('doc-tab-bar').style.display = 'flex';
+                        this.switchTab('sci');
+                    } else {
+                        document.getElementById('doc-tab-bar').style.display = 'none';
+                    }
+                } else {
+                    bsPaper.style.display = 'none';
+                    document.getElementById('doc-tab-bar').style.display = 'none';
+                }
+
+                this.attachAuditClickListeners();
+                this.updateTeacherPanelInfo();
+            }
+
+            formatVal(val, targetId) {
+                if (val === null || val === undefined) {
+                    return `<span class="blank-target-cell" data-audit-target="${targetId}">— [MISSING]</span>`;
+                }
+                const formatted = val < 0 ? `(${Math.abs(val)})` : `${val}`;
+                return `<span data-audit-target="${targetId}">${formatted}</span>`;
+            }
+
+            buildSciTableHtml(d) {
+                const s26 = d.sci26;
+                const s25 = d.sci25;
+
+                return `
                     <thead>
-                        <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
-                            <td style="text-align:left;">Line Item (Rp million)</td>
-                            <td class="num">2026</td>
-                            <td class="num">2025</td>
+                        <tr style="border-bottom: 2px solid #111827; font-weight: bold;">
+                            <td style="width: 50%;">Line Item (Rp million)</td>
+                            <td class="num" style="width: 25%;" data-audit-target="sci_header_26">2026</td>
+                            <td class="num" style="width: 25%;" data-audit-target="sci_prior_year">2025</td>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr id="sci_rev_26" class="company-card-selectable" onclick="game.auditClick('sci_rev_26')">
-                            <td>Revenue</td>
-                            <td class="num">${d.sci26.rev}</td>
-                            <td class="num">${d.sci25.rev}</td>
-                        </tr>
-                        <tr id="sci_cos_26" class="company-card-selectable" onclick="game.auditClick('sci_cos_26')">
-                            <td>Cost of Sales</td>
-                            <td class="num">(${d.sci26.cos})</td>
-                            <td class="num">(${d.sci25.cos})</td>
-                        </tr>
-                        <tr id="sci_gp_26" class="subtotal company-card-selectable" onclick="game.auditClick('sci_gp_26')">
-                            <td>Gross Profit</td>
-                            <td class="num">${d.sci26.gp}</td>
-                            <td class="num">${d.sci25.gp}</td>
-                        </tr>
-                        <tr id="sci_sell" class="indent company-card-selectable">
-                            <td>Selling Expenses</td>
-                            <td class="num">(${d.sci26.sell})</td>
-                            <td class="num">(${d.sci25.sell})</td>
-                        </tr>
-                        <tr id="sci_admin" class="indent company-card-selectable">
-                            <td>Admin Expenses</td>
-                            <td class="num">(${d.sci26.admin})</td>
-                            <td class="num">(${d.sci25.admin})</td>
-                        </tr>
-                        <tr id="sci_op" class="subtotal company-card-selectable">
-                            <td>Operating Profit</td>
-                            <td class="num">${d.sci26.op}</td>
-                            <td class="num">${d.sci25.op}</td>
-                        </tr>
-                        <tr id="sci_fin" class="company-card-selectable">
-                            <td>Finance Costs</td>
-                            <td class="num">(${d.sci26.fin})</td>
-                            <td class="num">(${d.sci25.fin})</td>
-                        </tr>
-                        <tr id="sci_pbt" class="subtotal company-card-selectable">
-                            <td>Profit Before Tax</td>
-                            <td class="num">${d.sci26.pbt}</td>
-                            <td class="num">${d.sci25.pbt}</td>
-                        </tr>
-                        <tr id="sci_tax" class="company-card-selectable">
-                            <td>Taxation</td>
-                            <td class="num">(${d.sci26.tax})</td>
-                            <td class="num">(${d.sci25.tax})</td>
-                        </tr>
-                        <tr id="sci_pat" class="total company-card-selectable">
-                            <td>Profit After Tax (PAT)</td>
-                            <td class="num">${d.sci26.pat}</td>
-                            <td class="num">${d.sci25.pat}</td>
-                        </tr>
+                        <tr><td>Revenue</td><td class="num">${this.formatVal(s26.rev, 'sci_rev_26')}</td><td class="num">${this.formatVal(s25.rev, 'sci_rev_25')}</td></tr>
+                        <tr><td>Cost of Sales</td><td class="num">${this.formatVal(s26.cos, 'sci_cos_26')}</td><td class="num">${this.formatVal(s25.cos, 'sci_cos_25')}</td></tr>
+                        <tr class="subtotal"><td>Gross Profit</td><td class="num">${this.formatVal(s26.gp, 'sci_gp_26')}</td><td class="num">${this.formatVal(s25.gp, 'sci_gp_25')}</td></tr>
+                        <tr class="indent"><td>Selling & Distribution</td><td class="num">${this.formatVal(s26.sell, 'sci_sell_26')}</td><td class="num">${this.formatVal(s25.sell, 'sci_sell_25')}</td></tr>
+                        <tr class="indent"><td>Administrative Expenses</td><td class="num">${this.formatVal(s26.admin, 'sci_admin_26')}</td><td class="num">${this.formatVal(s25.admin, 'sci_admin_25')}</td></tr>
+                        <tr class="subtotal"><td>Operating Profit</td><td class="num">${this.formatVal(s26.op, 'sci_op_26')}</td><td class="num">${this.formatVal(s25.op, 'sci_op_25')}</td></tr>
+                        <tr class="indent"><td>Finance Costs</td><td class="num">${this.formatVal(s26.fin, 'sci_fin_26')}</td><td class="num">${this.formatVal(s25.fin, 'sci_fin_25')}</td></tr>
+                        <tr class="subtotal"><td>Profit Before Tax (PBT)</td><td class="num">${this.formatVal(s26.pbt, 'sci_pbt_26')}</td><td class="num">${this.formatVal(s25.pbt, 'sci_pbt_25')}</td></tr>
+                        <tr class="indent"><td>Taxation</td><td class="num">${this.formatVal(s26.tax, 'sci_tax_26')}</td><td class="num">${this.formatVal(s25.tax, 'sci_tax_25')}</td></tr>
+                        <tr class="total"><td>Profit After Tax (PAT)</td><td class="num">${this.formatVal(s26.pat, 'sci_pat_26')}</td><td class="num">${this.formatVal(s25.pat, 'sci_pat_25')}</td></tr>
                     </tbody>
                 `;
-
-                const docArea = document.getElementById('document-area-container');
-                const bsPaper = document.getElementById('doc-bs');
-                const tabContainer = document.getElementById('doc-tab-bar');
-                
-                if (this.mode === 'senior' && d.bs26) {
-                    docArea.className = "document-area senior-side-by-side";
-                    bsPaper.style.display = 'block';
-
-                    if (window.innerWidth <= 900) {
-                        tabContainer.style.display = 'flex';
-                        this.switchTab('sci');
-                    } else {
-                        tabContainer.style.display = 'none';
-                        document.getElementById('doc-sci').style.display = 'block';
-                        document.getElementById('doc-bs').style.display = 'block';
-                    }
-
-                    document.getElementById('bs-company-name').innerText = sciName;
-                    const bsTable = document.getElementById('bs-table');
-                    bsTable.innerHTML = `
-                        <thead>
-                            <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
-                                <td style="text-align:left;">SOFP Item (Rp million)</td>
-                                <td class="num">2026</td>
-                                <td class="num">2025</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr class="section-head"><td colspan="3">Non-Current Assets</td></tr>
-                            <tr class="indent"><td>Property, Plant & Equip</td><td class="num">${d.bs26.ppe}</td><td class="num">${d.bs25.ppe}</td></tr>
-                            <tr class="indent"><td>Intangible Assets</td><td class="num">${d.bs26.int}</td><td class="num">${d.bs25.int}</td></tr>
-                            <tr class="subtotal"><td>Total Non-Current Assets</td><td class="num">${d.bs26.nca_total}</td><td class="num">${d.bs25.nca_total}</td></tr>
-
-                            <tr class="section-head"><td colspan="3">Current Assets</td></tr>
-                            <tr class="indent"><td>Inventories</td><td class="num">${d.bs26.inv}</td><td class="num">${d.bs25.inv}</td></tr>
-                            <tr class="indent"><td>Trade Receivables</td><td class="num">${d.bs26.receivables}</td><td class="num">${d.bs25.receivables}</td></tr>
-                            <tr class="indent"><td>Cash & Equivalents</td><td class="num">${d.bs26.cash}</td><td class="num">${d.bs25.cash}</td></tr>
-                            <tr class="subtotal"><td>Total Current Assets</td><td class="num">${d.bs26.ca_total}</td><td class="num">${d.bs25.ca_total}</td></tr>
-
-                            <tr class="total"><td>TOTAL ASSETS</td><td class="num">${d.bs26.assets_total}</td><td class="num">${d.bs25.assets_total}</td></tr>
-
-                            <tr class="section-head"><td colspan="3">Current Liabilities</td></tr>
-                            <tr class="indent"><td>Trade Payables</td><td class="num">${d.bs26.payables}</td><td class="num">${d.bs25.payables}</td></tr>
-                            <tr class="indent"><td>Short-Term Borrowings</td><td class="num">${d.bs26.st_borrowings}</td><td class="num">${d.bs25.st_borrowings}</td></tr>
-                            <tr class="subtotal"><td>Total Current Liabilities</td><td class="num">${d.bs26.cl_total}</td><td class="num">${d.bs25.cl_total}</td></tr>
-
-                            <tr class="section-head"><td colspan="3">Non-Current Liabilities</td></tr>
-                            <tr class="indent"><td>Long-Term Borrowings</td><td class="num">${d.bs26.lt_borrowings}</td><td class="num">${d.bs25.lt_borrowings}</td></tr>
-                            <tr class="subtotal"><td>Total Non-Current Liabilities</td><td class="num">${d.bs26.ncl_total}</td><td class="num">${d.bs25.ncl_total}</td></tr>
-
-                            <tr class="section-head"><td colspan="3">Equity</td></tr>
-                            <tr class="subtotal"><td>Total Equity</td><td class="num">${d.bs26.equity_total}</td><td class="num">${d.bs25.equity_total}</td></tr>
-
-                            <tr class="total"><td>TOTAL LIABILITIES & EQUITY</td><td class="num">${d.bs26.liab_eq_total}</td><td class="num">${d.bs25.liab_eq_total}</td></tr>
-                        </tbody>
-                    `;
-                } else {
-                    docArea.className = "document-area";
-                    bsPaper.style.display = 'none';
-                    tabContainer.style.display = 'none';
-                }
-
-                document.querySelectorAll('.stamp-mark').forEach(el => el.classList.remove('visible'));
             }
 
-            switchTab(tab) {
-                const cardBox = document.getElementById('company-card-box');
-                const sciPaper = document.getElementById('doc-sci');
-                const bsPaper = document.getElementById('doc-bs');
-                
-                document.getElementById('tab-card').classList.remove('active');
-                document.getElementById('tab-sci').classList.remove('active');
-                document.getElementById('tab-bs').classList.remove('active');
+            buildBsTableHtml(d) {
+                const b26 = d.bs26;
+                const b25 = d.bs25;
 
-                if (tab === 'card') {
-                    cardBox.style.display = 'block';
-                    sciPaper.style.display = 'none';
-                    bsPaper.style.display = 'none';
-                    document.getElementById('tab-card').classList.add('active');
-                } else if (tab === 'sci') {
-                    cardBox.style.display = 'block';
-                    sciPaper.style.display = 'block';
-                    bsPaper.style.display = 'none';
-                    document.getElementById('tab-sci').classList.add('active');
-                } else {
-                    cardBox.style.display = 'block';
-                    sciPaper.style.display = 'none';
-                    bsPaper.style.display = 'block';
-                    document.getElementById('tab-bs').classList.add('active');
-                }
+                return `
+                    <thead>
+                        <tr style="border-bottom: 2px solid #111827; font-weight: bold;">
+                            <td style="width: 50%;">Balance Sheet (Rp million)</td>
+                            <td class="num" style="width: 25%;" data-audit-target="bs_header_26">2026</td>
+                            <td class="num" style="width: 25%;" data-audit-target="bs_header_25">2025</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="section-head"><td colspan="3">Non-Current Assets</td></tr>
+                        <tr class="indent"><td>Property, Plant & Equipment</td><td class="num">${this.formatVal(b26.ppe, 'bs_ppe_26')}</td><td class="num">${this.formatVal(b25.ppe, 'bs_ppe_25')}</td></tr>
+                        <tr class="indent"><td>Intangibles & Goodwill</td><td class="num">${this.formatVal(b26.int, 'bs_int_26')}</td><td class="num">${this.formatVal(b25.int, 'bs_int_25')}</td></tr>
+                        <tr class="subtotal"><td>Total Non-Current Assets</td><td class="num">${this.formatVal(b26.nca_total, 'bs_nca_tot_26')}</td><td class="num">${this.formatVal(b25.nca_total, 'bs_nca_tot_25')}</td></tr>
+                        
+                        <tr class="section-head"><td colspan="3">Current Assets</td></tr>
+                        <tr class="indent"><td>Inventories</td><td class="num">${this.formatVal(b26.inv, 'bs_inv_26')}</td><td class="num">${this.formatVal(b25.inv, 'bs_inv_25')}</td></tr>
+                        <tr class="indent"><td>Trade Receivables</td><td class="num">${this.formatVal(b26.receivables, 'bs_rec_26')}</td><td class="num">${this.formatVal(b25.receivables, 'bs_rec_25')}</td></tr>
+                        <tr class="indent"><td>Cash & Equivalents</td><td class="num">${this.formatVal(b26.cash, 'bs_cash_26')}</td><td class="num">${this.formatVal(b25.cash, 'bs_cash_25')}</td></tr>
+                        <tr class="subtotal"><td>Total Current Assets</td><td class="num">${this.formatVal(b26.ca_total, 'bs_ca_tot_26')}</td><td class="num">${this.formatVal(b25.ca_total, 'bs_ca_tot_25')}</td></tr>
+                        <tr class="total"><td>TOTAL ASSETS</td><td class="num">${this.formatVal(b26.assets_total, 'bs_assets_tot_26')}</td><td class="num">${this.formatVal(b25.assets_total, 'bs_assets_tot_25')}</td></tr>
+
+                        <tr class="section-head"><td colspan="3">Current Liabilities</td></tr>
+                        <tr class="indent"><td>Trade Payables</td><td class="num">${this.formatVal(b26.payables, 'bs_pay_26')}</td><td class="num">${this.formatVal(b25.payables, 'bs_pay_25')}</td></tr>
+                        <tr class="indent"><td>Short-Term Borrowings</td><td class="num">${this.formatVal(b26.st_borrowings, 'bs_st_bor_26')}</td><td class="num">${this.formatVal(b25.st_borrowings, 'bs_st_bor_25')}</td></tr>
+                        <tr class="subtotal"><td>Total Current Liabilities</td><td class="num">${this.formatVal(b26.cl_total, 'bs_cl_tot_26')}</td><td class="num">${this.formatVal(b25.cl_total, 'bs_cl_tot_25')}</td></tr>
+
+                        <tr class="section-head"><td colspan="3">Non-Current Liabilities</td></tr>
+                        <tr class="indent"><td>Long-Term Borrowings</td><td class="num">${this.formatVal(b26.lt_borrowings, 'bs_lt_bor_26')}</td><td class="num">${this.formatVal(b25.lt_borrowings, 'bs_lt_bor_25')}</td></tr>
+                        <tr class="subtotal"><td>Total Non-Current Liabilities</td><td class="num">${this.formatVal(b26.ncl_total, 'bs_ncl_tot_26')}</td><td class="num">${this.formatVal(b25.ncl_total, 'bs_ncl_tot_25')}</td></tr>
+
+                        <tr class="section-head"><td colspan="3">Equity</td></tr>
+                        <tr class="subtotal"><td>Total Equity</td><td class="num">${this.formatVal(b26.equity_total, 'bs_eq_tot_26')}</td><td class="num">${this.formatVal(b25.equity_total, 'bs_eq_tot_25')}</td></tr>
+                        <tr class="total"><td>TOTAL LIABILITIES & EQUITY</td><td class="num">${this.formatVal(b26.liab_eq_total, 'bs_liab_eq_tot_26')}</td><td class="num">${this.formatVal(b25.liab_eq_total, 'bs_liab_eq_tot_25')}</td></tr>
+                    </tbody>
+                `;
+            }
+
+            attachAuditClickListeners() {
+                document.querySelectorAll('[data-audit-target]').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        if (!this.auditMode) return;
+                        e.stopPropagation();
+                        const targetId = el.getAttribute('data-audit-target');
+                        if (this.markedTargets.has(targetId)) {
+                            this.markedTargets.delete(targetId);
+                            el.classList.remove('marked-discrepancy');
+                        } else {
+                            this.markedTargets.add(targetId);
+                            el.classList.add('marked-discrepancy');
+                        }
+                    });
+                });
             }
 
             toggleAuditMode() {
-                this.setAuditMode(!this.isAuditMode);
-            }
-
-            setAuditMode(active) {
-                this.isAuditMode = active;
-                if (active) {
+                this.auditMode = !this.auditMode;
+                if (this.auditMode) {
                     document.body.classList.add('audit-mode');
+                    document.getElementById('btn-stamp-audit').style.display = 'inline-block';
+                    document.getElementById('btn-cancel-audit').style.display = 'inline-block';
+                    document.getElementById('btn-audit').style.display = 'none';
                     document.getElementById('btn-approve').style.display = 'none';
                     document.getElementById('btn-reject').style.display = 'none';
-                    document.getElementById('btn-audit').style.display = 'none';
-                    document.getElementById('btn-cancel-audit').style.display = 'inline-block';
-                    document.getElementById('btn-stamp-audit').style.display = 'inline-block';
-                    
-                    if (this.isCardMinimized) {
-                        this.isCardMinimized = false;
-                        this.renderCardMinimizedState();
-                    }
-                    showToast("🔍 AUDIT MODE ACTIVE: Click discrepancy rows / card to select!");
+                    showToast("🔍 AUDIT MODE ACTIVE — Click numbers, headers, or missing lines to mark discrepancy.");
                 } else {
                     document.body.classList.remove('audit-mode');
+                    this.markedTargets.clear();
+                    document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
+                    document.getElementById('btn-stamp-audit').style.display = 'none';
+                    document.getElementById('btn-cancel-audit').style.display = 'none';
+                    document.getElementById('btn-audit').style.display = 'inline-block';
                     document.getElementById('btn-approve').style.display = 'inline-block';
                     document.getElementById('btn-reject').style.display = 'inline-block';
-                    document.getElementById('btn-audit').style.display = 'inline-block';
-                    document.getElementById('btn-cancel-audit').style.display = 'none';
-                    document.getElementById('btn-stamp-audit').style.display = 'none';
-
-                    document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
-                    this.selectedAuditCells.clear();
                 }
-            }
-
-            auditClick(cellId) {
-                if (!this.isAuditMode) return;
-
-                const elem = document.getElementById(cellId);
-                if (this.selectedAuditCells.has(cellId)) {
-                    this.selectedAuditCells.delete(cellId);
-                    if (elem) elem.classList.remove('marked-discrepancy');
-                } else {
-                    this.selectedAuditCells.add(cellId);
-                    if (elem) elem.classList.add('marked-discrepancy');
-                }
-            }
-
-            getExpectedVerdict(d) {
-                if (d.isFraudMath) return { action: 'audit', reason: 'fraud_math', validReasons: ['fraud_math'] };
-                if (d.isInfoMismatch) return { action: 'audit', reason: 'info_mismatch', validReasons: ['info_mismatch'] };
-
-                if (this.activeNote && this.activeNote.forceApproveName === d.card.name) {
-                    return { action: 'approve', reason: 'vip_note', validReasons: [] };
-                }
-
-                if (this.activeNote && this.activeNote.approveStartups && d.card.founded >= 2024 && d.sci26.pat <= 0) {
-                    return { action: 'approve', reason: 'startup_pilot', validReasons: [] };
-                }
-
-                const validReasonsSet = new Set();
-
-                // 1. Check Active Daily Rule
-                if (this.activeRule && this.activeRule.test) {
-                    if (this.activeRule.test(d)) {
-                        validReasonsSet.add(this.activeRule.rejectReason || 'rule_violation');
-                    }
-                }
-
-                // 2. Check dossier pack type
-                if (d.packType === 'weak_margins') validReasonsSet.add('weak_margins');
-                if (d.packType === 'loss') validReasonsSet.add('loss_unprotected');
-                if (d.packType === 'bs_risk') validReasonsSet.add('bs_risk');
-                if (d.packType === 'collapse_yoy') validReasonsSet.add('worse_yoy');
-
-                // 3. Evaluate multi-factor underlying financial conditions
-                if (d.sci26 && d.sci26.rev > 0) {
-                    if ((d.sci26.gp / d.sci26.rev < 0.20) || (d.sci26.pat > 0 && d.sci26.pat / d.sci26.rev < 0.05) || (d.sci26.admin / d.sci26.rev > 0.25)) {
-                        validReasonsSet.add('weak_margins');
-                    }
-                }
-                if (d.sci25 && d.sci26) {
-                    if ((d.sci25.pat > 0 && d.sci26.pat < d.sci25.pat * 0.60) || (d.sci26.rev > d.sci25.rev && d.sci26.pat < d.sci25.pat)) {
-                        validReasonsSet.add('worse_yoy');
-                    }
-                }
-                if (d.sci26 && d.sci26.pat <= 0 && d.card.founded < 2024) {
-                    validReasonsSet.add('loss_unprotected');
-                }
-                if (d.bs26) {
-                    if (d.bs26.ca_total < d.bs26.cl_total || d.bs26.cash < 10 || d.bs26.ncl_total > d.bs26.equity_total || d.bs26.receivables > d.sci26.rev) {
-                        validReasonsSet.add('bs_risk');
-                    }
-                }
-
-                if (validReasonsSet.size > 0) {
-                    const reasonsArray = Array.from(validReasonsSet);
-                    return {
-                        action: 'reject',
-                        reason: reasonsArray[0],
-                        validReasons: reasonsArray
-                    };
-                }
-
-                return { action: 'approve', reason: 'healthy', validReasons: [] };
             }
 
             submitApprove() {
-                const d = this.queue[this.currentDossierIndex];
-                const expected = this.getExpectedVerdict(d);
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
 
-                if (expected.action === 'approve') {
-                    document.getElementById('stamp-sci-app').classList.add('visible');
-                    setTimeout(() => {
-                        this.showMemo(true, 'APPROVE', 'APPROVE', null, d.primaryDiscrepancyText, d.workingText, d.implicationText, 50, 5, 0);
-                    }, 300);
-                } else {
-                    document.getElementById('stamp-sci-app').classList.add('visible');
-                    setTimeout(() => {
-                        const expectedDisplay = expected.validReasons ? expected.validReasons.join(' / ').toUpperCase() : expected.reason.toUpperCase();
-                        this.showMemo(false, 'APPROVE', expected.action.toUpperCase(), expectedDisplay, d.primaryDiscrepancyText, d.workingText, d.implicationText, -20, -5, 1);
-                    }, 300);
-                }
+                document.getElementById('stamp-sci-app').classList.add('visible');
+
+                setTimeout(() => {
+                    if (verdict.correctAction === 'approve') {
+                        this.processVerdictSuccess('approve', verdict);
+                    } else {
+                        this.processVerdictError('approve', verdict);
+                    }
+                }, 400);
             }
 
             openRejectModal() {
                 const list = document.getElementById('reject-reasons-list');
-                list.innerHTML = `
-                    <label class="reject-option" onclick="game.selectRejectReason('weak_margins')">
-                        <input type="radio" name="rreason" class="reject-radio" value="weak_margins">
-                        <div>
-                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Thin Profit Margins / Below Threshold</div>
-                            <div style="font-size:0.75rem; color:#6b7280;">GPM < 20%, PAT < 5%, or excessive admin expenses.</div>
-                        </div>
-                    </label>
+                list.innerHTML = '';
+                this.selectedRejectReason = null;
 
-                    <label class="reject-option" onclick="game.selectRejectReason('worse_yoy')">
-                        <input type="radio" name="rreason" class="reject-radio" value="worse_yoy">
-                        <div>
-                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Deteriorating YoY Trajectory</div>
-                            <div style="font-size:0.75rem; color:#6b7280;">PAT fell >40% YoY or profits dropped while revenue grew.</div>
-                        </div>
-                    </label>
+                const reasons = [
+                    { id: 'loss_unprotected', label: 'Loss — no protection', desc: 'Operating PAT is <= 0 without startup or trajectory protection.' },
+                    { id: 'worse_yoy', label: 'Worse than last year', desc: 'Net earnings or operational PAT deteriorated YoY.' },
+                    { id: 'weak_margins', label: 'Weak margins', desc: 'Gross margin < 20% or net PAT margin < 5%.' },
+                    { id: 'fails_rule', label: 'Failed Rule of the Day', desc: 'Breaches the active daily investment committee directive.' }
+                ];
 
-                    <label class="reject-option" onclick="game.selectRejectReason('loss_unprotected')">
-                        <input type="radio" name="rreason" class="reject-radio" value="loss_unprotected">
-                        <div>
-                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Unprotected Operating Loss</div>
-                            <div style="font-size:0.75rem; color:#6b7280;">Net loss without qualifying startup exception policy.</div>
-                        </div>
-                    </label>
-
-                    <label class="reject-option" onclick="game.selectRejectReason('bs_risk')">
-                        <input type="radio" name="rreason" class="reject-radio" value="bs_risk">
-                        <div>
-                            <div style="font-weight:bold; font-size:0.85rem; color:#111827;">Balance Sheet Risk / Solvency Deficit</div>
-                            <div style="font-size:0.75rem; color:#6b7280;">Current asset deficit, excess debt, or high receivables.</div>
-                        </div>
-                    </label>
-                `;
-                this.currentRejectReason = null;
-                document.getElementById('reject-modal').style.display = 'flex';
-            }
-
-            selectRejectReason(reason) {
-                this.currentRejectReason = reason;
-                document.querySelectorAll('.reject-option').forEach(el => el.classList.remove('selected'));
-                if (event && event.currentTarget) {
-                    event.currentTarget.classList.add('selected');
+                if (this.mode === 'senior') {
+                    reasons.push({ id: 'bs_risk', label: 'Balance Sheet risk', desc: 'Liquidity deficit (CA < CL), cash floor break, or over-geared.' });
                 }
+
+                reasons.forEach(r => {
+                    const opt = document.createElement('div');
+                    opt.className = 'reject-option';
+                    opt.onclick = () => {
+                        document.querySelectorAll('.reject-option').forEach(el => el.classList.remove('selected'));
+                        opt.classList.add('selected');
+                        this.selectedRejectReason = r.id;
+                    };
+                    opt.innerHTML = `
+                        <div>
+                            <div style="font-weight:bold; font-size:0.85rem; color:#b91c1c;">${r.label}</div>
+                            <div style="font-size:0.75rem; color:#4b5563;">${r.desc}</div>
+                        </div>
+                    `;
+                    list.appendChild(opt);
+                });
+
+                document.getElementById('reject-modal').style.display = 'flex';
             }
 
             closeRejectModal() {
                 document.getElementById('reject-modal').style.display = 'none';
             }
 
+            /* ISSUE A: Multi-Reason Reject Scoring */
             confirmReject() {
-                if (!this.currentRejectReason) {
-                    showToast("⚠️ Select a rejection reason first!");
+                if (!this.selectedRejectReason) {
+                    showToast("⚠️ Please select a rejection reason!");
                     return;
                 }
-
                 this.closeRejectModal();
-                const d = this.queue[this.currentDossierIndex];
-                const expected = this.getExpectedVerdict(d);
+
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
 
                 document.getElementById('stamp-sci-den').classList.add('visible');
 
                 setTimeout(() => {
-                    if (expected.action === 'reject') {
-                        const isValid = expected.validReasons && expected.validReasons.includes(this.currentRejectReason);
-                        if (isValid) {
-                            this.showMemo(true, 'REJECT', 'REJECT', this.currentRejectReason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 50, 5, 0);
+                    if (verdict.correctAction === 'reject') {
+                        // Check if player's choice is IN the valid reasons array
+                        if (verdict.correctRejectReasons.includes(this.selectedRejectReason)) {
+                            // ISSUE A4: Full success with optional secondary acceptable reasons line
+                            const otherAcceptable = verdict.correctRejectReasons
+                                .filter(r => r !== this.selectedRejectReason)
+                                .map(r => REJECT_REASON_LABELS[r] || r);
+                            
+                            let noteMsg = "Correct reject.";
+                            if (otherAcceptable.length > 0) {
+                                noteMsg += ` Also acceptable: ${otherAcceptable.join(', ')}.`;
+                            }
+                            verdict.note = noteMsg;
+
+                            this.processVerdictSuccess('reject', verdict);
                         } else {
-                            const validDisplay = expected.validReasons.join(' / ').toUpperCase();
-                            this.showMemo(false, 'REJECT', 'REJECT', validDisplay, d.primaryDiscrepancyText, d.workingText, d.implicationText, 20, 0, 1);
+                            // Player picked wrong reason
+                            verdict.note = `Wrong reject reason chosen. Acceptable reason(s): ${verdict.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(', ')}.`;
+                            this.processVerdictWarning('reject', verdict);
                         }
-                    } else if (expected.action === 'audit') {
-                        this.showMemo(false, 'REJECT', 'AUDIT MODE', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -15, -3, 1);
                     } else {
-                        this.showMemo(false, 'REJECT', 'APPROVE', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -25, -5, 1);
+                        // Pack should not have been rejected
+                        this.processVerdictError('reject', verdict);
                     }
-                }, 300);
+                }, 400);
             }
 
             submitAuditStamp() {
-                const d = this.queue[this.currentDossierIndex];
-                const expected = this.getExpectedVerdict(d);
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
 
-                let isMatch = false;
-                if (d.auditChains && d.auditChains.length > 0) {
-                    for (const chain of d.auditChains) {
-                        const allSelected = chain.every(id => this.selectedAuditCells.has(id));
-                        if (allSelected && this.selectedAuditCells.size === chain.length) {
-                            isMatch = true;
+                if (verdict.correctAction === 'audit' && dossier.hasFraud) {
+                    // Check if player marked any valid chain
+                    const markedArr = Array.from(this.markedTargets);
+                    let isChainMatched = false;
+
+                    for (const chain of dossier.validChains) {
+                        const allChainItemsMarked = chain.every(item => markedArr.includes(item));
+                        if (allChainItemsMarked && markedArr.length <= chain.length + 2) {
+                            isChainMatched = true;
                             break;
                         }
                     }
-                }
 
-                if (expected.action === 'audit' && isMatch) {
-                    document.getElementById('stamp-sci-den').classList.add('visible');
-                    setTimeout(() => {
-                        this.showMemo(true, 'AUDIT FLAG', 'AUDIT FLAG', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, 75, 10, 0);
-                    }, 300);
-                } else if (expected.action === 'audit') {
-                    showToast("⚠️ Incorrect items flagged for audit!");
-                    this.showMemo(false, 'AUDIT FLAG', 'AUDIT FLAG', expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -20, -5, 1);
+                    if (isChainMatched) {
+                        this.processVerdictSuccess('audit', verdict);
+                    } else {
+                        verdict.note = `Discrepancy marked incorrectly or incomplete. Valid target chains: ${dossier.validChains.map(c => c.join(' + ')).join(' OR ')}.`;
+                        this.processVerdictWarning('audit', verdict);
+                    }
                 } else {
-                    showToast("⚠️ Flagged clean document for audit!");
-                    this.showMemo(false, 'AUDIT FLAG', expected.action.toUpperCase(), expected.reason, d.primaryDiscrepancyText, d.workingText, d.implicationText, -30, -5, 1);
+                    // Clean pack audited incorrectly
+                    verdict.note = "Clean pack audited in error — no statement fraud existed.";
+                    this.processVerdictError('audit', verdict);
                 }
             }
 
-            showMemo(isCorrect, actionTaken, expectedAction, reasonBucket, discrepancyText, workingText, implicationText, deltaPay, deltaRep, deltaCit) {
+            processVerdictSuccess(action, verdict) {
+                const payGain = 50;
+                const repGain = 5;
+                this.cash += payGain;
+                this.rep += repGain;
+
+                this.showMemoModal('CORRECT', action, verdict, payGain, repGain, 0);
+            }
+
+            processVerdictWarning(action, verdict) {
+                const payGain = 25;
+                const repGain = 2;
+                this.cash += payGain;
+                this.rep += repGain;
+
+                this.showMemoModal('WARNING', action, verdict, payGain, repGain, 0);
+            }
+
+            processVerdictError(action, verdict) {
+                const payGain = 0;
+                const repLoss = -5;
+                this.rep = Math.max(0, this.rep + repLoss);
+
+                let citAdded = 1;
+                if (this.inventory.shield > 0) {
+                    this.inventory.shield--;
+                    citAdded = 0;
+                    showToast("🛡️ Internal Review Shield absorbed 1 citation penalty!");
+                } else {
+                    this.citations += 1;
+                }
+
+                this.showMemoModal('INCORRECT', action, verdict, payGain, repLoss, citAdded);
+            }
+
+            showMemoModal(status, playerAction, verdict, deltaPay, deltaRep, deltaCit) {
+                const overlay = document.getElementById('memo-overlay');
                 const statusLine = document.getElementById('memo-status-line');
-                if (isCorrect) {
-                    statusLine.className = 'memo-status-CORRECT';
-                    statusLine.innerText = 'STATUS: VERDICT APPROVED BY COMMITTEE';
+                
+                statusLine.className = `memo-status-${status}`;
+                statusLine.innerText = `STATUS: ${status} (${playerAction.toUpperCase()} STAMPED)`;
+
+                document.getElementById('memo-correct-action').innerText = verdict.correctAction.toUpperCase();
+                
+                const bucketWrap = document.getElementById('memo-reason-bucket-wrapper');
+                if (verdict.correctAction === 'reject' && verdict.correctRejectReasons.length > 0) {
+                    bucketWrap.style.display = 'block';
+                    document.getElementById('memo-reason-bucket').innerText = verdict.correctRejectReasons.map(r => REJECT_REASON_LABELS[r] || r).join(', ');
                 } else {
-                    statusLine.className = 'memo-status-INCORRECT';
-                    statusLine.innerText = 'STATUS: INTERNAL REVIEW CITATION ISSUED';
+                    bucketWrap.style.display = 'none';
                 }
 
-                document.getElementById('memo-correct-action').innerText = expectedAction;
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const bulletsList = document.getElementById('memo-discrepancy-bullets');
+                bulletsList.innerHTML = dossier.discrepancyBullets.map(b => `<li>${b}</li>`).join('');
 
-                const bucketWrapper = document.getElementById('memo-reason-bucket-wrapper');
-                if (reasonBucket) {
-                    bucketWrapper.style.display = 'block';
-                    document.getElementById('memo-reason-bucket').innerText = reasonBucket.replace(/_/g, ' ').toUpperCase();
-                } else {
-                    bucketWrapper.style.display = 'none';
-                }
-
-                const bullets = document.getElementById('memo-discrepancy-bullets');
-                bullets.innerHTML = discrepancyText.map(t => `<li>${t}</li>`).join('');
-
-                document.getElementById('memo-working').innerText = workingText || "N/A";
-                document.getElementById('memo-implication').innerText = implicationText || "N/A";
+                document.getElementById('memo-working').innerText = dossier.workingText || "Identity & statement totals verified.";
+                document.getElementById('memo-implication').innerText = dossier.implicationText || "Standard commercial processing applies.";
 
                 document.getElementById('memo-delta-pay').innerText = `PAY: ${deltaPay >= 0 ? '+' : ''}$${deltaPay}`;
                 document.getElementById('memo-delta-rep').innerText = `REP: ${deltaRep >= 0 ? '+' : ''}${deltaRep}`;
 
-                const citElem = document.getElementById('memo-delta-cit');
+                const citEl = document.getElementById('memo-delta-cit');
                 if (deltaCit > 0) {
-                    if (this.inventory.shield > 0) {
-                        this.inventory.shield--;
-                        citElem.style.display = 'block';
-                        citElem.innerText = `CITATIONS: +0 (Shield Absorbed!)`;
-                        citElem.style.color = '#15803d';
-                        deltaCit = 0;
-                        showToast("🛡️ Internal Review Shield absorbed 1 citation!");
-                    } else {
-                        citElem.style.display = 'block';
-                        citElem.innerText = `CITATIONS: +${deltaCit}`;
-                        citElem.style.color = '#b91c1c';
-                    }
+                    citEl.style.display = 'block';
+                    citEl.innerText = `CITATIONS: +${deltaCit}`;
                 } else {
-                    citElem.style.display = 'none';
+                    citEl.style.display = 'none';
                 }
 
-                document.getElementById('memo-pedagogy').innerText = this.activeRule ? this.activeRule.text : "Standard GP Capital audit principles.";
+                document.getElementById('memo-pedagogy').innerText = verdict.note;
 
-                this.cash = Math.max(0, this.cash + deltaPay);
-                this.rep = Math.max(0, this.rep + deltaRep);
-                this.citations += deltaCit;
-
-                this.updateHUD();
-                document.getElementById('memo-overlay').style.display = 'flex';
+                overlay.style.display = 'flex';
             }
 
             closeMemo() {
                 document.getElementById('memo-overlay').style.display = 'none';
-                
+
                 if (this.citations >= this.maxCitations) {
-                    this.gameOver("Accumulated maximum Internal Review Citations.");
+                    this.triggerGameOver("Internal Review citations exceeded threshold.");
                     return;
                 }
 
-                this.currentDossierIndex++;
-                this.loadCurrentDossier();
+                this.shiftPackIndex++;
+                if (this.shiftPackIndex >= 5) {
+                    this.completeShift();
+                } else {
+                    this.loadCurrentDossier();
+                }
+            }
+
+            completeShift() {
+                clearInterval(this.timerInterval);
+                const shiftBonus = 50;
+                const citPenalty = this.citations * 10;
+                const rent = 30;
+
+                document.getElementById('settle-bonuses').innerText = `+$${shiftBonus}`;
+                document.getElementById('settle-penalties').innerText = `-$${citPenalty}`;
+                document.getElementById('settle-rent').innerText = `-$${rent}`;
+                document.getElementById('settle-total').innerText = `$${this.cash}`;
+                document.getElementById('settle-next-day').innerText = this.day + 1;
+
+                const currentScore = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                document.getElementById('settle-score-text').innerText = `Your Current Desk Score: ${currentScore} pts`;
+
+                document.getElementById('settlement-overlay').style.display = 'flex';
+            }
+
+            nextDay() {
+                document.getElementById('settlement-overlay').style.display = 'none';
+                this.day++;
+                this.citations = 0;
+                this.setupDayShift();
+            }
+
+            /* Shop Items */
+            buyItem(item) {
+                const prices = { coffee: 25, marker: 40, shield: 45, shredder: 30, goldstamp: 60 };
+                const price = prices[item];
+                if (this.cash < price) {
+                    showToast("❌ Insufficient funds!");
+                    return;
+                }
+
+                this.cash -= price;
+                this.inventory[item] = (this.inventory[item] || 0) + 1;
+
+                if (item === 'marker') {
+                    this.maxCitations = 5;
+                    showToast("🖊️ Red Marker Pro active: Daily citation limit increased to 5!");
+                } else {
+                    showToast(`🛍️ Purchased ${item.toUpperCase()}!`);
+                }
+
+                document.getElementById('hud-wage').innerText = this.cash;
             }
 
             useShredder() {
                 if (this.inventory.shredder <= 0) return;
                 this.inventory.shredder--;
                 showToast("🗑️ Dossier shredded safely!");
-                this.currentDossierIndex++;
-                this.updateHUD();
-                this.loadCurrentDossier();
+                this.closeMemo();
             }
 
             useGoldenStamp() {
                 if (this.inventory.goldstamp <= 0) return;
                 this.inventory.goldstamp--;
                 showToast("🌟 Golden Pass applied!");
-                this.showMemo(true, 'GOLDEN PASS', 'APPROVED', 'GOLDEN PASS', ['Golden Pass override applied.'], 'Automatic Full Credit Passed.', 'Investment Committee pass granted.', 75, 10, 0);
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
+                this.processVerdictSuccess('approve', verdict);
             }
 
-            finishShift() {
-                clearInterval(this.shiftTimer);
-                document.getElementById('settle-bonuses').innerText = `+$${this.cash}`;
-                document.getElementById('settle-penalties').innerText = `-$${this.citations * 15}`;
-                const rent = 30;
-                document.getElementById('settle-rent').innerText = `-$${rent}`;
-                const net = Math.max(0, this.cash - (this.citations * 15) - rent);
-                document.getElementById('settle-total').innerText = `$${net}`;
-                
-                this.cash = net;
-                this.citations = 0;
-
-                this.updateShopButtons();
-                document.getElementById('settlement-overlay').style.display = 'flex';
-            }
-
-            buyItem(item) {
-                if (item === 'coffee' && this.cash >= 25) {
-                    this.cash -= 25;
-                    this.inventory.coffee++;
-                    showToast("☕ Bought Desk Espresso!");
-                } else if (item === 'marker' && this.cash >= 40 && !this.inventory.marker) {
-                    this.cash -= 40;
-                    this.inventory.marker = true;
-                    showToast("🖊️ Bought Red Marker Pro!");
-                } else if (item === 'shield' && this.cash >= 45) {
-                    this.cash -= 45;
-                    this.inventory.shield++;
-                    showToast("🛡️ Bought Review Shield!");
-                } else if (item === 'shredder' && this.cash >= 30) {
-                    this.cash -= 30;
-                    this.inventory.shredder++;
-                    showToast("🗑️ Bought Industrial Shredder!");
-                } else if (item === 'goldstamp' && this.cash >= 60) {
-                    this.cash -= 60;
-                    this.inventory.goldstamp++;
-                    showToast("🌟 Bought Golden Pass Stamp!");
-                } else {
-                    showToast("❌ Not enough cash or item already owned!");
+            saveScoreFromSettlement() {
+                if (this.hasSavedScoreThisShift) {
+                    showToast("Already saved score for this shift!");
+                    return;
                 }
-                this.updateHUD();
-                this.updateShopButtons();
-            }
+                const nameInput = document.getElementById('settle-name-input');
+                const name = nameInput ? nameInput.value : this.playerName;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
 
-            updateShopButtons() {
-                const c = document.getElementById('buy-coffee-btn');
-                if (c) c.innerText = `BUY ($25) [Owned: ${this.inventory.coffee}]`;
-                const m = document.getElementById('buy-marker-btn');
-                if (m) m.innerText = this.inventory.marker ? `OWNED` : `BUY ($40)`;
-                const s = document.getElementById('buy-shield-btn');
-                if (s) s.innerText = `BUY ($45) [Owned: ${this.inventory.shield}]`;
-                const sh = document.getElementById('buy-shredder-btn');
-                if (sh) sh.innerText = `BUY ($30) [Owned: ${this.inventory.shredder}]`;
-                const g = document.getElementById('buy-goldstamp-btn');
-                if (g) g.innerText = `BUY ($60) [Owned: ${this.inventory.goldstamp}]`;
-            }
-
-            nextDay() {
-                document.getElementById('settlement-overlay').style.display = 'none';
-                this.day++;
-                this.clockMinutes = 540;
-                this.setupDay();
-            }
-
-            gameOver(reason) {
-                clearInterval(this.shiftTimer);
-                document.getElementById('gameover-reason').innerText = reason;
-                document.getElementById('go-days').innerText = this.day;
-                document.getElementById('go-cash').innerText = this.cash;
-                document.getElementById('go-rep').innerText = this.rep;
-                document.getElementById('gameover-overlay').style.display = 'flex';
-            }
-
-            openTeacherPanel() {
-                const d = this.queue[this.currentDossierIndex];
-                if (d) {
-                    const expected = this.getExpectedVerdict(d);
-                    document.getElementById('tp-queue-mix').innerText = this.queue.map(q => q.packType).join(', ');
-                    document.getElementById('tp-action').innerText = expected.action.toUpperCase();
-                    document.getElementById('tp-reason').innerText = expected.validReasons ? expected.validReasons.join(' / ').toUpperCase() : expected.reason.toUpperCase();
-                    document.getElementById('tp-math').innerText = d.isFraudMath ? "Active Math Fraud" : "Clean Math";
-                    document.getElementById('tp-info').innerText = d.isInfoMismatch ? "Name Mismatch Present" : "Entity Names Match";
-                    document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : "None";
-                    document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : "None";
-                    document.getElementById('tp-chains').innerText = JSON.stringify(d.auditChains);
+                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
+                    this.hasSavedScoreThisShift = true;
+                    document.getElementById('settle-save-status').innerText = "✓ Score saved to Top 3 Leaderboard!";
+                    LeaderboardManager.renderTitleList();
                 }
-                document.getElementById('tp-save-code').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
-                document.getElementById('teacher-overlay').style.display = 'flex';
             }
 
-            closeTeacherPanel() {
-                document.getElementById('teacher-overlay').style.display = 'none';
+            saveScoreFromExit() {
+                const nameInput = document.getElementById('exit-name-input');
+                const name = nameInput ? nameInput.value : this.playerName;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+
+                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
+                    document.getElementById('exit-save-status').innerText = "✓ Score saved to Leaderboard!";
+                    LeaderboardManager.renderTitleList();
+                }
             }
 
-            teacherForceMode(m) {
-                this.mode = m;
-                showToast(`Teacher Panel: Forced ${m.toUpperCase()} DESK`);
-                this.closeTeacherPanel();
-                this.loadCurrentDossier();
-            }
+            saveScoreFromGameOver() {
+                const nameInput = document.getElementById('go-name-input');
+                const name = nameInput ? nameInput.value : this.playerName;
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
 
-            teacherAddCash(amount) {
-                this.cash += amount;
-                this.updateHUD();
-                showToast(`Teacher Panel: +$${amount} Cash Added`);
-            }
-
-            teacherResetCitations() {
-                this.citations = 0;
-                this.updateHUD();
-                showToast("Teacher Panel: Citations Reset to 0");
-            }
-
-            openSaveCodeModal() {
-                document.getElementById('save-code-input').value = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode, inv: this.inventory }));
-                document.getElementById('savecode-overlay').style.display = 'flex';
-            }
-
-            closeSaveCodeModal() {
-                document.getElementById('savecode-overlay').style.display = 'none';
-            }
-
-            copySaveCode() {
-                const input = document.getElementById('save-code-input');
-                input.select();
-                navigator.clipboard.writeText(input.value);
-                showToast("📋 Save Code copied to clipboard!");
-            }
-
-            loadSaveCode() {
-                try {
-                    const val = document.getElementById('save-code-input').value.trim();
-                    const data = JSON.parse(atob(val));
-                    if (data.day) this.day = data.day;
-                    if (data.cash !== undefined) this.cash = data.cash;
-                    if (data.rep !== undefined) this.rep = data.rep;
-                    if (data.mode) this.mode = data.mode;
-                    if (data.inv) this.inventory = data.inv;
-                    this.closeSaveCodeModal();
-                    this.updateHUD();
-                    showToast("💾 State loaded successfully!");
-                } catch (e) {
-                    showToast("❌ Invalid Save Code!");
+                if (LeaderboardManager.saveEntry(name, score, this.day, this.cash, this.rep)) {
+                    document.getElementById('go-save-status').innerText = "✓ Score saved!";
+                    LeaderboardManager.renderTitleList();
                 }
             }
 
             openExitConfirmModal() {
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                document.getElementById('exit-score-text').innerText = `Your Current Score: ${score} pts`;
                 document.getElementById('exit-confirm-modal').style.display = 'flex';
             }
 
@@ -2127,19 +2170,160 @@
             }
 
             confirmReturnToMenu() {
-                clearInterval(this.shiftTimer);
+                clearInterval(this.timerInterval);
                 document.getElementById('exit-confirm-modal').style.display = 'none';
                 document.getElementById('game-container').style.display = 'none';
                 document.getElementById('main-menu').style.display = 'flex';
+                LeaderboardManager.renderTitleList();
             }
 
-            openLeaderboard() {
-                showToast("🏆 Local Analyst Badge: " + (this.playerName || "Analyst 88") + " | Level: Day " + this.day);
+            triggerGameOver(reason) {
+                clearInterval(this.timerInterval);
+                document.getElementById('go-days').innerText = this.day;
+                document.getElementById('go-cash').innerText = this.cash;
+                document.getElementById('go-rep').innerText = this.rep;
+                document.getElementById('gameover-reason').innerText = reason;
+                
+                const score = LeaderboardManager.calculateScore(this.cash, this.rep, this.day);
+                document.getElementById('go-score-text').innerText = `Final Score: ${score} pts`;
+
+                document.getElementById('gameover-overlay').style.display = 'flex';
+            }
+
+            switchTab(tab) {
+                document.querySelectorAll('.doc-tab').forEach(el => el.classList.remove('active'));
+                const sciDoc = document.getElementById('doc-sci');
+                const bsDoc = document.getElementById('doc-bs');
+                const cardDoc = document.getElementById('card-dock-row');
+
+                if (tab === 'sci') {
+                    document.getElementById('tab-sci').classList.add('active');
+                    sciDoc.style.display = 'block';
+                    bsDoc.style.display = 'none';
+                    cardDoc.style.display = 'block';
+                } else if (tab === 'bs') {
+                    document.getElementById('tab-bs').classList.add('active');
+                    sciDoc.style.display = 'none';
+                    bsDoc.style.display = 'block';
+                    cardDoc.style.display = 'none';
+                } else {
+                    document.getElementById('tab-card').classList.add('active');
+                    sciDoc.style.display = 'none';
+                    bsDoc.style.display = 'none';
+                    cardDoc.style.display = 'block';
+                }
+            }
+
+            toggleCompanyCard(e) {
+                if (e) e.stopPropagation();
+                const card = document.getElementById('company-card-box');
+                const btn = document.getElementById('btn-toggle-card');
+                if (card.classList.contains('minimized')) {
+                    card.classList.remove('minimized');
+                    btn.innerText = "Minimize −";
+                } else {
+                    card.classList.add('minimized');
+                    btn.innerText = "Expand +";
+                }
+            }
+
+            /* Teacher Panel & Code Save */
+            openTeacherPanel() {
+                this.updateTeacherPanelInfo();
+                document.getElementById('teacher-overlay').style.display = 'flex';
+            }
+
+            closeTeacherPanel() {
+                document.getElementById('teacher-overlay').style.display = 'none';
+            }
+
+            // ISSUE A5: Teacher panel displays all acceptable reason ids
+            updateTeacherPanelInfo() {
+                const dossier = this.currentQueue[this.shiftPackIndex];
+                if (dossier) {
+                    const verdict = evaluateDossierVerdict(dossier, this.activeRule, this.activeNote, this.mode);
+                    document.getElementById('tp-queue-index').innerText = `Pack ${this.shiftPackIndex + 1} of 5`;
+                    document.getElementById('tp-action').innerText = verdict.correctAction.toUpperCase();
+                    
+                    const acceptableList = verdict.correctRejectReasons.length > 0 ? 
+                        verdict.correctRejectReasons.join(', ') : (verdict.correctRejectReason || "N/A");
+                    document.getElementById('tp-reason').innerText = acceptableList;
+                    
+                    document.getElementById('tp-math').innerText = dossier.fraudCategory || "Clean Commercial";
+                    document.getElementById('tp-chains').innerText = dossier.validChains.length > 0 ? dossier.validChains.map(c => c.join('+')).join(' | ') : "None";
+                }
+                
+                document.getElementById('tp-rule').innerText = this.activeRule ? this.activeRule.text : "None";
+                document.getElementById('tp-note').innerText = this.activeNote ? this.activeNote.text : "None";
+
+                const stateCode = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                document.getElementById('tp-save-code').value = stateCode;
+            }
+
+            teacherForceMode(m) {
+                this.mode = m;
+                showToast(`Switched mode to ${m.toUpperCase()}`);
+                this.updateTeacherPanelInfo();
+            }
+
+            teacherAddCash(amt) {
+                this.cash += amt;
+                document.getElementById('hud-wage').innerText = this.cash;
+                showToast(`Added $${amt} cash`);
+            }
+
+            teacherResetCitations() {
+                this.citations = 0;
+                document.getElementById('hud-citations').innerText = `0/${this.maxCitations}`;
+                showToast("Citations reset to 0");
+            }
+
+            clearLeaderboardTeacher() {
+                LeaderboardManager.clear();
+                LeaderboardManager.renderTitleList();
+                showToast("Leaderboard cleared");
+            }
+
+            openSaveCodeModal() {
+                document.getElementById('savecode-overlay').style.display = 'flex';
+            }
+
+            closeSaveCodeModal() {
+                document.getElementById('savecode-overlay').style.display = 'none';
+            }
+
+            copySaveCode() {
+                const code = btoa(JSON.stringify({ day: this.day, cash: this.cash, rep: this.rep, mode: this.mode }));
+                const input = document.getElementById('save-code-input');
+                input.value = code;
+                input.select();
+                document.execCommand('copy');
+                showToast("Code copied to clipboard!");
+            }
+
+            loadSaveCode() {
+                const val = document.getElementById('save-code-input').value.trim();
+                try {
+                    const parsed = JSON.parse(atob(val));
+                    if (parsed.day) this.day = parsed.day;
+                    if (parsed.cash) this.cash = parsed.cash;
+                    if (parsed.rep) this.rep = parsed.rep;
+                    if (parsed.mode) this.mode = parsed.mode;
+                    this.closeSaveCodeModal();
+                    showToast("Progress loaded successfully!");
+                    this.startGame(this.mode);
+                } catch (e) {
+                    showToast("❌ Invalid save code!");
+                }
             }
         }
 
-        const game = new GameEngine();
-        window.game = game;
+        // Initialize Game Instance on Load
+        let game;
+        window.onload = function () {
+            game = new Game();
+            game.init();
+        };
     </script>
 </body>
 </html>
