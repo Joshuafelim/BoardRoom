@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Audit Desk: Golden Parachute Capital — MERGED MASTER</title>
+    <title>Audit Desk: Golden Parachute Capital</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=VT323&family=Inter:wght@400;600;700&display=swap');
@@ -41,7 +42,6 @@
             overflow: hidden;
         }
 
-        /* Atmosphere: Scanlines & Vignette */
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.18) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
@@ -64,7 +64,6 @@
             40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
-        /* Toast Notifications */
         #toast-container {
             position: fixed; top: 20px; right: 20px; z-index: 10000;
             display: flex; flex-direction: column; gap: 10px; pointer-events: none;
@@ -79,12 +78,55 @@
         }
         .toast.show { opacity: 1; transform: translateY(0); }
 
-        /* Screens */
         .screen-container {
             width: 100%; height: 100vh; 
-            background: #050505; display: flex; flex-direction: column; 
+            background: radial-gradient(circle at 50% 30%, #2a2118 0%, #0c0a09 85%);
+            display: flex; flex-direction: column; 
             justify-content: center; align-items: center; color: #d1d5db; 
-            text-align: center; padding: 2rem 1rem; overflow-y: auto; position: relative; z-index: 50;
+            text-align: center; padding: 1.5rem 1rem; overflow-y: auto; position: relative; z-index: 50;
+            animation: warmLampPulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes warmLampPulse {
+            0% { background: radial-gradient(circle at 50% 25%, #342618 0%, #0c0a09 85%); }
+            50% { background: radial-gradient(circle at 52% 28%, #3d2b1a 0%, #080706 90%); }
+            100% { background: radial-gradient(circle at 48% 23%, #2e2015 0%, #0a0908 85%); }
+        }
+
+        #main-menu::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #main-menu::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background-image: 
+                radial-gradient(1.5px 1.5px at 10% 20%, rgba(251, 191, 36, 0.35), transparent),
+                radial-gradient(2px 2px at 30% 60%, rgba(255, 255, 255, 0.25), transparent),
+                radial-gradient(1px 1px at 70% 30%, rgba(251, 191, 36, 0.3), transparent),
+                radial-gradient(2px 2px at 85% 75%, rgba(255, 255, 255, 0.2), transparent),
+                radial-gradient(1.5px 1.5px at 45% 85%, rgba(251, 191, 36, 0.3), transparent);
+            background-repeat: repeat;
+            background-size: 300px 300px;
+            animation: dustMotes 28s linear infinite;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes dustMotes {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-40px, -80px) rotate(8deg); }
+        }
+
+        #main-menu > * {
+            position: relative;
+            z-index: 5;
         }
 
         #game-container {
@@ -96,7 +138,6 @@
             display: none; flex-direction: column; overflow: hidden; z-index: 10;
         }
 
-        /* HUD & Rules Bar */
         #hud {
             width: 100%; min-height: 52px; background: var(--ui-bg);
             border-bottom: 2px solid var(--ui-border); display: flex; flex-wrap: wrap;
@@ -113,16 +154,14 @@
         #pinned-strip {
             width: 100%; background: #0f1110; border-bottom: 1px dashed #27272a;
             padding: 8px 16px; font-size: 0.8rem; color: #d1d5db; display: flex;
-            flex-direction: column; gap: 4px; z-index: 45; box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+            flex-direction: row; justify-content: space-between; align-items: center; gap: 10px; z-index: 45; box-shadow: 0 2px 10px rgba(0,0,0,0.6);
         }
 
-        /* Desk Surface */
         #desk-surface {
             flex-grow: 1; position: relative; overflow: hidden;
             padding: 12px; display: flex; flex-direction: column; align-items: center; width: 100%;
         }
 
-        /* DRAGGABLE CARDS & PAPERS */
         .company-card {
             width: 300px; background: #1a1c1b; border: 2px solid #3f3f46;
             border-radius: 4px; padding: 12px 16px; color: #e4e4e7; font-size: 0.85rem;
@@ -149,8 +188,8 @@
         .paper:active { cursor: grabbing; box-shadow: 12px 12px 30px rgba(0,0,0,0.8), inset 0 0 40px rgba(0,0,0,0.05); }
 
         .paper-sofp { background: var(--paper-sofp); border-top: 5px solid #78350f; }
-        .paper-bank { background: var(--paper-bank); border-top: 5px solid #1e3a8a; max-width: 380px; min-height: 400px; }
-        .paper-tax { background: var(--paper-tax); border-top: 5px solid #065f46; max-width: 380px; min-height: 400px; }
+        .paper-bank { background: var(--paper-bank); border-top: 5px solid #1e3a8a; max-width: 380px; min-height: 380px; }
+        .paper-tax { background: var(--paper-tax); border-top: 5px solid #065f46; max-width: 380px; min-height: 380px; }
 
         .doc-header { text-align: center; border-bottom: 3px double var(--ink); padding-bottom: 6px; margin-bottom: 10px; }
         .doc-header h1 { margin: 0; font-size: 1.05rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -164,7 +203,6 @@
         .doc-table tr.section-head td { font-weight: bold; padding-top: 8px; border-bottom: none; text-transform: uppercase; font-size: 0.72rem; text-decoration: underline; }
         .indent td:first-child { padding-left: 10px; }
 
-        /* AUDIT MODE & GAP ROW STYLING */
         body.audit-mode [data-audit-target] {
             cursor: crosshair !important; transition: background-color 0.15s; border-radius: 2px;
         }
@@ -175,13 +213,29 @@
         
         .missing-line-gap-row { height: 4px; padding: 0; margin: 0; }
         .missing-line-gap-row td { border: none !important; padding: 0 !important; }
-        body.audit-mode .missing-line-gap-row { 
-            height: 20px; 
-            background: rgba(220, 38, 38, 0.12); 
-            border: 1px dashed rgba(185, 28, 28, 0.6) !important; 
-            cursor: crosshair !important; 
+        body.audit-mode .missing-line-gap-row,
+        body.audit-mode .missing-line-gap-row td {
+            height: 22px !important;
+            min-height: 22px !important;
+            background: rgba(220, 38, 38, 0.12);
+            cursor: crosshair !important;
+            pointer-events: auto !important;
         }
-        body.audit-mode .missing-line-gap-row:hover { background-color: rgba(220, 38, 38, 0.35) !important; }
+        body.audit-mode .missing-line-gap-row:hover,
+        body.audit-mode .missing-line-gap-row td:hover {
+            background-color: rgba(220, 38, 38, 0.35) !important;
+        }
+
+        body.audit-mode #tax-stamp {
+            cursor: crosshair !important;
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 5;
+        }
+        body.audit-mode #tax-stamp:hover {
+            outline: 1px dashed #991b1b;
+            background-color: rgba(220, 38, 38, 0.20) !important;
+        }
         
         .marked-discrepancy { 
             background-color: rgba(220, 38, 38, 0.45) !important; 
@@ -190,7 +244,12 @@
             font-weight: bold !important; 
         }
 
-        /* Tool Tray */
+        .tax-stamp-forged-red {
+            border-color: #dc2626 !important;
+            color: #991b1b !important;
+            background: #fef2f2 !important;
+        }
+
         #tool-tray {
             position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
             background: rgba(15, 17, 16, 0.95); border: 2px solid #27272a; border-radius: 8px;
@@ -213,7 +272,6 @@
         #btn-shredder { background: #7c2d12; }
         #btn-golden-stamp { background: #b45309; }
 
-        /* Stamp Animations */
         .stamp-mark {
             position: absolute; top: 45%; left: 50%;
             font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; border: 5px solid; padding: 6px 16px;
@@ -232,7 +290,6 @@
         .stamp-green { color: var(--ink-green); border-color: var(--ink-green); --rot: -7deg; }
         .stamp-red { color: var(--ink-red); border-color: var(--ink-red); --rot: 10deg; }
 
-        /* Modals & Overlays */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.91); z-index: 300; display: none; 
@@ -249,13 +306,11 @@
         .memo-btn { background: #27272a; color: #fff; border: none; padding: 12px 16px; cursor: pointer; font-weight: bold; border-radius: 2px; min-height: 44px; text-transform: uppercase; transition: background 0.2s; font-family: 'Courier Prime', monospace;}
         .memo-btn:hover { background: #3f3f46; }
 
-        /* Dialogue UI */
         .dialogue-speaker { font-weight: bold; color: #d97706; margin-bottom: 8px; font-family: 'VT323', monospace; font-size: 1.5rem; border-bottom: 1px solid #d97706; padding-bottom: 4px;}
         .dialogue-text { font-size: 0.95rem; line-height: 1.5; color: #27272a; margin-bottom: 16px; font-style: italic; }
 
-        /* Leaderboard */
-        .leaderboard-box { background: #111312; border: 1px solid #27272a; border-radius: 4px; padding: 14px; width: 100%; max-width: 500px; margin-top: 16px; text-align: left; }
-        .leaderboard-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 5px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); font-family: 'Inter', sans-serif;}
+        .leaderboard-box { background: #111312; border: 1px solid #27272a; border-radius: 4px; padding: 12px; width: 360px; text-align: left; margin-bottom: 12px; }
+        .leaderboard-row { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 4px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); font-family: 'Inter', sans-serif;}
     </style>
 </head>
 <body>
@@ -265,39 +320,42 @@
 
     <!-- MAIN MENU -->
     <div id="main-menu" class="screen-container">
-        <h1 style="font-size: clamp(2.3rem, 5.5vw, 3.8rem); font-weight: bold; font-family: 'VT323', monospace; color: #fbbf24; margin-bottom: 0; text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);">GOLDEN PARACHUTE CAPITAL</h1>
-        <div style="font-size: 0.95rem; font-style: italic; color: #fbbf24; transform: skewX(-8deg); margin-bottom: 8px; font-weight: 600;">JAKARTA DESK — SENIOR AUDIT OS</div>
-        <div style="font-size: 0.8rem; color: #a1a1aa; margin-bottom: 24px;">Educational Accounting Simulator • Expanded Report Variety Edition</div>
+        <div style="font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; color: #fbbf24; text-transform: uppercase; margin-bottom: 2px;">JAKARTA NIGHT DESK</div>
+        <h1 style="font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: bold; font-family: 'VT323', monospace; color: #fbbf24; margin-bottom: 0; text-shadow: 0 0 20px rgba(251, 191, 36, 0.4); line-height: 1;">GOLDEN PARACHUTE CAPITAL</h1>
+        <div style="font-size: 0.9rem; font-style: italic; color: #fef08a; margin-bottom: 12px;">by Mr. Felim</div>
         
-        <p style="max-width: 620px; margin-bottom: 24px; line-height: 1.5; font-size: 0.88rem; color: #d1d5db;">
-            Welcome to the night shift. You have 7 days until the final Investment Committee.<br>
-            Analyze full 2-year <strong>SCI</strong>, <strong>SOFP Balance Sheet</strong>, <strong>Bank Confirmation Letters</strong>, and <strong>Tax Clearance Slips</strong>.<br>
-            <strong>APPROVE</strong> sound dossiers. <strong>REJECT</strong> commercial risks.<br>
-            Use <strong>AUDIT MODE</strong> to cross-examine report details and expose corporate fraud.
+        <p style="max-width: 520px; margin-bottom: 16px; line-height: 1.4; font-size: 0.85rem; color: #d1d5db; font-family: 'Inter', sans-serif;">
+            Cross-examine corporate financial filings, bank statements, and tax clearance slips. Approve legitimate business loans, reject insolvency risks, and stamp fraud.
         </p>
 
-        <div style="margin-bottom: 20px; width: 100%; max-width: 360px; text-align: left;">
-            <label style="display: block; font-size: 0.78rem; text-transform: uppercase; color: #a1a1aa; margin-bottom: 6px; font-weight: bold;">Analyst Badge ID:</label>
-            <input type="text" id="player-name-input" placeholder="e.g. Analyst Vance" value="Analyst 88" style="width: 100%; background: #18181b; color: #f4f4f5; border: 1px solid #3f3f46; border-radius: 2px; padding: 10px; font-family: 'Courier Prime', monospace; font-size: 0.95rem; outline: none;">
+        <div style="margin-bottom: 10px; width: 360px; text-align: left;">
+            <label style="display: block; font-size: 0.72rem; text-transform: uppercase; color: #a1a1aa; margin-bottom: 4px; font-weight: bold; font-family: 'Inter', sans-serif;">Analyst Badge ID:</label>
+            <input type="text" id="player-name-input" placeholder="e.g. Analyst Vance" value="Analyst 88" style="width: 360px; background: #18181b; color: #f4f4f5; border: 1px solid #3f3f46; border-radius: 2px; padding: 8px 10px; font-family: 'Courier Prime', monospace; font-size: 0.9rem; outline: none;">
+        </div>
+
+        <div style="margin-bottom: 14px; width: 360px; text-align: left;">
+            <label style="display: block; font-size: 0.72rem; text-transform: uppercase; color: #a1a1aa; margin-bottom: 4px; font-weight: bold; font-family: 'Inter', sans-serif;">Classroom Code:</label>
+            <input type="text" id="class-code-input" placeholder="GPC-2026" value="GPC-2026" style="width: 360px; background: #18181b; color: #f4f4f5; border: 1px solid #3f3f46; border-radius: 2px; padding: 8px 10px; font-family: 'Courier Prime', monospace; font-size: 0.9rem; outline: none; text-transform: uppercase;">
         </div>
         
-        <button class="memo-btn" onclick="game.startGame('senior')" style="width: 100%; max-width: 360px; margin-bottom: 10px; background: #166534; font-size: 1.05rem; height: 48px;">
-            START SENIOR DESK (FULL REPORTS & SOFP)
-        </button>
-        
-        <button class="memo-btn" onclick="game.startGame('junior')" style="width: 100%; max-width: 360px; margin-bottom: 20px; background: #27272a; font-size: 0.88rem; height: 40px; color: #a1a1aa;">
-            JUNIOR DESK (SCI + BANK CERT ONLY)
-        </button>
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 360px; margin-bottom: 14px;">
+            <button class="memo-btn" onclick="game.startGame('senior')" style="width: 360px; background: #166534; font-size: 0.95rem; height: 44px; white-space: nowrap;">
+                START SENIOR DESK
+            </button>
+            <button class="memo-btn" onclick="game.startGame('junior')" style="width: 360px; background: #27272a; font-size: 0.95rem; height: 44px; color: #e4e4e7; white-space: nowrap;">
+                JUNIOR DESK
+            </button>
+        </div>
 
         <div class="leaderboard-box">
-            <div style="font-size: 0.88rem; font-weight: bold; color: #fbbf24; margin-bottom: 10px; border-bottom: 1px solid #3f3f46; padding-bottom: 4px; font-family: 'VT323', monospace; letter-spacing: 1px;">🏆 TOP ANALYSTS LEADERBOARD</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; border-bottom: 1px solid #3f3f46; padding-bottom: 4px;">
+                <span style="font-size: 0.82rem; font-weight: bold; color: #fbbf24; font-family: 'VT323', monospace; letter-spacing: 1px;">🏆 CLASS SCOREBOARD</span>
+                <span id="lb-status" style="font-size: 0.65rem; color: #a1a1aa; font-family: 'Inter', sans-serif;">Local</span>
+            </div>
             <div id="title-leaderboard-list"></div>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center;">
-            <button onclick="game.openSaveCodeModal()" style="background: transparent; border: 1px solid #3f3f46; color: #a1a1aa; padding: 8px 16px; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 0.82rem;">💾 LOAD SAVE CODE</button>
-            <button onclick="game.openTeacherPanel()" style="background: transparent; border: 1px solid #3f3f46; color: #a1a1aa; padding: 8px 16px; border-radius: 2px; cursor: pointer; font-family: inherit; font-size: 0.82rem;">🎓 TEACHER PANEL</button>
-        </div>
+        <button onclick="game.openSaveCodeModal()" style="background: transparent; border: none; color: #a1a1aa; text-decoration: underline; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 0.78rem;">Load Save Code</button>
     </div>
 
     <!-- NARRATIVE DIALOGUE OVERLAY -->
@@ -319,15 +377,20 @@
                 <span id="briefing-date">DAY 1 OF 7</span>
             </div>
             
-            <div style="background: #d5cfc0; border: 1px solid #a1a1aa; padding: 12px; margin-bottom: 14px;">
+            <div style="background: #d5cfc0; border: 1px solid #a1a1aa; padding: 12px; margin-bottom: 10px;">
                 <div style="font-weight: bold; font-size: 0.78rem; color: #92400e; text-transform: uppercase;">📌 RULE OF THE DAY</div>
                 <div id="briefing-rule-text" style="font-size: 0.88rem; font-weight: bold; margin-top: 4px; font-family: 'Inter', sans-serif;">Rule loading...</div>
             </div>
 
+            <div style="background: #f4ece1; border: 1px dashed #065f46; padding: 10px; margin-bottom: 14px; font-size: 0.78rem; color: #064e3b; font-family: 'Courier Prime', monospace;">
+                <strong>DJP SPECIMEN:</strong> DJP-JKT-2026-OK<br>
+                <span style="font-size:0.7rem; color:#047857;">VALID SPECIMEN — compare stamp code only</span>
+            </div>
+
             <div style="font-size: 0.82rem; color: #3f3f46; margin-bottom: 18px; line-height: 1.5; font-family: 'Inter', sans-serif;">
-                • <strong>Approve</strong> sound dossiers with healthy margins and balanced position.<br>
+                • <strong>Approve</strong> sound dossiers with healthy margins.<br>
                 • <strong>Reject</strong> weak deals with valid commercial reasons.<br>
-                • <strong>Audit Mode</strong> to highlight discrepancies across SCI, SOFP, Bank Slips, & Tax Certificates.
+                • <strong>Audit Mode</strong> to highlight discrepancies. Max 3 citations allowed per day!
             </div>
 
             <button onclick="game.startShiftQueue(true)" class="memo-btn" style="width: 100%; background: #166534;">START SHIFT ➔</button>
@@ -344,12 +407,13 @@
             <div class="hud-stat">⏳ <span id="hud-timer" class="hud-value">04:00</span></div>
             <div class="hud-stat">💵 $<span id="hud-wage" class="hud-value">50</span></div>
             <div class="hud-stat">⭐ <span id="hud-rep" class="hud-value">20</span></div>
-            <div class="hud-stat">⚠️ <span id="hud-citations" class="hud-value">0/4</span></div>
+            <div class="hud-stat">⚠️ <span id="hud-citations" class="hud-value">0/3</span></div>
+            <button id="btn-leave-desk" onclick="game.openLeaveConfirmModal()" style="background:#3f3f46; color:#f4f4f5; border:1px solid #71717a; border-radius:3px; padding:2px 10px; font-family:'VT323', monospace; cursor:pointer; font-size:1.1rem; margin-left:auto;">DESK / MENU</button>
         </div>
 
         <div id="pinned-strip">
             <div id="pinned-rule" style="font-weight: bold; color: #fbbf24;">📌 RULE: Loading...</div>
-            <div id="pinned-note" style="color: #fef3c7; display: none;">✉️ NOTE: None</div>
+            <div id="pinned-specimen" style="font-family: monospace; color: #a7f3d0; font-size: 0.75rem;">DJP SPECIMEN: DJP-JKT-2026-OK</div>
         </div>
 
         <!-- DESK SURFACE -->
@@ -377,7 +441,7 @@
                 <div class="stamp-mark stamp-red" id="stamp-sci-den">REJECTED</div>
             </div>
 
-            <!-- SOFP PAPER (Doc 2) -->
+            <!-- SOFP PAPER (Doc 2 - Senior Only) -->
             <div class="paper paper-sofp" id="doc-bs" style="display:none; left: 800px; top: 15px;" data-drag="true">
                 <div class="doc-header" id="bs-header" data-audit-target="bs_header">
                     <h1 id="bs-company-name">PT NUSA BITE</h1>
@@ -386,7 +450,7 @@
                 <table class="doc-table" id="bs-table"></table>
             </div>
 
-            <!-- BANK CONFIRMATION LETTER (Doc 3) -->
+            <!-- BANK CONFIRMATION LETTER (Doc 3 - Senior Only) -->
             <div class="paper paper-bank" id="doc-bank" style="left: 400px; top: 220px;" data-drag="true">
                 <div class="doc-header">
                     <div style="font-size:0.68rem; color:#1e3a8a; font-weight:bold; text-transform:uppercase;">🏦 BANK MANDIRI / AUDIT CONFIRMATION</div>
@@ -403,18 +467,22 @@
                 </div>
             </div>
 
-            <!-- TAX CLEARANCE SLIP (Doc 4) -->
-            <div class="paper paper-tax" id="doc-tax" style="display:none; left: 860px; top: 220px;" data-drag="true">
+            <!-- TAX CLEARANCE SLIP (Doc 4 - Junior & Senior) -->
+            <div class="paper paper-tax" id="doc-tax" style="left: 860px; top: 220px;" data-drag="true">
                 <div class="doc-header">
-                    <div style="font-size:0.68rem; color:#065f46; font-weight:bold; text-transform:uppercase;">🇮🇩 DIREKTORAT JENDERAL PAJAK</div>
+                    <div style="font-size:0.68rem; color:#065f46; font-weight:bold; text-transform:uppercase;">DJP / TAX CLEARANCE DESK — JAKARTA</div>
                     <h1 id="tax-company-name" style="font-size:0.92rem; margin-top:2px;">PT NUSA BITE</h1>
-                    <p>Annual Corporate Tax Return Clearance Slip</p>
+                    <p>Annual Corporate Tax Return Clearance Slip (2026)</p>
                 </div>
                 <div style="font-size:0.78rem; line-height:1.4; color:#064e3b;">
                     <div style="margin-bottom:6px;">NPWP Reg: <span style="font-family:monospace; font-weight:bold;">01.884.293.1-012.000</span></div>
-                    <div style="background:#fff; border:1px solid #a7f3d0; padding:8px; font-size:0.75rem; display:flex; flex-direction:column; gap:4px;">
-                        <div style="display:flex; justify-content:space-between;"><span>Declared 2026 Revenue:</span> <strong id="tax-declared-rev" data-audit-target="tax_cert_rev">Rp 0m</strong></div>
-                        <div style="display:flex; justify-content:space-between;"><span>Assessed Tax Payable:</span> <strong id="tax-declared-tax" data-audit-target="tax_cert_tax">Rp 0m</strong></div>
+                    <div style="background:#fff; border:1px solid #a7f3d0; padding:8px; font-size:0.75rem; display:flex; flex-direction:column; gap:4px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between;"><span>Declared 2026 Revenue:</span> <strong id="tax-declared-rev" data-audit-target="tax_declared_rev">Rp 0m</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span>Assessed Tax Payable:</span> <strong id="tax-declared-tax" data-audit-target="tax_declared_tax">Rp 0m</strong></div>
+                        <div style="display:flex; justify-content:space-between;"><span>Status:</span> <strong id="tax-status" data-audit-target="tax_status">PAID</strong></div>
+                    </div>
+                    <div style="background:#e6f4ea; border:1px solid #34a853; padding:6px; font-family:monospace; font-size:0.7rem; text-align:center;" id="tax-stamp" data-audit-target="tax_stamp">
+                        DJP-JKT-2026-OK
                     </div>
                 </div>
             </div>
@@ -428,6 +496,22 @@
                 <button id="btn-cancel-audit" class="action-btn" onclick="game.toggleAuditMode()">CANCEL</button>
                 <button id="btn-shredder" class="action-btn" style="display:none;" onclick="game.useItem('shredder')">SHRED (<span id="shred-count">0</span>)</button>
                 <button id="btn-golden-stamp" class="action-btn" style="display:none;" onclick="game.useItem('gold')">GOLD STAMP (<span id="gold-count">0</span>)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEAVE DESK CONFIRM MODAL -->
+    <div id="leave-modal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 420px; text-align: center;">
+            <h2 style="font-size: 1.15rem; font-weight: bold; border-bottom: 2px solid #18181b; padding-bottom: 6px; margin-bottom: 12px; color: #991b1b; font-family: 'Inter', sans-serif;">
+                LEAVE DESK?
+            </h2>
+            <p style="font-size: 0.88rem; color: #27272a; margin-bottom: 20px; font-family: 'Inter', sans-serif;">
+                Shift progress for today will be lost. Return to main menu?
+            </p>
+            <div style="display: flex; justify-content: center; gap: 12px;">
+                <button onclick="game.closeLeaveConfirmModal()" class="memo-btn" style="background: #3f3f46;">STAY AT DESK</button>
+                <button onclick="game.confirmLeaveDesk()" class="memo-btn" style="background: #991b1b;">RETURN TO MENU</button>
             </div>
         </div>
     </div>
@@ -469,7 +553,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; background:#18181b; color:#fff; padding:10px 14px; margin-bottom: 16px; font-family: 'VT323', monospace; font-size: 1.2rem;">
                 <div id="memo-delta-pay" style="color:#4ade80;">PAY: +$50</div>
                 <div id="memo-delta-rep" style="color:#4ade80;">REP: +5</div>
-                <div id="memo-delta-cit" style="color:#f87171; display:none;">CITATIONS: +1</div>
+                <div id="memo-delta-cit" style="color:#f87171; display:none;">CITATIONS TODAY: +1</div>
             </div>
             
             <button class="memo-btn" onclick="game.closeMemo()" style="width: 100%; background: #166534;">ACKNOWLEDGE ➔</button>
@@ -484,6 +568,7 @@
             <div style="background: #18181b; padding: 14px; margin-bottom: 18px; color: #d1d5db; font-size: 0.88rem; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; gap: 6px;">
                 <div style="display:flex; justify-content:space-between;"><span>Total Cash:</span> <span id="settle-cash" style="color:#4ade80; font-weight:bold;">$0</span></div>
                 <div style="display:flex; justify-content:space-between;"><span>Reputation:</span> <span id="settle-rep" style="color:#fbbf24; font-weight:bold;">0</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Ruined Days:</span> <span id="settle-ruined" style="color:#f87171; font-weight:bold;">0/3</span></div>
                 <div style="display:flex; justify-content:space-between; border-top: 1px solid #3f3f46; padding-top: 6px;"><span>Desk Rent & Overhead:</span> <span style="color:#f87171; font-weight:bold;">-$30</span></div>
             </div>
 
@@ -517,29 +602,10 @@
             <div style="background: #18181b; padding: 14px; margin-bottom: 18px; text-align: left; color: #f4f4f5; font-family: 'Inter', sans-serif;">
                 <div style="font-weight: bold; font-size: 0.9rem; color: #fbbf24; margin-bottom: 8px;">Final Performance Score: <span id="ending-score">0</span></div>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="ending-name" placeholder="Analyst Name" maxlength="14" style="flex-grow: 1; padding: 8px; border: 1px solid #3f3f46; background: #27272a; color: #fff; font-family: inherit;">
+                    <input type="text" id="ending-name" placeholder="Analyst Name" maxlength="20" style="flex-grow: 1; padding: 8px; border: 1px solid #3f3f46; background: #27272a; color: #fff; font-family: inherit;">
                     <button onclick="game.saveScoreAndReload()" class="memo-btn" style="background: #d97706; padding: 8px 14px; min-height: 0;">SAVE SCORE</button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- TEACHER PANEL -->
-    <div id="teacher-overlay" class="modal-overlay">
-        <div class="modal-card" style="max-width: 520px; border-left-color: #0891b2;">
-            <div class="memo-header">
-                <span>TEACHER PANEL & AUDIT CONTROLS</span>
-                <button onclick="game.closeTeacherPanel()" style="background:none; border:none; cursor:pointer;">✖</button>
-            </div>
-            <div style="font-family: 'Inter', sans-serif; font-size: 0.85rem; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 8px;">
-                <button onclick="game.teacherSetDay(4)" class="memo-btn" style="background:#3f3f46; padding:8px;">Skip to Day 4</button>
-                <button onclick="game.teacherSetDay(7)" class="memo-btn" style="background:#3f3f46; padding:8px;">Skip to Day 7</button>
-                <button onclick="game.gameState.cash += 100; game.updateHUD(); showToast('+$100 Cash Added');" class="memo-btn" style="background:#166534; padding:8px;">+$100 Cash</button>
-                <button onclick="game.gameState.citations = 0; game.updateHUD(); showToast('Citations Reset');" class="memo-btn" style="background:#b45309; padding:8px;">Reset Citations</button>
-                <button onclick="localStorage.clear(); location.reload();" class="memo-btn" style="background:#991b1b; padding:8px;">Reset All Data</button>
-            </div>
-            <div style="font-size:0.78rem; font-weight:bold; color:#3f3f46; margin-bottom:4px;">CURRENT SAVE STATE CODE:</div>
-            <textarea id="save-code-output" rows="3" style="width:100%; background:#fff; border:1px solid #a1a1aa; padding:8px; font-family:monospace; font-size:0.78rem;" readonly></textarea>
         </div>
     </div>
     
@@ -556,7 +622,6 @@
     </div>
 
 <script>
-    // Audio Synthesizer Engine
     const Sound = {
         ctx: null,
         init() { 
@@ -565,14 +630,16 @@
         },
         playTone(freq, type, duration, vol=0.1) {
             if (!this.ctx) return;
-            const osc = this.ctx.createOscillator(); 
-            const gain = this.ctx.createGain();
-            osc.type = type; 
-            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
-            osc.connect(gain); gain.connect(this.ctx.destination);
-            osc.start(); osc.stop(this.ctx.currentTime + duration);
+            try {
+                const osc = this.ctx.createOscillator(); 
+                const gain = this.ctx.createGain();
+                osc.type = type; 
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
+            } catch(e){}
         },
         stamp() { 
             this.playTone(70, 'square', 0.18, 0.5); 
@@ -596,6 +663,67 @@
         const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
         c.appendChild(t); setTimeout(()=>t.classList.add('show'), 10);
         setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 300); }, 3000);
+    }
+
+    // MQTT Leaderboard Engine
+    let mqttClient = null;
+    let localLeaderboard = JSON.parse(localStorage.getItem('gpc_leaderboard') || '[]');
+
+    function sanitizeClassCode(code) {
+        return (code || 'GPC-2026').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 15) || 'GPC-2026';
+    }
+
+    function renderLeaderboard(list) {
+        const container = document.getElementById('title-leaderboard-list');
+        if (!container) return;
+        if (!list || list.length === 0) {
+            container.innerHTML = '<div style="font-size:0.75rem; color:#a1a1aa; font-style:italic;">No scores recorded yet.</div>';
+            return;
+        }
+        let html = '';
+        list.slice(0, 5).forEach((item, index) => {
+            const escName = (item.name || 'Anonymous').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            html += `<div class="leaderboard-row"><span>#${index+1} ${escName} (${item.mode || 'senior'})</span><span style="font-weight:bold; color:#fbbf24;">${item.score} pts</span></div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function initMQTT() {
+        renderLeaderboard(localLeaderboard);
+        const classCode = sanitizeClassCode(document.getElementById('class-code-input')?.value);
+        try {
+            mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+            mqttClient.on('connect', () => {
+                const statusEl = document.getElementById('lb-status');
+                if (statusEl) statusEl.innerText = `Online: ${classCode}`;
+                mqttClient.subscribe(`gpcapital/lb/${classCode}`);
+                mqttClient.subscribe(`gpcapital/lb/${classCode}/event`);
+            });
+            mqttClient.on('message', (topic, message) => {
+                try {
+                    const data = JSON.parse(message.toString());
+                    if (Array.isArray(data)) {
+                        localLeaderboard = data;
+                        renderLeaderboard(localLeaderboard);
+                    } else if (data && data.score !== undefined) {
+                        const existing = localLeaderboard.find(x => x.name === data.name);
+                        if (!existing || data.score > existing.score) {
+                            if (existing) existing.score = data.score;
+                            else localLeaderboard.push(data);
+                            localLeaderboard.sort((a,b) => b.score - a.score);
+                            renderLeaderboard(localLeaderboard);
+                        }
+                    }
+                } catch(e){}
+            });
+            mqttClient.on('error', () => {
+                const statusEl = document.getElementById('lb-status');
+                if (statusEl) statusEl.innerText = 'Offline (Local)';
+            });
+        } catch(e) {
+            const statusEl = document.getElementById('lb-status');
+            if (statusEl) statusEl.innerText = 'Offline (Local)';
+        }
     }
 
     // Dynamic Company Pool
@@ -686,9 +814,18 @@
             const sci26 = { rev:rev26, cos:cos26, gp:gp26, sell:sell26, admin:admin26, op:op26, fin:fin26, pbt:pbt26, tax:tax26, pat:pat26, headerName: '', missTax:false, missFin:false };
             const sci25 = { rev:rev25, cos:cos25, gp:gp25, sell:sell25, admin:admin25, op:op25, fin:fin25, pbt:pbt25, tax:tax25, pat:pat25 };
 
-            // Supplementary Data: Bank Certificate & Tax Clearance
+            // Bank & Tax Slip Data
             const bankCert = { verifiedCash: Math.round(rev26 * 0.15) };
-            const taxCert = { declaredRev: rev26, declaredTax: tax26 };
+            
+            let taxStatus = pat26 <= 0 ? 'EXEMPTION' : 'PAID';
+            let declaredTaxVal = pat26 <= 0 ? 0 : tax26;
+            const taxCert = { 
+                declaredRev: rev26, 
+                declaredTax: declaredTaxVal,
+                status: taxStatus,
+                stampCode: 'DJP-JKT-2026-OK',
+                isForgedStyle: false
+            };
 
             let bs26 = null, bs25 = null;
             if (mode === 'senior') {
@@ -803,14 +940,14 @@
             } else if (fraudType === 'missing_tax') {
                 data.sci26.missTax = true; 
                 data.sci26.pat = data.sci26.pbt;
-                validChains.push(['sci:taxation:missing'], ['sci_pbt_26', 'sci_pat_26']);
+                validChains.push(['sci_tax_26:missing'], ['sci_pbt_26', 'sci_pat_26']);
                 reason = "Omission Fraud (SCI): Complete omission of Corporate Taxation provision.";
                 working = "Taxation row is completely omitted from SCI.\nProfit Before Tax (${data.sci26.pbt}) directly equals Profit After Tax (${data.sci26.pat}).";
                 implication = "Omitting tax obligations creates severe regulatory liability and future legal penalties.";
             } else if (fraudType === 'missing_fin') {
                 data.sci26.missFin = true; 
                 data.sci26.pbt = data.sci26.op;
-                validChains.push(['sci:financeCosts:missing'], ['sci_op_26', 'sci_pbt_26']);
+                validChains.push(['sci_fin_26:missing'], ['sci_op_26', 'sci_pbt_26']);
                 reason = "Omission Fraud (SCI): Omission of Finance Costs / Debt Interest obligations.";
                 working = "Finance Costs row is omitted.\nOperating Profit (${data.sci26.op}) directly equals Profit Before Tax (${data.sci26.pbt}).";
                 implication = "Concealing interest expense obscures high bank leverage and impending debt defaults.";
@@ -821,13 +958,58 @@
                 reason = "Identity Mismatch: Company Card name does not match Statement Header.";
                 working = `Company Card Name: "${card.name}"\nStatement Header Name: "${data.sci26.headerName}"`;
                 implication = "Submitting financial records under an unverified corporate entity is illegal tax evasion / laundering.";
+            } else if (fraudType === 'tax_mismatch') {
+                const fakeTax = Math.round(data.sci26.tax * 0.4);
+                data.taxCert.declaredTax = fakeTax;
+                validChains.push(['sci_tax_26', 'tax_declared_tax']);
+                reason = "Tax Slip Discrepancy: Declared tax on Clearance Slip does not match SCI Tax Expense.";
+                working = `SCI Taxation Expense: Rp ${data.sci26.tax}m.\nTax Clearance Slip Declared Tax: Rp ${data.taxCert.declaredTax}m.`;
+                implication = "Underreporting corporate tax liabilities to tax authorities constitutes tax fraud.";
+            } else if (fraudType === 'tax_rev_mismatch') {
+                const fakeRev = Math.round(data.sci26.rev * 0.7);
+                data.taxCert.declaredRev = fakeRev;
+                validChains.push(['sci_rev_26', 'tax_declared_rev']);
+                reason = "Tax Clearance Revenue Fraud: Tax Slip declared revenue is significantly lower than SCI.";
+                working = `SCI Reported Revenue: Rp ${data.sci26.rev}m.\nTax Clearance Slip Revenue: Rp ${data.taxCert.declaredRev}m.`;
+                implication = "Hiding revenue from tax returns creates extreme legal exposure for tax evasion.";
+            } else if (fraudType === 'false_exemption') {
+                data.taxCert.status = 'EXEMPTION';
+                data.taxCert.declaredTax = 0;
+                validChains.push(['sci_pat_26', 'tax_status']);
+                reason = "False Tax Exemption: Company is highly profitable but claims Tax Exemption Status.";
+                working = `SCI Profit After Tax: Rp ${data.sci26.pat}m (>0).\nTax Slip Status: EXEMPTION.`;
+                implication = "Profitable corporations cannot claim tax exemption without official ministry clearance.";
+            } else if (fraudType === 'false_tax_on_loss') {
+                data.sci26.pat = -120;
+                data.sci26.pbt = -120;
+                data.sci26.tax = 0;
+                data.taxCert.status = 'PAID';
+                data.taxCert.declaredTax = 50;
+                validChains.push(['sci_pat_26', 'tax_status']);
+                reason = "Tax Status Error: Loss-making company marked as Tax PAID instead of EXEMPTION.";
+                working = `SCI Profit After Tax: Rp ${data.sci26.pat}m (Loss).\nTax Slip Status: PAID (Rp 50m).`;
+                implication = "Companies operating at a net loss do not owe income tax and are tax EXEMPT.";
+            } else if (fraudType === 'forged_stamp') {
+                const nearMissStamps = [
+                    'DJP-JKT-2025-OK',
+                    'DJP-BDG-2026-OK',
+                    'DJP-JKT-26-OK',
+                    'DJP JKT 2026 MANTAP',
+                    'DJP-JKT-2026-OKK'
+                ];
+                data.taxCert.stampCode = nearMissStamps[this.randInt(0, nearMissStamps.length - 1)];
+                data.taxCert.isForgedStyle = true;
+                validChains.push(['tax_stamp']);
+                reason = "Forged DJP Tax Stamp: Stamp code does not match official DJP specimen code.";
+                working = `Official DJP Specimen: "DJP-JKT-2026-OK"\nDoc Tax Stamp Code: "${data.taxCert.stampCode}"`;
+                implication = "Forging or altering official government tax stamps is a criminal felony.";
             } else if (fraudType === 'bs_imbalance' && mode === 'senior') {
                 const inflate = this.randInt(200, 500);
                 data.bs26.total_assets += inflate;
                 validChains.push(['bs_ta_26', 'bs_tot_eq_liab_26']);
                 reason = "Balance Sheet Fraud (SOFP Out of Balance): Total Assets != Total Equity & Liabilities.";
                 working = `Total Assets (${data.bs26.total_assets}) does NOT equal Total Equity & Liabilities (${data.bs26.total_eq_liab}).\nOut of balance by Rp ${inflate}m.`;
-                implication = "An unbalanced Statement of Financial Position violates double-entry accounting rules and hides cooked books.";
+                implication = "An unbalanced Statement of Financial Position violates double-entry accounting rules.";
             } else if (fraudType === 'bs_math_ca' && mode === 'senior') {
                 const inflate = this.randInt(120, 300);
                 data.bs26.ca_total += inflate;
@@ -835,13 +1017,13 @@
                 validChains.push(['bs_inv_26', 'bs_rec_26', 'bs_cash_26', 'bs_ca_26']);
                 reason = "Balance Sheet Addition Error: Total Current Assets is calculated incorrectly.";
                 working = `Inventories (${data.bs26.inv}) + Receivables (${data.bs26.rec}) + Cash (${data.bs26.cash}) = ${data.bs26.inv + data.bs26.rec + data.bs26.cash}.\nReported CA Total: ${data.bs26.ca_total}.`;
-                implication = "Inflating current assets artificially boosts working capital ratios to pass credit checks.";
+                implication = "Inflating current assets artificially boosts working capital ratios.";
             } else if (fraudType === 'bs_missing_borrow' && mode === 'senior') {
                 data.bs26.missBorrow = true;
                 data.bs26.cl_total = data.bs26.payables;
                 validChains.push(['bs:st_borrow:missing'], ['bs_pay_26', 'bs_cl_26']);
                 reason = "Omission Fraud (SOFP): Short-Term Borrowings line hidden from Current Liabilities.";
-                working = "Short-Term Bank Borrowings row is omitted.\nTotal Current Liabilities reported as ${data.bs26.cl_total} instead of including bank overdrafts.";
+                working = "Short-Term Bank Borrowings row is omitted.\nTotal Current Liabilities reported as ${data.bs26.cl_total}.";
                 implication = "Hiding short-term bank debt tricks lenders into believing liquidity is unencumbered.";
             } else if (fraudType === 'cross_bank_cash') {
                 const realBankCash = Math.round(data.bs26 ? data.bs26.cash * 0.35 : data.sci26.rev * 0.05);
@@ -851,7 +1033,6 @@
                 working = `SOFP / Reported Cash: Rp ${data.bs26 ? data.bs26.cash : Math.round(data.sci26.rev * 0.15)}m.\nVerified Bank Confirmation Balance: Rp ${data.bankCert.verifiedCash}m.`;
                 implication = "Falsifying cash balances creates phantom liquidity and indicates corporate embezzlement.";
             } else {
-                // Fallback to SCI Math
                 const inflate = 150;
                 data.sci26.gp += inflate;
                 validChains.push(['sci_rev_26', 'sci_cos_26', 'sci_gp_26']);
@@ -864,10 +1045,10 @@
         }
     }
 
-    // Story Narrative Events Engine (7 Days)
+    // Story Narrative Events Engine
     const STORY_EVENTS = {
         1: { 
-            start: { s: "Partner Rina Hartono", t: "Welcome to the Senior Audit desk. I review every verdict you stamp. Don't make waves, keep your error rate low, and don't dig where you shouldn't. Begin your shift.", c: [{l:"Understood, Partner.", a:null}] } 
+            start: { s: "Partner Rina Hartono", t: "Welcome to the desk. I review every verdict you stamp. Don't make waves, keep your daily citations under 3, and don't dig where you shouldn't. Begin your shift.", c: [{l:"Understood, Partner.", a:null}] } 
         },
         2: { 
             start: { s: "Message from Family", t: "Mother's hospital bill is due in Jakarta today. It costs $50. Can you send the funds from your wage?", c: [{l:"Send $50 Home", a:'payFamily50'}, {l:"Keep Funds for Desk", a:null}] } 
@@ -883,17 +1064,18 @@
             end: { s: "Partner Rina Hartono", t: "The Internal Review Committee is monitoring your citations. Clear your desk efficiently.", c: [{l:"Proceed.", a:null}] }
         },
         6: {
-            start: { s: "The Tipster (Secret Meeting)", t: "Tomorrow is the final Investment Committee gauntlet. I have the proof of tax fraud against PT Nusantara Energy. I need your badge authorization code to leak it to the press tonight. You will be fired, but truth will prevail.", c: [{l:"Authorize Leak to Press (Whistleblower)", a:'leakPress'}, {l:"Refuse & Keep Head Down", a:null}] }
+            start: { s: "The Tipster (Secret Meeting)", t: "Tomorrow is the final Investment Committee gauntlet. I have the proof of tax fraud against PT Nusantara Energy. I need your authorization to leak it to the press tonight.", c: [{l:"Authorize Leak to Press (Whistleblower)", a:'leakPress'}, {l:"Refuse & Keep Head Down", a:null}] }
         },
         7: { 
-            start: { s: "FINAL INVESTMENT COMMITTEE GAUNTLET", t: "8 high-stakes files. No room for citations. Pass this final shift to seal your legacy at Golden Parachute Capital.", c: [{l:"Begin Gauntlet.", a:null}] } 
+            start: { s: "FINAL INVESTMENT COMMITTEE GAUNTLET", t: "8 high-stakes files. Keep daily citations strictly below 3. Pass this shift to seal your legacy at Golden Parachute Capital.", c: [{l:"Begin Gauntlet.", a:null}] } 
         }
     };
 
     // Game Core State & Controller
     const game = {
         gameState: {
-            mode: 'senior', day: 1, cash: 50, rep: 20, citations: 0, maxCitations: 4,
+            mode: 'senior', day: 1, cash: 50, rep: 20, 
+            dayCitations: 0, maxCitationsPerDay: 3, ruinedDays: 0,
             flags: { familyPaid: 0, helpedTipster: false, protectedPolitical: false, rejectedPolitical: false, leakedToPress: false },
             inventory: { coffee: 0, shredder: 0, gold: 0 }, queue: [], rule: null
         },
@@ -902,10 +1084,34 @@
         startGame(mode) {
             Sound.init(); 
             this.gameState.mode = mode;
-            this.gameState.maxCitations = mode === 'senior' ? 4 : 5;
+            this.applyModeVisibility();
             document.getElementById('main-menu').style.display = 'none';
             this.initDrag(); 
             this.triggerStoryEvent(this.gameState.day, 'start');
+        },
+
+        openLeaveConfirmModal() {
+            document.getElementById('leave-modal').style.display = 'flex';
+        },
+
+        closeLeaveConfirmModal() {
+            document.getElementById('leave-modal').style.display = 'none';
+        },
+
+        confirmLeaveDesk() {
+            this.closeLeaveConfirmModal();
+            clearInterval(this.timerInt);
+            if (this.isAuditMode) this.toggleAuditMode();
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('main-menu').style.display = 'flex';
+        },
+
+        applyModeVisibility() {
+            const isJunior = this.gameState.mode === 'junior';
+            const bsPaper = document.getElementById('doc-bs');
+            const bankPaper = document.getElementById('doc-bank');
+            if (bsPaper) bsPaper.style.display = isJunior ? 'none' : 'block';
+            if (bankPaper) bankPaper.style.display = isJunior ? 'none' : 'block';
         },
 
         triggerStoryEvent(day, phase) {
@@ -950,6 +1156,7 @@
         },
 
         prepareDay() {
+            this.gameState.dayCitations = 0;
             this.updateHUD();
             let packCount = this.gameState.day === 7 ? 8 : 5;
             this.timer = (this.gameState.day === 7 ? 210 : 240) + (this.gameState.inventory.coffee > 0 ? 30 : 0);
@@ -976,16 +1183,16 @@
                     this.gameState.queue.push(RolePackBuilder.buildHealthyApprove(mode, this.gameState.rule));
                 } else {
                     const rand = Math.random();
-                    if(rand < 0.35) {
+                    if(rand < 0.30) {
                         this.gameState.queue.push(RolePackBuilder.buildHealthyApprove(mode, this.gameState.rule));
-                    } else if(rand < 0.65) {
+                    } else if(rand < 0.55) {
                         const reasonsList = Object.keys(REJECT_REASONS).filter(k => mode === 'senior' || k !== 'bs_risk');
                         const ranReason = reasonsList[RolePackBuilder.randInt(0, reasonsList.length-1)];
                         this.gameState.queue.push(RolePackBuilder.buildCommercialReject(mode, ranReason, this.gameState.rule));
                     } else {
                         const frauds = mode === 'senior' 
-                            ? ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'bs_imbalance', 'bs_math_ca', 'bs_missing_borrow', 'cross_bank_cash']
-                            : ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'cross_bank_cash'];
+                            ? ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'tax_mismatch', 'tax_rev_mismatch', 'false_exemption', 'false_tax_on_loss', 'forged_stamp', 'bs_imbalance', 'bs_math_ca', 'bs_missing_borrow', 'cross_bank_cash']
+                            : ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'tax_mismatch', 'tax_rev_mismatch', 'false_exemption', 'false_tax_on_loss', 'forged_stamp', 'cross_bank_cash'];
                         const f = frauds[RolePackBuilder.randInt(0, frauds.length-1)];
                         this.gameState.queue.push(RolePackBuilder.buildAuditFraud(mode, f, null));
                     }
@@ -1028,10 +1235,9 @@
             if(this.packIndex >= this.gameState.queue.length) { this.endDay(); return; }
             const pack = this.gameState.queue[this.packIndex];
             
-            // UI Reset
             document.querySelectorAll('.stamp-mark').forEach(e => e.classList.remove('visible'));
-            document.getElementById('doc-bs').style.display = pack.bs26 ? 'block' : 'none';
-            document.getElementById('doc-tax').style.display = this.gameState.mode === 'senior' ? 'block' : 'none';
+            this.applyModeVisibility();
+
             document.getElementById('shred-count').innerText = this.gameState.inventory.shredder;
             document.getElementById('gold-count').innerText = this.gameState.inventory.gold;
             document.getElementById('btn-shredder').style.display = this.gameState.inventory.shredder > 0 ? 'block' : 'none';
@@ -1043,12 +1249,12 @@
             document.getElementById('card-founded').innerText = pack.card.founded;
             document.getElementById('card-desc').innerText = pack.card.isPolitical ? "⚠️ Priority Political Dossier" : "Standard Corporate Applicant";
             
-            // SCI Table Rendering
+            // SCI Table Rendering (FROZEN 2-COLUMN SCHEMA)
             document.getElementById('sci-company-name').innerText = pack.sci26.headerName;
             let sciHtml = `
                 <thead>
                     <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
-                        <td style="text-align:left;">Metric (Rp million)</td>
+                        <td style="text-align:left;">Statement of Comprehensive Income<br><span style="font-size:0.7rem; font-weight:normal;">Years Ended 31 Dec (Rp million)</span></td>
                         <td class="num">2026</td>
                         <td class="num">2025</td>
                     </tr>
@@ -1058,11 +1264,11 @@
                     <tr><td>Cost of Sales</td><td class="num" data-audit-target="sci_cos_26">(${pack.sci26.cos})</td><td class="num">(${pack.sci25.cos})</td></tr>
                     <tr class="subtotal"><td data-audit-target="sci_gp_26">Gross Profit</td><td class="num" data-audit-target="sci_gp_26">${pack.sci26.gp}</td><td class="num">${pack.sci25.gp}</td></tr>
                     <tr><td>Selling Expenses</td><td class="num" data-audit-target="sci_sell_26">(${pack.sci26.sell})</td><td class="num">(${pack.sci25.sell})</td></tr>
-                    <tr><td>Admin Expenses</td><td class="num" data-audit-target="sci_admin_26">(${pack.sci26.admin})</td><td class="num">(${pack.sci25.admin})</td></tr>
+                    <tr><td>Administrative Expenses</td><td class="num" data-audit-target="sci_admin_26">(${pack.sci26.admin})</td><td class="num">(${pack.sci25.admin})</td></tr>
                     <tr class="subtotal"><td data-audit-target="sci_op_26">Operating Profit</td><td class="num" data-audit-target="sci_op_26">${pack.sci26.op}</td><td class="num">${pack.sci25.op}</td></tr>
             `;
             if(pack.sci26.missFin) {
-                sciHtml += `<tr class="missing-line-gap-row" data-audit-target="sci:financeCosts:missing"><td colspan="3"></td></tr>`;
+                sciHtml += `<tr class="missing-line-gap-row" data-audit-target="sci_fin_26:missing"><td colspan="3" data-audit-target="sci_fin_26:missing"></td></tr>`;
             } else {
                 sciHtml += `<tr><td>Finance Costs</td><td class="num" data-audit-target="sci_fin_26">(${pack.sci26.fin})</td><td class="num">(${pack.sci25.fin})</td></tr>`;
             }
@@ -1070,386 +1276,440 @@
             sciHtml += `<tr class="subtotal"><td data-audit-target="sci_pbt_26">Profit Before Tax</td><td class="num" data-audit-target="sci_pbt_26">${pack.sci26.pbt}</td><td class="num">${pack.sci25.pbt}</td></tr>`;
             
             if(pack.sci26.missTax) {
-                sciHtml += `<tr class="missing-line-gap-row" data-audit-target="sci:taxation:missing"><td colspan="3"></td></tr>`;
+                sciHtml += `<tr class="missing-line-gap-row" data-audit-target="sci_tax_26:missing"><td colspan="3" data-audit-target="sci_tax_26:missing"></td></tr>`;
             } else {
                 sciHtml += `<tr><td>Taxation</td><td class="num" data-audit-target="sci_tax_26">(${pack.sci26.tax})</td><td class="num">(${pack.sci25.tax})</td></tr>`;
             }
-            
-            sciHtml += `<tr class="total"><td data-audit-target="sci_pat_26">PROFIT AFTER TAX</td><td class="num" data-audit-target="sci_pat_26">${pack.sci26.pat}</td><td class="num">${pack.sci25.pat}</td></tr></tbody>`;
+
+            sciHtml += `
+                    <tr class="total"><td data-audit-target="sci_pat_26">Profit After Tax</td><td class="num" data-audit-target="sci_pat_26">${pack.sci26.pat}</td><td class="num">${pack.sci25.pat}</td></tr>
+                </tbody>
+            `;
             document.getElementById('sci-table').innerHTML = sciHtml;
 
-            // SOFP Balance Sheet Rendering with FULL Audit Target Tags
-            if (pack.bs26) {
+            // Senior SOFP Table
+            if(this.gameState.mode === 'senior' && pack.bs26) {
                 document.getElementById('bs-company-name').innerText = pack.bs26.headerName;
                 let bsHtml = `
                     <thead>
                         <tr style="border-bottom: 2px solid var(--ink); font-weight: bold;">
-                            <td style="text-align:left;">Position (Rp mil)</td>
-                            <td class="num">2026</td>
-                            <td class="num">2025</td>
+                            <td>Statement of Financial Position</td><td class="num">2026</td><td class="num">2025</td>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="section-head"><td colspan="3">Non-Current Assets</td></tr>
-                        <tr class="indent"><td>Property, Plant & Eq.</td><td class="num" data-audit-target="bs_ppe_26">${pack.bs26.ppe}</td><td class="num">${pack.bs25.ppe}</td></tr>
-                        <tr class="indent"><td>Intangible Assets</td><td class="num" data-audit-target="bs_intang_26">${pack.bs26.intang}</td><td class="num">${pack.bs25.intang}</td></tr>
-                        <tr class="subtotal"><td data-audit-target="bs_nca_26">Total Non-Current Assets</td><td class="num" data-audit-target="bs_nca_26">${pack.bs26.nca_total}</td><td class="num">${pack.bs25.nca_total}</td></tr>
+                        <tr class="indent"><td>Property, Plant & Equip.</td><td class="num">${pack.bs26.ppe}</td><td class="num">${pack.bs25.ppe}</td></tr>
+                        <tr class="indent"><td>Intangibles</td><td class="num">${pack.bs26.intang}</td><td class="num">${pack.bs25.intang}</td></tr>
+                        <tr class="subtotal"><td>Total Non-Current Assets</td><td class="num">${pack.bs26.nca_total}</td><td class="num">${pack.bs25.nca_total}</td></tr>
 
                         <tr class="section-head"><td colspan="3">Current Assets</td></tr>
                         <tr class="indent"><td>Inventories</td><td class="num" data-audit-target="bs_inv_26">${pack.bs26.inv}</td><td class="num">${pack.bs25.inv}</td></tr>
                         <tr class="indent"><td>Trade Receivables</td><td class="num" data-audit-target="bs_rec_26">${pack.bs26.rec}</td><td class="num">${pack.bs25.rec}</td></tr>
-                        <tr class="indent"><td>Cash & Cash Eq.</td><td class="num" data-audit-target="bs_cash_26">${pack.bs26.cash}</td><td class="num">${pack.bs25.cash}</td></tr>
+                        <tr class="indent"><td>Cash & Equivalents</td><td class="num" data-audit-target="bs_cash_26">${pack.bs26.cash}</td><td class="num">${pack.bs25.cash}</td></tr>
                         <tr class="subtotal"><td data-audit-target="bs_ca_26">Total Current Assets</td><td class="num" data-audit-target="bs_ca_26">${pack.bs26.ca_total}</td><td class="num">${pack.bs25.ca_total}</td></tr>
-                        <tr class="total" style="border-top: 1px solid #000;"><td data-audit-target="bs_ta_26">TOTAL ASSETS</td><td class="num" data-audit-target="bs_ta_26">${pack.bs26.total_assets}</td><td class="num">${pack.bs25.total_assets}</td></tr>
+                        
+                        <tr class="total"><td data-audit-target="bs_ta_26">TOTAL ASSETS</td><td class="num" data-audit-target="bs_ta_26">${pack.bs26.total_assets}</td><td class="num">${pack.bs25.total_assets}</td></tr>
 
                         <tr class="section-head"><td colspan="3">Current Liabilities</td></tr>
                         <tr class="indent"><td>Trade Payables</td><td class="num" data-audit-target="bs_pay_26">${pack.bs26.payables}</td><td class="num">${pack.bs25.payables}</td></tr>
                 `;
-
-                if (pack.bs26.missBorrow) {
-                    bsHtml += `<tr class="missing-line-gap-row" data-audit-target="bs:st_borrow:missing"><td colspan="3"></td></tr>`;
+                if(pack.bs26.missBorrow) {
+                    bsHtml += `<tr class="missing-line-gap-row" data-audit-target="bs:st_borrow:missing"><td colspan="3" data-audit-target="bs:st_borrow:missing"></td></tr>`;
                 } else {
-                    bsHtml += `<tr class="indent"><td>ST Borrowings</td><td class="num" data-audit-target="bs_stb_26">${pack.bs26.st_borrow}</td><td class="num">${pack.bs25.st_borrow}</td></tr>`;
+                    bsHtml += `<tr class="indent"><td>Short-Term Borrowings</td><td class="num" data-audit-target="bs_st_borrow_26">${pack.bs26.st_borrow}</td><td class="num">${pack.bs25.st_borrow}</td></tr>`;
                 }
-
                 bsHtml += `
-                        <tr class="subtotal"><td data-audit-target="bs_cl_26">Total Current Liab.</td><td class="num" data-audit-target="bs_cl_26">${pack.bs26.cl_total}</td><td class="num">${pack.bs25.cl_total}</td></tr>
+                        <tr class="subtotal"><td data-audit-target="bs_cl_26">Total Current Liabilities</td><td class="num" data-audit-target="bs_cl_26">${pack.bs26.cl_total}</td><td class="num">${pack.bs25.cl_total}</td></tr>
 
                         <tr class="section-head"><td colspan="3">Non-Current Liabilities</td></tr>
-                        <tr class="indent"><td>LT Borrowings</td><td class="num" data-audit-target="bs_ltb_26">${pack.bs26.lt_borrow}</td><td class="num">${pack.bs25.lt_borrow}</td></tr>
+                        <tr class="indent"><td>Long-Term Debt</td><td class="num">${pack.bs26.lt_borrow}</td><td class="num">${pack.bs25.lt_borrow}</td></tr>
 
                         <tr class="section-head"><td colspan="3">Equity</td></tr>
-                        <tr class="indent"><td>Total Capital & Ret. Earn.</td><td class="num" data-audit-target="bs_eq_26">${pack.bs26.equity_total}</td><td class="num">${pack.bs25.equity_total}</td></tr>
+                        <tr class="indent"><td>Share Capital & Reserves</td><td class="num">${pack.bs26.equity_total}</td><td class="num">${pack.bs25.equity_total}</td></tr>
+                        
                         <tr class="total"><td data-audit-target="bs_tot_eq_liab_26">TOTAL EQUITY & LIAB.</td><td class="num" data-audit-target="bs_tot_eq_liab_26">${pack.bs26.total_eq_liab}</td><td class="num">${pack.bs25.total_eq_liab}</td></tr>
                     </tbody>
                 `;
                 document.getElementById('bs-table').innerHTML = bsHtml;
             }
 
-            // Bank Certificate & Tax Slip Rendering
+            // Bank Confirmation
             document.getElementById('bank-company-name').innerText = pack.card.name;
             document.getElementById('bank-verified-cash').innerText = `Rp ${pack.bankCert.verifiedCash}m`;
-            
+
+            // Tax Slip
             document.getElementById('tax-company-name').innerText = pack.card.name;
             document.getElementById('tax-declared-rev').innerText = `Rp ${pack.taxCert.declaredRev}m`;
             document.getElementById('tax-declared-tax').innerText = `Rp ${pack.taxCert.declaredTax}m`;
+            document.getElementById('tax-status').innerText = pack.taxCert.status;
             
-            // Build Reject Reasons Modal Options
-            const rejectList = document.getElementById('reject-reasons-list');
-            rejectList.innerHTML = '';
-            Object.keys(REJECT_REASONS).forEach(key => {
-                if(this.gameState.mode === 'junior' && key === 'bs_risk') return;
-                rejectList.innerHTML += `
-                    <label style="display:flex; gap:10px; background:#e8e4d9; border:1px solid #a1a1aa; padding:10px; cursor:pointer; font-size: 0.85rem;">
-                        <input type="radio" name="rj-reason" value="${key}"> ${REJECT_REASONS[key]}
-                    </label>
-                `;
+            const taxStampEl = document.getElementById('tax-stamp');
+            taxStampEl.innerText = pack.taxCert.stampCode;
+            if(pack.taxCert.isForgedStyle) taxStampEl.classList.add('tax-stamp-forged-red');
+            else taxStampEl.classList.remove('tax-stamp-forged-red');
+
+            this.updateHUD();
+        },
+
+        /* ALLOWED FIX 1 & 2 & 5: Drag refusal & handleAuditClick target resolution */
+        initDrag() {
+            let activeElement = null;
+            let offsetX = 0, offsetY = 0;
+
+            document.addEventListener('pointerdown', (e) => {
+                if (game.isAuditMode) return;
+                if (e.target.closest('[data-audit-target]')) return;
+
+                const dragEl = e.target.closest('[data-drag="true"]');
+                if (dragEl) {
+                    activeElement = dragEl;
+                    const rect = activeElement.getBoundingClientRect();
+                    offsetX = e.clientX - rect.left;
+                    offsetY = e.clientY - rect.top;
+                    
+                    document.querySelectorAll('.paper, .company-card').forEach(p => p.style.zIndex = 15);
+                    activeElement.style.zIndex = 20;
+                    Sound.paper();
+                }
             });
 
-            this.updateHUD(); 
-            Sound.paper();
+            document.addEventListener('pointermove', (e) => {
+                if (activeElement) {
+                    const surface = document.getElementById('desk-surface').getBoundingClientRect();
+                    let x = e.clientX - surface.left - offsetX;
+                    let y = e.clientY - surface.top - offsetY;
+                    
+                    x = Math.max(-50, Math.min(x, surface.width - 100));
+                    y = Math.max(0, Math.min(y, surface.height - 100));
+
+                    activeElement.style.left = `${x}px`;
+                    activeElement.style.top = `${y}px`;
+                }
+            });
+
+            document.addEventListener('pointerup', () => { activeElement = null; });
+
+            document.getElementById('desk-surface').addEventListener('click', (e) => {
+                this.handleAuditClick(e);
+            });
         },
 
-        updateHUD() {
-            document.getElementById('hud-day').innerText = `D${this.gameState.day}`;
-            document.getElementById('hud-file-progress').innerText = `${this.packIndex + 1}/${this.gameState.queue.length}`;
-            let m = Math.floor(this.timer/60); let s = this.timer%60;
-            document.getElementById('hud-timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            document.getElementById('hud-wage').innerText = this.gameState.cash;
-            document.getElementById('hud-rep').innerText = this.gameState.rep;
-            document.getElementById('hud-citations').innerText = `${this.gameState.citations}/${this.gameState.maxCitations}`;
-        },
+        handleAuditClick(e) {
+            if (!this.isAuditMode) return;
 
-        submitApprove() { 
-            const p = this.gameState.queue[this.packIndex];
-            if(p.card.isPolitical) this.gameState.flags.protectedPolitical = true;
-            this.evaluateAction('approve'); 
-        },
-        openRejectModal() { document.getElementById('reject-modal').style.display = 'flex'; },
-        closeRejectModal() { document.getElementById('reject-modal').style.display = 'none'; },
-        confirmReject() {
-            const el = document.querySelector('input[name="rj-reason"]:checked');
-            if(!el) { showToast("Select a commercial reject reason."); return; }
-            this.closeRejectModal();
-            const p = this.gameState.queue[this.packIndex];
-            if(p.card.isPolitical) this.gameState.flags.rejectedPolitical = true;
-            this.evaluateAction('reject');
-        },
-        useItem(type) {
-            if(type === 'shredder' && this.gameState.inventory.shredder > 0) {
-                this.gameState.inventory.shredder--; Sound.paper();
-                this.packIndex++; 
-                this.loadPack(); 
-                showToast("Pack Shredded.");
-            }
-            if(type === 'gold' && this.gameState.inventory.gold > 0) {
-                this.gameState.inventory.gold--;
-                this.evaluateAction(this.gameState.queue[this.packIndex].correct, true);
+            const target = e.target.closest('[data-audit-target]') || 
+                           e.target.closest('tr.missing-line-gap-row') || 
+                           e.target.closest('#tax-stamp');
+            if (!target) return;
+
+            e.stopPropagation();
+
+            const attr = target.getAttribute('data-audit-target') || (target.id === 'tax-stamp' ? 'tax_stamp' : null);
+            if (!attr) return;
+
+            if (this.selectedAudit.has(attr)) {
+                this.selectedAudit.delete(attr);
+                target.classList.remove('marked-discrepancy');
+                if (target.parentElement && target.parentElement.classList.contains('missing-line-gap-row')) {
+                    target.parentElement.classList.remove('marked-discrepancy');
+                }
+            } else {
+                this.selectedAudit.add(attr);
+                target.classList.add('marked-discrepancy');
             }
         },
 
         toggleAuditMode() {
             this.isAuditMode = !this.isAuditMode;
-            this.selectedAudit.clear();
-            document.body.classList.toggle('audit-mode', this.isAuditMode);
-            document.getElementById('btn-approve').style.display = this.isAuditMode ? 'none' : 'block';
-            document.getElementById('btn-reject').style.display = this.isAuditMode ? 'none' : 'block';
-            document.getElementById('btn-audit').style.display = this.isAuditMode ? 'none' : 'block';
-            document.getElementById('btn-cancel-audit').style.display = this.isAuditMode ? 'block' : 'none';
-            document.getElementById('btn-stamp-audit').style.display = this.isAuditMode ? 'block' : 'none';
-            document.querySelectorAll('.marked-discrepancy').forEach(e => e.classList.remove('marked-discrepancy'));
-        },
-        handleAuditClick(e) {
-            if(!this.isAuditMode) return;
-            const target = e.target.closest('[data-audit-target]');
-            if(!target) return;
-            Sound.paper();
-            if(this.selectedAudit.has(target)) { 
-                this.selectedAudit.delete(target); 
-                target.classList.remove('marked-discrepancy'); 
-            } else if(this.selectedAudit.size < 4) { 
-                this.selectedAudit.add(target); 
-                target.classList.add('marked-discrepancy'); 
+            if (this.isAuditMode) {
+                document.body.classList.add('audit-mode');
+                document.getElementById('btn-approve').style.display = 'none';
+                document.getElementById('btn-reject').style.display = 'none';
+                document.getElementById('btn-audit').style.display = 'none';
+                document.getElementById('btn-stamp-audit').style.display = 'inline-block';
+                document.getElementById('btn-cancel-audit').style.display = 'inline-block';
+                showToast("AUDIT MODE: Tap cells to highlight discrepancies.");
+            } else {
+                document.body.classList.remove('audit-mode');
+                document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
+                this.selectedAudit.clear();
+                document.getElementById('btn-approve').style.display = 'inline-block';
+                document.getElementById('btn-reject').style.display = 'inline-block';
+                document.getElementById('btn-audit').style.display = 'inline-block';
+                document.getElementById('btn-stamp-audit').style.display = 'none';
+                document.getElementById('btn-cancel-audit').style.display = 'none';
             }
-        },
-        submitAuditStamp() {
-            if(this.selectedAudit.size === 0) { showToast("Select elements to audit first."); return; }
-            const p = this.gameState.queue[this.packIndex];
-            if(p.card.isPolitical) this.gameState.flags.helpedTipster = true;
-            
-            let matched = false;
-            if(p.correct === 'audit') {
-                const selectedIds = Array.from(this.selectedAudit).map(el => el.getAttribute('data-audit-target')).sort();
-                p.validChains.forEach(chain => {
-                    const sortedChain = [...chain].sort();
-                    if(JSON.stringify(selectedIds) === JSON.stringify(sortedChain) || selectedIds.some(id => sortedChain.includes(id))) {
-                        matched = true;
-                    }
-                });
-            }
-            this.toggleAuditMode();
-            this.evaluateAction(matched ? 'audit' : 'false_audit');
         },
 
-        evaluateAction(action, forceCorrect=false) {
-            clearInterval(this.timerInt);
-            const p = this.gameState.queue[this.packIndex];
-            const isCorrect = forceCorrect || action === p.correct;
-            
-            const stamp = document.getElementById(action === 'approve' ? 'stamp-sci-app' : 'stamp-sci-den');
-            stamp.classList.add('visible'); 
+        submitApprove() {
+            const pack = this.gameState.queue[this.packIndex];
+            document.getElementById('stamp-sci-app').classList.add('visible');
             Sound.stamp();
 
             setTimeout(() => {
-                document.getElementById('memo-status-line').innerText = isCorrect ? "STATUS: VERDICT VERIFIED" : "STATUS: COMMITTEE CITATION ISSUED";
-                document.getElementById('memo-status-line').style.color = isCorrect ? "var(--ink-green)" : "var(--ink-red)";
-                
-                document.getElementById('memo-reason').innerText = p.reason;
-                document.getElementById('memo-working').innerText = p.working || "N/A";
-                document.getElementById('memo-implication').innerText = p.implication || "Standard financial review.";
+                if (pack.card.isPolitical) {
+                    this.gameState.flags.protectedPolitical = true;
+                }
+                const isCorrect = (pack.correct === 'approve');
+                this.processVerdict(isCorrect, 'approve', pack);
+            }, 300);
+        },
 
-                const dPay = isCorrect ? 50 : 0;
-                const dRep = isCorrect ? 5 : -10;
-                
-                this.gameState.cash += dPay;
-                this.gameState.rep += dRep;
-                
-                document.getElementById('memo-delta-pay').innerText = `PAY: +$${dPay}`;
-                document.getElementById('memo-delta-rep').innerText = `REP: ${dRep > 0 ? '+'+dRep : dRep}`;
-                
-                const citEl = document.getElementById('memo-delta-cit');
-                if(!isCorrect) {
-                    this.gameState.citations++; 
-                    Sound.wrong();
-                    citEl.style.display = 'block';
-                } else {
-                    Sound.correct(); 
-                    citEl.style.display = 'none';
+        openRejectModal() {
+            const list = document.getElementById('reject-reasons-list');
+            list.innerHTML = '';
+            
+            const mode = this.gameState.mode;
+            const reasonsList = Object.keys(REJECT_REASONS).filter(k => mode === 'senior' || k !== 'bs_risk');
+
+            reasonsList.forEach(key => {
+                const label = document.createElement('label');
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '8px';
+                label.style.fontSize = '0.82rem';
+                label.style.cursor = 'pointer';
+
+                label.innerHTML = `<input type="radio" name="reject_reason" value="${key}"> <span>${REJECT_REASONS[key]}</span>`;
+                list.appendChild(label);
+            });
+
+            document.getElementById('reject-modal').style.display = 'flex';
+        },
+
+        closeRejectModal() {
+            document.getElementById('reject-modal').style.display = 'none';
+        },
+
+        confirmReject() {
+            const selected = document.querySelector('input[name="reject_reason"]:checked')?.value;
+            if (!selected) { showToast("Select a commercial rejection reason."); return; }
+
+            this.closeRejectModal();
+            const pack = this.gameState.queue[this.packIndex];
+            document.getElementById('stamp-sci-den').classList.add('visible');
+            Sound.stamp();
+
+            setTimeout(() => {
+                if (pack.card.isPolitical) {
+                    this.gameState.flags.rejectedPolitical = true;
                 }
                 
-                document.getElementById('memo-overlay').style.display = 'flex';
-            }, 750);
+                const isCorrect = (pack.correct === 'reject') && (pack.reason.includes(REJECT_REASONS[selected]));
+                this.processVerdict(isCorrect, 'reject', pack);
+            }, 300);
+        },
+
+        submitAuditStamp() {
+            if (this.selectedAudit.size === 0) { showToast("Highlight at least 1 discrepancy cell."); return; }
+
+            const pack = this.gameState.queue[this.packIndex];
+            const selArray = Array.from(this.selectedAudit);
+
+            let isCorrect = false;
+            if (pack.correct === 'audit') {
+                for (let chain of pack.validChains) {
+                    if (chain.every(id => selArray.includes(id))) {
+                        isCorrect = true; break;
+                    }
+                }
+            }
+
+            this.toggleAuditMode();
+            document.getElementById('stamp-sci-den').classList.add('visible');
+            Sound.stamp();
+
+            setTimeout(() => {
+                if (pack.card.isPolitical) {
+                    this.gameState.flags.rejectedPolitical = true;
+                }
+                this.processVerdict(isCorrect, 'audit', pack);
+            }, 300);
+        },
+
+        useItem(item) {
+            if (item === 'shredder' && this.gameState.inventory.shredder > 0) {
+                this.gameState.inventory.shredder--;
+                showToast("Dossier shredded safely.");
+                this.packIndex++;
+                this.loadPack();
+            } else if (item === 'gold' && this.gameState.inventory.gold > 0) {
+                this.gameState.inventory.gold--;
+                const pack = this.gameState.queue[this.packIndex];
+                this.processVerdict(true, pack.correct, pack);
+            }
+        },
+
+        buyItem(item) {
+            if (item === 'coffee' && this.gameState.cash >= 25) {
+                this.gameState.cash -= 25; this.gameState.inventory.coffee++; showToast("Espresso purchased (+30s tomorrow).");
+            } else if (item === 'shredder' && this.gameState.cash >= 30) {
+                this.gameState.cash -= 30; this.gameState.inventory.shredder++; showToast("Shredder purchased.");
+            } else if (item === 'gold' && this.gameState.cash >= 60) {
+                this.gameState.cash -= 60; this.gameState.inventory.gold++; showToast("Golden stamp purchased.");
+            } else {
+                showToast("Insufficient cash balance.");
+            }
+            this.updateHUD();
+            document.getElementById('settle-cash').innerText = `$${this.gameState.cash}`;
+        },
+
+        processVerdict(isCorrect, playerAction, pack) {
+            let deltaPay = 0, deltaRep = 0, citationAdded = false;
+
+            if (isCorrect) {
+                Sound.correct();
+                deltaPay = 50; deltaRep = 5;
+                this.gameState.cash += deltaPay;
+                this.gameState.rep += deltaRep;
+            } else {
+                Sound.wrong();
+                deltaPay = 0; deltaRep = -10;
+                this.gameState.rep = Math.max(0, this.gameState.rep + deltaRep);
+                this.gameState.dayCitations++;
+                citationAdded = true;
+            }
+
+            const statusEl = document.getElementById('memo-status-line');
+            statusEl.innerText = isCorrect ? "VERDICT STATUS: CORRECT (+PAY/REP)" : "VERDICT STATUS: INCORRECT (CITATION ISSUED)";
+            statusEl.style.color = isCorrect ? "#166534" : "#991b1b";
+
+            document.getElementById('memo-reason').innerText = pack.reason;
+            document.getElementById('memo-working').innerText = pack.working;
+            document.getElementById('memo-implication').innerText = pack.implication;
+
+            document.getElementById('memo-delta-pay').innerText = `PAY: +$${deltaPay}`;
+            document.getElementById('memo-delta-rep').innerText = `REP: ${deltaRep >= 0 ? '+' : ''}${deltaRep}`;
+            
+            const citEl = document.getElementById('memo-delta-cit');
+            if (citationAdded) {
+                citEl.innerText = `DAILY CITATION: ${this.gameState.dayCitations}/${this.gameState.maxCitationsPerDay}`;
+                citEl.style.display = 'block';
+            } else {
+                citEl.style.display = 'none';
+            }
+
+            document.getElementById('memo-overlay').style.display = 'flex';
         },
 
         closeMemo() {
             document.getElementById('memo-overlay').style.display = 'none';
-            if(this.gameState.citations >= this.gameState.maxCitations) { this.evaluateEndings(); return; }
-            
             this.packIndex++;
-            if(this.packIndex >= this.gameState.queue.length) { 
-                this.endDay(); 
-            } else { 
-                this.loadPack();
-                clearInterval(this.timerInt);
-                this.timerInt = setInterval(() => {
-                    if(this.timer > 0) {
-                        this.timer--; this.updateHUD();
-                        const el = document.getElementById('hud-timer');
-                        if(this.timer < 30) el.classList.add('timer-warning'); else el.classList.remove('timer-warning');
-                    } else {
-                        clearInterval(this.timerInt); this.endDay();
-                    }
-                }, 1000);
-            }
+            this.loadPack();
+        },
+
+        updateHUD() {
+            document.getElementById('hud-day').innerText = `D${this.gameState.day}`;
+            document.getElementById('hud-file-progress').innerText = `${Math.min(this.packIndex + 1, this.gameState.queue.length)}/${this.gameState.queue.length}`;
+            
+            const mins = Math.floor(this.timer / 60);
+            const secs = this.timer % 60;
+            document.getElementById('hud-timer').innerText = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+            
+            document.getElementById('hud-wage').innerText = this.gameState.cash;
+            document.getElementById('hud-rep').innerText = this.gameState.rep;
+            document.getElementById('hud-citations').innerText = `${this.gameState.dayCitations}/${this.gameState.maxCitationsPerDay}`;
         },
 
         endDay() {
             clearInterval(this.timerInt);
             document.getElementById('game-container').style.display = 'none';
+
+            if (this.gameState.dayCitations >= this.gameState.maxCitationsPerDay) {
+                this.gameState.ruinedDays++;
+            }
+
+            if (this.gameState.ruinedDays >= 3) {
+                this.triggerEnding('TERMINATED', '3 Ruined Shift Days', 'You accumulated 3 ruined shift days with excessive compliance citations. The Internal Audit Committee has terminated your employment.');
+                return;
+            }
+
             this.triggerStoryEvent(this.gameState.day, 'end');
         },
 
         showSettlement() {
-            this.gameState.cash -= 30;
+            this.gameState.cash = Math.max(0, this.gameState.cash - 30);
             document.getElementById('settle-cash').innerText = `$${this.gameState.cash}`;
             document.getElementById('settle-rep').innerText = this.gameState.rep;
+            document.getElementById('settle-ruined').innerText = `${this.gameState.ruinedDays}/3`;
             document.getElementById('settlement-overlay').style.display = 'flex';
-        },
-
-        buyItem(type) {
-            const costs = { coffee: 25, shredder: 30, gold: 60 };
-            if(this.gameState.cash >= costs[type]) {
-                this.gameState.cash -= costs[type];
-                this.gameState.inventory[type]++;
-                document.getElementById('settle-cash').innerText = `$${this.gameState.cash}`;
-                showToast("Item Purchased.");
-            } else { showToast("Insufficient funds."); }
         },
 
         triggerNextDayEvent() {
             document.getElementById('settlement-overlay').style.display = 'none';
-            if(this.gameState.cash < 0) { this.gameState.citations = 99; this.evaluateEndings(); return; }
-            
-            this.gameState.day++;
-            if(this.gameState.day > 7) { this.evaluateEndings(); return; }
-            this.triggerStoryEvent(this.gameState.day, 'start');
+            if (this.gameState.day >= 7) {
+                this.evaluateEndings();
+            } else {
+                this.gameState.day++;
+                this.triggerStoryEvent(this.gameState.day, 'start');
+            }
         },
 
         evaluateEndings() {
-            document.getElementById('game-container').style.display = 'none';
-            document.getElementById('dialogue-overlay').style.display = 'none';
-            document.getElementById('settlement-overlay').style.display = 'none';
-            
-            let title = "", subtitle = "", desc = "";
-            const f = this.gameState.flags;
-            const score = this.gameState.cash + (this.gameState.rep * 10) + (this.gameState.day * 50);
-
-            if (f.leakedToPress) {
-                title = "THE WHISTLEBLOWER"; 
-                subtitle = "Fired, but Integrity Preserved";
-                desc = "You leaked the PT Nusantara Energy audit trail to the press. Golden Parachute Capital faced a public fallout, your badge was revoked, but you exposed systemic corporate fraud.";
-            } else if (this.gameState.citations >= this.gameState.maxCitations) {
-                title = "TERMINATED"; 
-                subtitle = "Internal Review Board Dismissal";
-                if(this.gameState.cash < 0) desc = "You accrued negative cash reserves and failed overhead payments. Security escorted you off the premises.";
-                else desc = "Your citation limit was breached. Golden Parachute terminated your analyst contract.";
-            } else if (this.gameState.day > 7) {
-                if (f.familyPaid >= 150) {
-                    title = "FAMILY FIRST"; 
-                    subtitle = "Hospital Bills Paid & Survived";
-                    desc = "You navigated the desk shifts and successfully remitted funds for your mother's emergency operations. You remain an analyst, quietly enduring.";
-                } else if (f.protectedPolitical && this.gameState.rep >= 40) {
-                    title = "PROMOTED"; 
-                    subtitle = "Senior Partner Fast-Track";
-                    desc = "You protected the Director's political allies and maintained immaculate numbers. You are promoted to Partner Track.";
-                } else if (f.helpedTipster && this.gameState.rep >= 40) {
-                    title = "TRUE AUDITOR"; 
-                    subtitle = "Uncompromising Professional Standard";
-                    desc = "You rejected corporate corruption and caught every fraud while staying within compliance bounds. Your reputation among peers is unmatched.";
-                } else if (this.gameState.cash >= 450) {
-                    title = "GOLDEN PARACHUTE EXIT"; 
-                    subtitle = "Amassed Capital & Departed";
-                    desc = "You accumulated significant wealth through relentless shift efficiency. You resign on Day 8 and take your capital elsewhere.";
-                } else if (f.rejectedPolitical) {
-                    title = "BROKEN IDEALISM"; 
-                    subtitle = "Demoted & Ostracized";
-                    desc = "You stood up against political pressure, but lacked the internal influence to survive unblemished. You remain stuck on night shifts.";
-                } else {
-                    title = "QUIET PROFESSIONAL"; 
-                    subtitle = "Cog in the Machine";
-                    desc = "You completed all 7 days without distinction or violation. Day 8 begins, and the desk awaits.";
-                }
+            if (this.gameState.flags.leakedToPress) {
+                this.triggerEnding('WHISTLEBLOWER HERO', 'Truth Exposed', 'You leaked proof of corporate tax fraud to the press. Golden Parachute was investigated and reformed, making you a national financial ethics figure.');
+            } else if (this.gameState.flags.protectedPolitical) {
+                this.triggerEnding('PARTNER PROMOTION', 'Corporate Loyalism', 'You followed executive orders and approved high-level political partners. You were promoted to Senior Partner with lucrative performance bonuses.');
+            } else if (this.gameState.rep >= 80) {
+                this.triggerEnding('CHIEF RISK OFFICER', 'Flawless Compliance', 'Your impeccable audit accuracy and risk management earned you direct appointment as Chief Risk Officer.');
+            } else {
+                this.triggerEnding('STANDARD RETIREMENT', 'Desk Analyst Legacy', 'You completed your 7-day desk assignment cleanly, keeping GP Capital stable through rigorous cross-examination.');
             }
+        },
 
+        triggerEnding(title, subtitle, desc) {
             document.getElementById('ending-title').innerText = title;
             document.getElementById('ending-subtitle').innerText = subtitle;
             document.getElementById('ending-desc').innerText = desc;
-            document.getElementById('ending-score').innerText = score;
+            
+            const finalScore = (this.gameState.cash * 2) + (this.gameState.rep * 5) - (this.gameState.ruinedDays * 50);
+            document.getElementById('ending-score').innerText = Math.max(0, finalScore);
+
+            const pName = document.getElementById('player-name-input')?.value || "Analyst";
+            document.getElementById('ending-name').value = pName;
+
             document.getElementById('ending-overlay').style.display = 'flex';
         },
 
         saveScoreAndReload() {
             const name = document.getElementById('ending-name').value || "Analyst";
-            const score = parseInt(document.getElementById('ending-score').innerText);
-            let lb = JSON.parse(localStorage.getItem('gp_lb') || '[]');
-            lb.push({name, score, day: this.gameState.day});
-            lb.sort((a,b)=>b.score-a.score);
-            localStorage.setItem('gp_lb', JSON.stringify(lb.slice(0,5)));
+            const score = parseInt(document.getElementById('ending-score').innerText) || 0;
+            const mode = this.gameState.mode;
+            const classCode = sanitizeClassCode(document.getElementById('class-code-input')?.value);
+
+            const entry = { name, score, mode, date: new Date().toISOString() };
+            localLeaderboard.push(entry);
+            localLeaderboard.sort((a,b) => b.score - a.score);
+            localStorage.setItem('gpc_leaderboard', JSON.stringify(localLeaderboard));
+
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.publish(`gpcapital/lb/${classCode}/event`, JSON.stringify(entry));
+            }
+
             location.reload();
         },
 
-        renderLeaderboard() {
-            const lb = JSON.parse(localStorage.getItem('gp_lb') || '[]');
-            const container = document.getElementById('title-leaderboard-list');
-            if(lb.length === 0) { container.innerHTML = "<div style='font-size:0.8rem; color:#a1a1aa;'>No records found.</div>"; return; }
-            container.innerHTML = lb.map((e,i) => `
-                <div class="leaderboard-row">
-                    <span style="color:#fbbf24; width:20px;">#${i+1}</span>
-                    <span style="flex-grow:1;">${e.name}</span>
-                    <span style="color:#4ade80;">${e.score} pts</span>
-                </div>
-            `).join('');
+        openSaveCodeModal() {
+            document.getElementById('savecode-overlay').style.display = 'flex';
         },
 
-        initDrag() {
-            let active = null, startX, startY, initX, initY, z = 50;
-            const startDrag = (e) => {
-                if(this.isAuditMode) return;
-                const target = e.target.closest('[data-drag="true"]');
-                if(!target) return;
-                active = target; z++; active.style.zIndex = z;
-                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                initX = active.offsetLeft; initY = active.offsetTop;
-            };
-            const moveDrag = (e) => {
-                if(!active) return;
-                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                active.style.left = `${initX + (clientX - startX)}px`;
-                active.style.top = `${initY + (clientY - startY)}px`;
-            };
-            const stopDrag = () => { active = null; };
-            
-            document.getElementById('desk-surface').addEventListener('mousedown', startDrag);
-            document.addEventListener('mousemove', moveDrag);
-            document.addEventListener('mouseup', stopDrag);
-            document.getElementById('desk-surface').addEventListener('touchstart', startDrag, {passive:false});
-            document.addEventListener('touchmove', moveDrag, {passive:false});
-            document.addEventListener('touchend', stopDrag);
-            
-            document.addEventListener('click', (e) => this.handleAuditClick(e));
-        },
-
-        openTeacherPanel() { 
-            document.getElementById('save-code-output').value = btoa(JSON.stringify(this.gameState));
-            document.getElementById('teacher-overlay').style.display = 'flex'; 
-        },
-        closeTeacherPanel() { document.getElementById('teacher-overlay').style.display = 'none'; },
-        teacherSetDay(d) { this.gameState.day = d; this.updateHUD(); showToast(`Day set to ${d}`); },
-        openSaveCodeModal() { document.getElementById('savecode-overlay').style.display = 'flex'; },
         loadSaveCode() {
             try {
-                const code = document.getElementById('save-code-input').value;
-                this.gameState = JSON.parse(atob(code));
-                document.getElementById('savecode-overlay').style.display = 'none';
-                document.getElementById('main-menu').style.display = 'none';
-                this.startGame(this.gameState.mode);
-            } catch(e) { showToast("Invalid save code."); }
+                const code = document.getElementById('save-code-input').value.trim();
+                const json = JSON.parse(atob(code));
+                if (json && json.day) {
+                    this.gameState = json;
+                    showToast("Save state restored!");
+                    document.getElementById('savecode-overlay').style.display = 'none';
+                    this.startGame(this.gameState.mode);
+                }
+            } catch(e) { showToast("Invalid save code string."); }
         }
     };
 
-    window.onload = () => { game.renderLeaderboard(); };
+    window.onload = function() {
+        initMQTT();
+    };
 </script>
 </body>
 </html>
