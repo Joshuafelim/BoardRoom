@@ -592,27 +592,20 @@
         </div>
     </div>
 
-    <!-- 3-SLIDE EPILOGUE ENDING OVERLAY -->
+    <!-- ENDING OVERLAY -->
     <div id="ending-overlay" class="modal-overlay">
-        <div class="modal-card" style="text-align: center; max-width: 580px;">
-            <div style="font-size: 0.8rem; font-weight: bold; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px;" id="ending-slide-indicator">EPILOGUE 1 OF 3</div>
-            <div style="font-size: 2rem; font-weight: bold; font-family: 'VT323', monospace; margin-bottom: 4px;" id="ending-title">COMMITTEE MEMORANDUM</div>
-            <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 14px; text-transform: uppercase; color: #991b1b;" id="ending-subtitle">CLASSIFIED DOSSIER FATE</div>
-            
-            <div style="background: #d5cfc0; border-left: 4px solid #18181b; padding: 14px; margin-bottom: 18px; text-align: left; font-family: 'Inter', sans-serif;">
-                <p style="font-size: 0.92rem; color: #18181b; line-height: 1.5; margin: 0; white-space: pre-wrap;" id="ending-desc">Text loading...</p>
-            </div>
+        <div class="modal-card" style="text-align: center;">
+            <div style="font-size: 2.3rem; font-weight: bold; font-family: 'VT323', monospace; margin-bottom: 6px;" id="ending-title">ENDING</div>
+            <div style="font-size: 0.95rem; font-weight: bold; margin-bottom: 14px; text-transform: uppercase;" id="ending-subtitle">Description</div>
+            <p style="font-size: 0.92rem; color: #27272a; margin-bottom: 20px; line-height: 1.5; font-family: 'Inter', sans-serif;" id="ending-desc">Text.</p>
 
-            <!-- Slide 3 Score Box -->
-            <div id="ending-score-box" style="display: none; background: #18181b; padding: 14px; margin-bottom: 18px; text-align: left; color: #f4f4f5; font-family: 'Inter', sans-serif;">
-                <div style="font-weight: bold; font-size: 0.95rem; color: #fbbf24; margin-bottom: 8px;">Final Performance Score: <span id="ending-score">0</span></div>
+            <div style="background: #18181b; padding: 14px; margin-bottom: 18px; text-align: left; color: #f4f4f5; font-family: 'Inter', sans-serif;">
+                <div style="font-weight: bold; font-size: 0.9rem; color: #fbbf24; margin-bottom: 8px;">Final Performance Score: <span id="ending-score">0</span></div>
                 <div style="display: flex; gap: 8px;">
                     <input type="text" id="ending-name" placeholder="Analyst Name" maxlength="20" style="flex-grow: 1; padding: 8px; border: 1px solid #3f3f46; background: #27272a; color: #fff; font-family: inherit;">
                     <button onclick="game.saveScoreAndReload()" class="memo-btn" style="background: #d97706; padding: 8px 14px; min-height: 0;">SAVE SCORE</button>
                 </div>
             </div>
-
-            <button id="ending-next-btn" onclick="game.nextEndingSlide()" class="memo-btn" style="width: 100%; background: #166534;">NEXT ➔</button>
         </div>
     </div>
     
@@ -1052,13 +1045,13 @@
         }
     }
 
-    // Story Narrative Events Engine with dynamic handlers
+    // Story Narrative Events Engine
     const STORY_EVENTS = {
         1: { 
             start: { s: "Partner Rina Hartono", t: "Welcome to the desk. I review every verdict you stamp. Don't make waves, keep your daily citations under 3, and don't dig where you shouldn't. Begin your shift.", c: [{l:"Understood, Partner.", a:null}] } 
         },
         2: { 
-            start: { s: "Message from Family", t: "Mother's hospital bill is due in Jakarta today. It costs $50. Can you send the funds from your wage?", c: [{l:"Send $50 Home", a:'payFamily50'}, {l:"Keep Funds for Desk", a:'keepFamily50'}] } 
+            start: { s: "Message from Family", t: "Mother's hospital bill is due in Jakarta today. It costs $50. Can you send the funds from your wage?", c: [{l:"Send $50 Home", a:'payFamily50'}, {l:"Keep Funds for Desk", a:null}] } 
         },
         3: { 
             start: { s: "Anonymous Note on Desk", t: "'They are cooking the books at the top. Watch out for PT Nusantara Energy tomorrow. Don't be a puppet.' — The Tipster", c: [{l:"Keep the note secret.", a:'helpedTipster'}] } 
@@ -1067,39 +1060,14 @@
             start: { s: "Director Budi Santoso", t: "Listen closely. PT Nusantara Energy is in your queue today. They are a political partner of Golden Parachute. You WILL APPROVE their file. Do not audit them.", c: [{l:"Understood, Director.", a:null}] } 
         },
         5: { 
-            start: { 
-                getEvent: (flags) => {
-                    if (flags.familyPaid >= 50) {
-                        return { s: "Message from Family", t: "Mother is recovering, but follow-up prescription treatment requires $80.", c: [{l:"Send $80 Medical Funds", a:'payFamily80'}, {l:"Ignore Request", a:null}] };
-                    } else {
-                        return { s: "Urgent Call from Family", t: "Mother's condition worsened due to delayed care! Emergency procedure requires $120 immediately, and the distress is penalty-reducing your focus.", c: [{l:"Send $120 Emergency Funds", a:'payFamily120'}, {l:"Ignore Request", a:null}] };
-                    }
-                }
-            },
+            start: { s: "Message from Family", t: "Her condition worsened. Emergency procedure requires $100 immediately.", c: [{l:"Send $100 Emergency Funds", a:'payFamily100'}, {l:"Ignore Request", a:null}] },
             end: { s: "Partner Rina Hartono", t: "The Internal Review Committee is monitoring your citations. Clear your desk efficiently.", c: [{l:"Proceed.", a:null}] }
         },
         6: {
-            start: { 
-                getEvent: (flags) => {
-                    if (flags.protectedPolitical) {
-                        return { s: "Partner Rina Hartono", t: "Director Budi already filed your loyalty report regarding PT Nusantara Energy. The leak channels are closed. 'Budi already filed your loyalty.'", c: [{l:"Continue duties.", a:null}] };
-                    } else if (flags.helpedTipster && flags.rejectedPolitical) {
-                        return { s: "The Tipster (Secret Meeting)", t: "Tomorrow is the final Investment Committee gauntlet. I have proof of tax fraud against PT Nusantara Energy. I need your authorization to leak it to the press tonight.", c: [{l:"Authorize Leak to Press (Whistleblower)", a:'leakPress'}, {l:"Refuse & Keep Head Down", a:null}] };
-                    } else {
-                        return { s: "The Tipster (Secret Meeting)", t: "You hesitated when PT Nusantara came through. Without firm audit proof, we cannot leak anything to the press.", c: [{l:"Understood.", a:null}] };
-                    }
-                }
-            }
+            start: { s: "The Tipster (Secret Meeting)", t: "Tomorrow is the final Investment Committee gauntlet. I have the proof of tax fraud against PT Nusantara Energy. I need your authorization to leak it to the press tonight.", c: [{l:"Authorize Leak to Press (Whistleblower)", a:'leakPress'}, {l:"Refuse & Keep Head Down", a:null}] }
         },
         7: { 
-            start: { 
-                getEvent: (flags) => {
-                    let ctx = flags.protectedPolitical 
-                        ? "Director Budi has ensured your political backing today." 
-                        : "Director Budi is hunting for any citation flaw on your desk after the Nusantara defiance.";
-                    return { s: "FINAL INVESTMENT COMMITTEE GAUNTLET", t: `8 high-stakes files. ${ctx} Keep daily citations strictly below 3. Pass this shift to seal your legacy at Golden Parachute Capital.`, c: [{l:"Begin Gauntlet.", a:null}] };
-                }
-            } 
+            start: { s: "FINAL INVESTMENT COMMITTEE GAUNTLET", t: "8 high-stakes files. Keep daily citations strictly below 3. Pass this shift to seal your legacy at Golden Parachute Capital.", c: [{l:"Begin Gauntlet.", a:null}] } 
         }
     };
 
@@ -1108,11 +1076,10 @@
         gameState: {
             mode: 'senior', day: 1, cash: 50, rep: 20, 
             dayCitations: 0, maxCitationsPerDay: 3, ruinedDays: 0,
-            flags: { familyPaid: 0, familyUnpaid: false, helpedTipster: false, protectedPolitical: false, rejectedPolitical: false, leakedToPress: false },
+            flags: { familyPaid: 0, helpedTipster: false, protectedPolitical: false, rejectedPolitical: false, leakedToPress: false },
             inventory: { coffee: 0, shredder: 0, gold: 0 }, queue: [], rule: null
         },
         packIndex: 0, timer: 0, timerInt: null, isAuditMode: false, selectedAudit: new Set(),
-        endingSlides: [], currentEndingSlide: 0, midShiftTriggered: false,
 
         startGame(mode) {
             Sound.init(); 
@@ -1148,10 +1115,8 @@
         },
 
         triggerStoryEvent(day, phase) {
-            let rawEv = STORY_EVENTS[day]?.[phase];
-            if (!rawEv) { this.proceedAfterStory(phase); return; }
-
-            let ev = rawEv.getEvent ? rawEv.getEvent(this.gameState.flags) : rawEv;
+            const ev = STORY_EVENTS[day]?.[phase];
+            if (!ev) { this.proceedAfterStory(phase); return; }
 
             document.getElementById('dialogue-date').innerText = `DAY ${day} — ${phase.toUpperCase()}`;
             document.getElementById('dialogue-speaker').innerText = ev.s;
@@ -1166,63 +1131,23 @@
                 btn.style.background = '#18181b';
                 btn.innerText = choice.l;
                 btn.onclick = () => {
-                    this.handleChoiceAction(choice.a);
-                    document.getElementById('dialogue-overlay').style.display = 'none';
-                    if (choice.a === 'leakPress') {
-                        this.evaluateEndings();
-                        return;
+                    if(choice.a === 'payFamily50') { 
+                        if(this.gameState.cash >= 50) { this.gameState.cash -= 50; this.gameState.flags.familyPaid += 50; showToast("Sent $50 home."); } 
+                        else { showToast("Not enough cash."); }
                     }
+                    if(choice.a === 'payFamily100') { 
+                        if(this.gameState.cash >= 100) { this.gameState.cash -= 100; this.gameState.flags.familyPaid += 100; showToast("Sent $100 home."); } 
+                        else { showToast("Not enough cash."); }
+                    }
+                    if(choice.a === 'helpedTipster') { this.gameState.flags.helpedTipster = true; }
+                    if(choice.a === 'leakPress') { this.gameState.flags.leakedToPress = true; this.evaluateEndings(); return; }
+                    
+                    document.getElementById('dialogue-overlay').style.display = 'none';
                     this.proceedAfterStory(phase);
                 };
                 btnContainer.appendChild(btn);
             });
             document.getElementById('dialogue-overlay').style.display = 'flex';
-        },
-
-        handleChoiceAction(action) {
-            if (!action) return;
-            
-            if (action === 'payFamily50') {
-                if (this.gameState.cash >= 50) {
-                    this.gameState.cash -= 50;
-                    this.gameState.flags.familyPaid += 50;
-                    showToast("Sent $50 home to family.");
-                } else {
-                    showToast("Insufficient cash ($50 required).");
-                    this.gameState.flags.familyUnpaid = true;
-                }
-            } else if (action === 'keepFamily50') {
-                this.gameState.flags.familyUnpaid = true;
-                showToast("Family request unpaid.");
-            } else if (action === 'payFamily80') {
-                if (this.gameState.cash >= 80) {
-                    this.gameState.cash -= 80;
-                    this.gameState.flags.familyPaid += 80;
-                    showToast("Sent $80 medical funds home.");
-                } else {
-                    showToast("Insufficient cash ($80 required).");
-                }
-            } else if (action === 'payFamily120') {
-                if (this.gameState.cash >= 120) {
-                    this.gameState.cash -= 120;
-                    this.gameState.flags.familyPaid += 120;
-                    showToast("Sent $120 emergency funds home.");
-                } else {
-                    showToast("Insufficient cash ($120 required).");
-                    this.gameState.flags.familyUnpaid = true;
-                }
-            } else if (action === 'helpedTipster') {
-                this.gameState.flags.helpedTipster = true;
-                showToast("Note hidden safely.");
-            } else if (action === 'leakPress') {
-                if (this.gameState.flags.helpedTipster && this.gameState.flags.rejectedPolitical) {
-                    this.gameState.flags.leakedToPress = true;
-                    showToast("Whistleblower evidence leaked to press!");
-                } else {
-                    showToast("Leak rejected or disabled.");
-                }
-            }
-            this.updateHUD();
         },
 
         proceedAfterStory(phase) {
@@ -1234,9 +1159,7 @@
             this.gameState.dayCitations = 0;
             this.updateHUD();
             let packCount = this.gameState.day === 7 ? 8 : 5;
-            let baseTimer = (this.gameState.day === 7 ? 210 : 240);
-            if (this.gameState.flags.familyUnpaid) baseTimer -= 15;
-            this.timer = baseTimer + (this.gameState.inventory.coffee > 0 ? 30 : 0);
+            this.timer = (this.gameState.day === 7 ? 210 : 240) + (this.gameState.inventory.coffee > 0 ? 30 : 0);
             if(this.gameState.inventory.coffee > 0) this.gameState.inventory.coffee--;
 
             this.gameState.queue = [];
@@ -1246,42 +1169,37 @@
             const activeRules = RULES_POOL.filter(r => mode === 'senior' || !r.reqBS);
             this.gameState.rule = activeRules[(this.gameState.day - 1) % activeRules.length];
 
-            // Day 4 Scripted Nusantara Energy First Pack
-            if (this.gameState.day === 4) {
-                let nusantaraPack = RolePackBuilder.buildAuditFraud(mode, 'missing_tax', "PT Nusantara Energy");
-                nusantaraPack.card.isPolitical = true;
-                this.gameState.queue.push(nusantaraPack);
-                
-                for (let i = 1; i < packCount; i++) {
-                    if (i === 1) this.gameState.queue.push(RolePackBuilder.buildHealthyApprove(mode, this.gameState.rule));
-                    else {
-                        const fList = ['math_sci', 'tax_mismatch', 'identity', 'false_exemption'];
-                        this.gameState.queue.push(RolePackBuilder.buildAuditFraud(mode, fList[RolePackBuilder.randInt(0, fList.length-1)]));
-                    }
+            let hasPolitical = (this.gameState.day === 4);
+
+            for(let i = 0; i < packCount; i++) {
+                if (hasPolitical && i === 2) {
+                    this.gameState.queue.push(RolePackBuilder.buildAuditFraud(mode, 'missing_tax', "PT Nusantara Energy"));
+                    continue;
                 }
-            } else {
-                for(let i = 0; i < packCount; i++) {
-                    if (i === 0) {
-                        this.gameState.queue.push(RolePackBuilder.buildCommercialReject(mode, this.gameState.rule.reason, this.gameState.rule));
-                    } else if (i === 1) {
+
+                if (i === 0) {
+                    this.gameState.queue.push(RolePackBuilder.buildCommercialReject(mode, this.gameState.rule.reason, this.gameState.rule));
+                } else if (i === 1) {
+                    this.gameState.queue.push(RolePackBuilder.buildHealthyApprove(mode, this.gameState.rule));
+                } else {
+                    const rand = Math.random();
+                    if(rand < 0.30) {
                         this.gameState.queue.push(RolePackBuilder.buildHealthyApprove(mode, this.gameState.rule));
+                    } else if(rand < 0.55) {
+                        const reasonsList = Object.keys(REJECT_REASONS).filter(k => mode === 'senior' || k !== 'bs_risk');
+                        const ranReason = reasonsList[RolePackBuilder.randInt(0, reasonsList.length-1)];
+                        this.gameState.queue.push(RolePackBuilder.buildCommercialReject(mode, ranReason, this.gameState.rule));
                     } else {
-                        const rand = Math.random();
-                        if(rand < 0.30) {
-                            this.gameState.queue.push(RolePackBuilder.buildHealthyApprove(mode, this.gameState.rule));
-                        } else if(rand < 0.55) {
-                            const reasonsList = Object.keys(REJECT_REASONS).filter(k => mode === 'senior' || k !== 'bs_risk');
-                            const ranReason = reasonsList[RolePackBuilder.randInt(0, reasonsList.length-1)];
-                            this.gameState.queue.push(RolePackBuilder.buildCommercialReject(mode, ranReason, this.gameState.rule));
-                        } else {
-                            const frauds = mode === 'senior' 
-                                ? ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'tax_mismatch', 'tax_rev_mismatch', 'false_exemption', 'false_tax_on_loss', 'forged_stamp', 'bs_imbalance', 'bs_math_ca', 'bs_missing_borrow', 'cross_bank_cash']
-                                : ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'tax_mismatch', 'tax_rev_mismatch', 'false_exemption', 'false_tax_on_loss', 'forged_stamp', 'cross_bank_cash'];
-                            const f = frauds[RolePackBuilder.randInt(0, frauds.length-1)];
-                            this.gameState.queue.push(RolePackBuilder.buildAuditFraud(mode, f, null));
-                        }
+                        const frauds = mode === 'senior' 
+                            ? ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'tax_mismatch', 'tax_rev_mismatch', 'false_exemption', 'false_tax_on_loss', 'forged_stamp', 'bs_imbalance', 'bs_math_ca', 'bs_missing_borrow', 'cross_bank_cash']
+                            : ['math_sci', 'missing_tax', 'missing_fin', 'identity', 'tax_mismatch', 'tax_rev_mismatch', 'false_exemption', 'false_tax_on_loss', 'forged_stamp', 'cross_bank_cash'];
+                        const f = frauds[RolePackBuilder.randInt(0, frauds.length-1)];
+                        this.gameState.queue.push(RolePackBuilder.buildAuditFraud(mode, f, null));
                     }
                 }
+            }
+
+            if(!hasPolitical) {
                 this.gameState.queue.sort(() => Math.random() - 0.5);
             }
 
@@ -1433,6 +1351,7 @@
             this.updateHUD();
         },
 
+        /* ALLOWED FIX 1 & 2 & 5: Drag refusal & handleAuditClick target resolution */
         initDrag() {
             let activeElement = null;
             let offsetX = 0, offsetY = 0;
@@ -1497,9 +1416,6 @@
             } else {
                 this.selectedAudit.add(attr);
                 target.classList.add('marked-discrepancy');
-                if (target.parentElement && target.parentElement.classList.contains('missing-line-gap-row')) {
-                    target.parentElement.classList.add('marked-discrepancy');
-                }
             }
         },
 
@@ -1510,8 +1426,9 @@
                 document.getElementById('btn-approve').style.display = 'none';
                 document.getElementById('btn-reject').style.display = 'none';
                 document.getElementById('btn-audit').style.display = 'none';
-                document.getElementById('btn-cancel-audit').style.display = 'inline-block';
                 document.getElementById('btn-stamp-audit').style.display = 'inline-block';
+                document.getElementById('btn-cancel-audit').style.display = 'inline-block';
+                showToast("AUDIT MODE: Tap cells to highlight discrepancies.");
             } else {
                 document.body.classList.remove('audit-mode');
                 document.querySelectorAll('.marked-discrepancy').forEach(el => el.classList.remove('marked-discrepancy'));
@@ -1519,8 +1436,8 @@
                 document.getElementById('btn-approve').style.display = 'inline-block';
                 document.getElementById('btn-reject').style.display = 'inline-block';
                 document.getElementById('btn-audit').style.display = 'inline-block';
-                document.getElementById('btn-cancel-audit').style.display = 'none';
                 document.getElementById('btn-stamp-audit').style.display = 'none';
+                document.getElementById('btn-cancel-audit').style.display = 'none';
             }
         },
 
@@ -1530,36 +1447,33 @@
             Sound.stamp();
 
             setTimeout(() => {
-                let isCorrect = (pack.correct === 'approve');
-                
-                // Day 4 PT Nusantara Energy override
-                if (pack.card.name === "PT Nusantara Energy") {
+                if (pack.card.isPolitical) {
                     this.gameState.flags.protectedPolitical = true;
-                    this.gameState.cash += 25; // Extra political payout
-                    isCorrect = true; // Director protection suppresses citation
-                    showToast("Director Budi protected Nusantara approval (+ $25 political bonus)");
                 }
-
-                this.processVerdictResult(isCorrect, "APPROVED DOSSIER");
+                const isCorrect = (pack.correct === 'approve');
+                this.processVerdict(isCorrect, 'approve', pack);
             }, 300);
         },
 
         openRejectModal() {
-            const pack = this.gameState.queue[this.packIndex];
             const list = document.getElementById('reject-reasons-list');
             list.innerHTML = '';
             
-            Object.entries(REJECT_REASONS).forEach(([key, label]) => {
-                if (this.gameState.mode === 'junior' && key === 'bs_risk') return;
-                const btn = document.createElement('button');
-                btn.className = 'memo-btn';
-                btn.style.background = '#27272a';
-                btn.style.fontSize = '0.8rem';
-                btn.style.textAlign = 'left';
-                btn.innerText = label;
-                btn.onclick = () => this.confirmReject(key);
-                list.appendChild(btn);
+            const mode = this.gameState.mode;
+            const reasonsList = Object.keys(REJECT_REASONS).filter(k => mode === 'senior' || k !== 'bs_risk');
+
+            reasonsList.forEach(key => {
+                const label = document.createElement('label');
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '8px';
+                label.style.fontSize = '0.82rem';
+                label.style.cursor = 'pointer';
+
+                label.innerHTML = `<input type="radio" name="reject_reason" value="${key}"> <span>${REJECT_REASONS[key]}</span>`;
+                list.appendChild(label);
             });
+
             document.getElementById('reject-modal').style.display = 'flex';
         },
 
@@ -1567,101 +1481,110 @@
             document.getElementById('reject-modal').style.display = 'none';
         },
 
-        confirmReject(selectedReasonKey) {
+        confirmReject() {
+            const selected = document.querySelector('input[name="reject_reason"]:checked')?.value;
+            if (!selected) { showToast("Select a commercial rejection reason."); return; }
+
             this.closeRejectModal();
             const pack = this.gameState.queue[this.packIndex];
             document.getElementById('stamp-sci-den').classList.add('visible');
             Sound.stamp();
 
             setTimeout(() => {
-                let isCorrect = (pack.correct === 'reject' && selectedReasonKey === pack.reason.split(': ')[1]?.trim() || pack.reason.includes(selectedReasonKey));
-                
-                if (pack.card.name === "PT Nusantara Energy") {
+                if (pack.card.isPolitical) {
                     this.gameState.flags.rejectedPolitical = true;
                 }
-
-                this.processVerdictResult(isCorrect, "REJECTED DOSSIER");
+                
+                const isCorrect = (pack.correct === 'reject') && (pack.reason.includes(REJECT_REASONS[selected]));
+                this.processVerdict(isCorrect, 'reject', pack);
             }, 300);
         },
 
         submitAuditStamp() {
+            if (this.selectedAudit.size === 0) { showToast("Highlight at least 1 discrepancy cell."); return; }
+
             const pack = this.gameState.queue[this.packIndex];
-            const userSelections = Array.from(this.selectedAudit);
+            const selArray = Array.from(this.selectedAudit);
 
-            if (userSelections.length === 0) {
-                showToast("Select discrepancy cells before stamping audit!");
-                return;
+            let isCorrect = false;
+            if (pack.correct === 'audit') {
+                for (let chain of pack.validChains) {
+                    if (chain.every(id => selArray.includes(id))) {
+                        isCorrect = true; break;
+                    }
+                }
             }
 
-            let matchesChain = false;
-            if (pack.correct === 'audit' && pack.validChains) {
-                matchesChain = pack.validChains.some(chain => {
-                    if (chain.length !== userSelections.length) return false;
-                    return chain.every(item => userSelections.includes(item));
-                });
-            }
-
-            if (this.isAuditMode) this.toggleAuditMode();
-
+            this.toggleAuditMode();
             document.getElementById('stamp-sci-den').classList.add('visible');
             Sound.stamp();
 
             setTimeout(() => {
-                if (pack.card.name === "PT Nusantara Energy") {
+                if (pack.card.isPolitical) {
                     this.gameState.flags.rejectedPolitical = true;
                 }
-                this.processVerdictResult(matchesChain, "STAMPED FRAUD");
+                this.processVerdict(isCorrect, 'audit', pack);
             }, 300);
         },
 
         useItem(item) {
-            if (this.gameState.inventory[item] <= 0) return;
-            this.gameState.inventory[item]--;
-            showToast(`Used ${item.toUpperCase()}`);
-            if (this.isAuditMode) this.toggleAuditMode();
-            
-            if (item === 'shredder' || item === 'gold') {
-                this.processVerdictResult(true, "ITEM DISPATCHED");
+            if (item === 'shredder' && this.gameState.inventory.shredder > 0) {
+                this.gameState.inventory.shredder--;
+                showToast("Dossier shredded safely.");
+                this.packIndex++;
+                this.loadPack();
+            } else if (item === 'gold' && this.gameState.inventory.gold > 0) {
+                this.gameState.inventory.gold--;
+                const pack = this.gameState.queue[this.packIndex];
+                this.processVerdict(true, pack.correct, pack);
             }
         },
 
-        processVerdictResult(isCorrect, actionLabel) {
-            const pack = this.gameState.queue[this.packIndex];
-            
-            let payDelta = 0;
-            let repDelta = 0;
-            let citDelta = 0;
+        buyItem(item) {
+            if (item === 'coffee' && this.gameState.cash >= 25) {
+                this.gameState.cash -= 25; this.gameState.inventory.coffee++; showToast("Espresso purchased (+30s tomorrow).");
+            } else if (item === 'shredder' && this.gameState.cash >= 30) {
+                this.gameState.cash -= 30; this.gameState.inventory.shredder++; showToast("Shredder purchased.");
+            } else if (item === 'gold' && this.gameState.cash >= 60) {
+                this.gameState.cash -= 60; this.gameState.inventory.gold++; showToast("Golden stamp purchased.");
+            } else {
+                showToast("Insufficient cash balance.");
+            }
+            this.updateHUD();
+            document.getElementById('settle-cash').innerText = `$${this.gameState.cash}`;
+        },
+
+        processVerdict(isCorrect, playerAction, pack) {
+            let deltaPay = 0, deltaRep = 0, citationAdded = false;
 
             if (isCorrect) {
                 Sound.correct();
-                payDelta = 50;
-                repDelta = 5;
-                this.gameState.cash += payDelta;
-                this.gameState.rep += repDelta;
+                deltaPay = 50; deltaRep = 5;
+                this.gameState.cash += deltaPay;
+                this.gameState.rep += deltaRep;
             } else {
                 Sound.wrong();
-                payDelta = 0;
-                repDelta = -10;
-                citDelta = 1;
-                this.gameState.rep += repDelta;
-                this.gameState.dayCitations += citDelta;
+                deltaPay = 0; deltaRep = -10;
+                this.gameState.rep = Math.max(0, this.gameState.rep + deltaRep);
+                this.gameState.dayCitations++;
+                citationAdded = true;
             }
 
-            // Memo modal display
-            document.getElementById('memo-status-line').innerText = `VERDICT: ${isCorrect ? 'CORRECT' : 'CITATION ISSUED'}`;
-            document.getElementById('memo-status-line').style.color = isCorrect ? '#166534' : '#991b1b';
-            
-            document.getElementById('memo-reason').innerText = pack.reason || "Clean file.";
-            document.getElementById('memo-working').innerText = pack.working || "No discrepancies.";
-            document.getElementById('memo-implication').innerText = pack.implication || "Standard compliance.";
+            const statusEl = document.getElementById('memo-status-line');
+            statusEl.innerText = isCorrect ? "VERDICT STATUS: CORRECT (+PAY/REP)" : "VERDICT STATUS: INCORRECT (CITATION ISSUED)";
+            statusEl.style.color = isCorrect ? "#166534" : "#991b1b";
 
-            document.getElementById('memo-delta-pay').innerText = `PAY: +$${payDelta}`;
-            document.getElementById('memo-delta-rep').innerText = `REP: ${repDelta >= 0 ? '+' : ''}${repDelta}`;
+            document.getElementById('memo-reason').innerText = pack.reason;
+            document.getElementById('memo-working').innerText = pack.working;
+            document.getElementById('memo-implication').innerText = pack.implication;
+
+            document.getElementById('memo-delta-pay').innerText = `PAY: +$${deltaPay}`;
+            document.getElementById('memo-delta-rep').innerText = `REP: ${deltaRep >= 0 ? '+' : ''}${deltaRep}`;
             
             const citEl = document.getElementById('memo-delta-cit');
-            if (citDelta > 0) {
+            if (citationAdded) {
+                citEl.innerText = `DAILY CITATION: ${this.gameState.dayCitations}/${this.gameState.maxCitationsPerDay}`;
                 citEl.style.display = 'block';
-                citEl.innerText = `CITATIONS TODAY: ${this.gameState.dayCitations}/${this.gameState.maxCitationsPerDay}`;
             } else {
                 citEl.style.display = 'none';
             }
@@ -1671,56 +1594,33 @@
 
         closeMemo() {
             document.getElementById('memo-overlay').style.display = 'none';
-            
-            // Check Mid-Shift Call for Day 4 Nusantara Defiance
-            if (this.gameState.day === 4 && this.gameState.flags.rejectedPolitical && !this.midShiftTriggered) {
-                this.midShiftTriggered = true;
-                this.triggerMidShiftCall();
-                return;
-            }
-
             this.packIndex++;
-            if (this.gameState.dayCitations >= this.gameState.maxCitationsPerDay) {
-                showToast("Maximum daily citations reached! Shift halted.");
-                this.endDay();
-            } else if (this.packIndex >= this.gameState.queue.length) {
-                this.endDay();
-            } else {
-                this.loadPack();
-            }
+            this.loadPack();
         },
 
-        triggerMidShiftCall() {
-            document.getElementById('dialogue-date').innerText = "DAY 4 — URGENT CALL";
-            document.getElementById('dialogue-speaker').innerText = "Director Budi Santoso";
-            document.getElementById('dialogue-text').innerText = "What the hell was that, Analyst? You were explicitly ordered to approve PT Nusantara Energy! You've made a dangerous enemy today.";
+        updateHUD() {
+            document.getElementById('hud-day').innerText = `D${this.gameState.day}`;
+            document.getElementById('hud-file-progress').innerText = `${Math.min(this.packIndex + 1, this.gameState.queue.length)}/${this.gameState.queue.length}`;
             
-            const btnContainer = document.getElementById('dialogue-choices');
-            btnContainer.innerHTML = '';
+            const mins = Math.floor(this.timer / 60);
+            const secs = this.timer % 60;
+            document.getElementById('hud-timer').innerText = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
             
-            const btn = document.createElement('button');
-            btn.className = 'memo-btn';
-            btn.style.background = '#991b1b';
-            btn.innerText = "Return to desk";
-            btn.onclick = () => {
-                document.getElementById('dialogue-overlay').style.display = 'none';
-                this.packIndex++;
-                if (this.packIndex < this.gameState.queue.length) this.loadPack();
-                else this.endDay();
-            };
-            btnContainer.appendChild(btn);
-            document.getElementById('dialogue-overlay').style.display = 'flex';
+            document.getElementById('hud-wage').innerText = this.gameState.cash;
+            document.getElementById('hud-rep').innerText = this.gameState.rep;
+            document.getElementById('hud-citations').innerText = `${this.gameState.dayCitations}/${this.gameState.maxCitationsPerDay}`;
         },
 
         endDay() {
             clearInterval(this.timerInt);
+            document.getElementById('game-container').style.display = 'none';
+
             if (this.gameState.dayCitations >= this.gameState.maxCitationsPerDay) {
                 this.gameState.ruinedDays++;
             }
-            this.gameState.cash -= 30; // Desk overhead rent
-            
-            if (this.gameState.ruinedDays >= 3 || this.gameState.cash < 0) {
-                this.evaluateEndings();
+
+            if (this.gameState.ruinedDays >= 3) {
+                this.triggerEnding('TERMINATED', '3 Ruined Shift Days', 'You accumulated 3 ruined shift days with excessive compliance citations. The Internal Audit Committee has terminated your employment.');
                 return;
             }
 
@@ -1728,134 +1628,62 @@
         },
 
         showSettlement() {
+            this.gameState.cash = Math.max(0, this.gameState.cash - 30);
             document.getElementById('settle-cash').innerText = `$${this.gameState.cash}`;
             document.getElementById('settle-rep').innerText = this.gameState.rep;
             document.getElementById('settle-ruined').innerText = `${this.gameState.ruinedDays}/3`;
             document.getElementById('settlement-overlay').style.display = 'flex';
         },
 
-        buyItem(item) {
-            const prices = { coffee: 25, shredder: 30, gold: 60 };
-            const cost = prices[item];
-            if (this.gameState.cash >= cost) {
-                this.gameState.cash -= cost;
-                this.gameState.inventory[item]++;
-                showToast(`Bought ${item.toUpperCase()}`);
-                this.showSettlement();
-            } else {
-                showToast("Insufficient cash!");
-            }
-        },
-
         triggerNextDayEvent() {
             document.getElementById('settlement-overlay').style.display = 'none';
-            this.gameState.day++;
-            if (this.gameState.day > 7) {
+            if (this.gameState.day >= 7) {
                 this.evaluateEndings();
             } else {
+                this.gameState.day++;
                 this.triggerStoryEvent(this.gameState.day, 'start');
             }
         },
 
         evaluateEndings() {
-            clearInterval(this.timerInt);
-            document.getElementById('game-container').style.display = 'none';
-            document.getElementById('settlement-overlay').style.display = 'none';
-
-            const f = this.gameState.flags;
-            const score = Math.max(0, (this.gameState.cash * 2) + (this.gameState.rep * 10) - (this.gameState.ruinedDays * 100));
-
-            let p1Title = "COMMITTEE MEMORANDUM";
-            let p1Sub = "CLASSIFIED DOSSIER FATE";
-            let p1Desc = "";
-
-            let p2Title = "JAKARTA HEADLINE";
-            let p2Sub = "BREAKING CAPITAL NEWS";
-            let p2Desc = "";
-
-            let p3Title = "PERSONAL FATE";
-            let p3Sub = "ANALYST DESTINY";
-            let p3Desc = "";
-
-            if (f.leakedToPress) {
-                p1Desc = "Director Budi Santoso and the Investment Board were served federal warrants following a midnight leak. Golden Parachute Capital's office has been cordoned off by anti-corruption officers.";
-                p2Desc = "JAKARTA POST: 'GOLDEN PARACHUTE CAPITAL COLLAPSED IN MULTI-BILLION TAX FRAUD WHISTLEBLOWER EXPOSÉ.'";
-                p3Desc = "Whistleblower Path: You entered federal witness protection. Your courageous stand dismantled systemic corporate fraud, though your career in Jakarta investment banking is forever closed.";
-            } else if (this.gameState.ruinedDays >= 3 || this.gameState.cash < 0) {
-                p1Desc = "Signed: Partner Rina Hartono.\n'Your repeated audit citations and insolvency demonstrate unacceptable professional negligence. Your badge is revoked immediately.'";
-                p2Desc = "FINANCIAL TIMES: 'ANALYST TERMINATED AT GP CAPITAL AMID REPEATED AUDIT COMPLIANCE FAILURES.'";
-                p3Desc = "Terminated Path: Escorted out of the building by desk security. Blacklisted across all financial institutions in Indonesia.";
-            } else if (f.protectedPolitical && !f.leakedToPress) {
-                p1Desc = "Signed: Director Budi Santoso.\n'Your pragmatic discretion regarding PT Nusantara Energy proved your corporate loyalty. The Executive Board hereby commends your alignment.'";
-                p2Desc = "BUSINESS INDONESIA: 'GP CAPITAL SECURES MULTI-BILLION ENERGY INFRASTRUCTURE MERGER.'";
-                p3Desc = "Corporate Partner / Puppet Path: Promoted to Junior Partner with lucrative offshore bonuses. You sit in comfortable air-conditioned boardrooms, having traded away your audit independence.";
-            } else if (f.rejectedPolitical && this.gameState.rep >= 40 && !f.leakedToPress) {
-                p1Desc = "Signed: Internal Audit Oversight Committee.\n'Despite corporate pressure, your rigorous audit precision preserved GP Capital's fiduciary standard during the Nusantara review.'";
-                p2Desc = "JAKARTA TRIBUNE: 'GP CAPITAL RESTORES INVESTOR CONFIDENCE THROUGH STERN COMPLIANCE REFORMS.'";
-                p3Desc = "True Auditor / Crusader Path: Promoted to Chief Risk Officer. Earned widespread acclaim across Jakarta's financial sector as an unbending pillar of integrity.";
-            } else if (f.familyPaid >= 150) {
-                p1Desc = "Signed: Family Care Division.\n'Your steady financial transfers guaranteed full medical recovery for your mother.'";
-                p2Desc = "JAKARTA DAILY: 'LOCAL MARKETS CONCLUDE FISCAL YEAR WITH STEADY PERFORMANCE.'";
-                p3Desc = "Family First Path: You survived the desk while prioritizing what truly mattered. Your family is debt-free and healthy, living a quiet, honest life.";
+            if (this.gameState.flags.leakedToPress) {
+                this.triggerEnding('WHISTLEBLOWER HERO', 'Truth Exposed', 'You leaked proof of corporate tax fraud to the press. Golden Parachute was investigated and reformed, making you a national financial ethics figure.');
+            } else if (this.gameState.flags.protectedPolitical) {
+                this.triggerEnding('PARTNER PROMOTION', 'Corporate Loyalism', 'You followed executive orders and approved high-level political partners. You were promoted to Senior Partner with lucrative performance bonuses.');
+            } else if (this.gameState.rep >= 80) {
+                this.triggerEnding('CHIEF RISK OFFICER', 'Flawless Compliance', 'Your impeccable audit accuracy and risk management earned you direct appointment as Chief Risk Officer.');
             } else {
-                p1Desc = "Signed: Partner Rina Hartono.\n'You completed your 7-day desk assignment without major incident. Your annual review is logged as adequate.'";
-                p2Desc = "CAPITAL INSIGHTS: 'GP CAPITAL CONCLUDES ANNUAL AUDIT CYCLE UNREMARKABLY.'";
-                p3Desc = "Quiet Professional Path: You endured the long night desk shifts. Unnoticed and unbothered, you remain a reliable clockwork auditor.";
+                this.triggerEnding('STANDARD RETIREMENT', 'Desk Analyst Legacy', 'You completed your 7-day desk assignment cleanly, keeping GP Capital stable through rigorous cross-examination.');
             }
+        },
 
-            this.endingSlides = [
-                { title: p1Title, sub: p1Sub, desc: p1Desc, score: false },
-                { title: p2Title, sub: p2Sub, desc: p2Desc, score: false },
-                { title: p3Title, sub: p3Sub, desc: p3Desc, score: true, finalScore: score }
-            ];
+        triggerEnding(title, subtitle, desc) {
+            document.getElementById('ending-title').innerText = title;
+            document.getElementById('ending-subtitle').innerText = subtitle;
+            document.getElementById('ending-desc').innerText = desc;
+            
+            const finalScore = (this.gameState.cash * 2) + (this.gameState.rep * 5) - (this.gameState.ruinedDays * 50);
+            document.getElementById('ending-score').innerText = Math.max(0, finalScore);
 
-            this.currentEndingSlide = 0;
-            this.renderEndingSlide();
+            const pName = document.getElementById('player-name-input')?.value || "Analyst";
+            document.getElementById('ending-name').value = pName;
+
             document.getElementById('ending-overlay').style.display = 'flex';
         },
 
-        renderEndingSlide() {
-            const slide = this.endingSlides[this.currentEndingSlide];
-            document.getElementById('ending-slide-indicator').innerText = `EPILOGUE ${this.currentEndingSlide + 1} OF 3`;
-            document.getElementById('ending-title').innerText = slide.title;
-            document.getElementById('ending-subtitle').innerText = slide.sub;
-            document.getElementById('ending-desc').innerText = slide.desc;
-
-            const scoreBox = document.getElementById('ending-score-box');
-            const nextBtn = document.getElementById('ending-next-btn');
-
-            if (slide.score) {
-                scoreBox.style.display = 'block';
-                document.getElementById('ending-score').innerText = slide.finalScore;
-                nextBtn.style.display = 'none';
-            } else {
-                scoreBox.style.display = 'none';
-                nextBtn.style.display = 'block';
-                nextBtn.innerText = "NEXT SLIDE ➔";
-            }
-        },
-
-        nextEndingSlide() {
-            if (this.currentEndingSlide < this.endingSlides.length - 1) {
-                this.currentEndingSlide++;
-                this.renderEndingSlide();
-            }
-        },
-
         saveScoreAndReload() {
-            const nameInput = document.getElementById('player-name-input')?.value || "Analyst";
-            const customName = document.getElementById('ending-name')?.value || nameInput;
-            const finalScore = parseInt(document.getElementById('ending-score').innerText) || 0;
+            const name = document.getElementById('ending-name').value || "Analyst";
+            const score = parseInt(document.getElementById('ending-score').innerText) || 0;
+            const mode = this.gameState.mode;
             const classCode = sanitizeClassCode(document.getElementById('class-code-input')?.value);
 
-            const record = { name: customName, score: finalScore, mode: this.gameState.mode, code: classCode, timestamp: Date.now() };
-
-            localLeaderboard.push(record);
+            const entry = { name, score, mode, date: new Date().toISOString() };
+            localLeaderboard.push(entry);
             localLeaderboard.sort((a,b) => b.score - a.score);
             localStorage.setItem('gpc_leaderboard', JSON.stringify(localLeaderboard));
 
             if (mqttClient && mqttClient.connected) {
-                mqttClient.publish(`gpcapital/lb/${classCode}/event`, JSON.stringify(record));
+                mqttClient.publish(`gpcapital/lb/${classCode}/event`, JSON.stringify(entry));
             }
 
             location.reload();
@@ -1869,32 +1697,17 @@
             try {
                 const code = document.getElementById('save-code-input').value.trim();
                 const json = JSON.parse(atob(code));
-                if (json.day && json.cash !== undefined) {
+                if (json && json.day) {
                     this.gameState = json;
+                    showToast("Save state restored!");
                     document.getElementById('savecode-overlay').style.display = 'none';
-                    showToast("Loaded saved state successfully!");
                     this.startGame(this.gameState.mode);
                 }
-            } catch(e) {
-                showToast("Invalid save code string!");
-            }
-        },
-
-        updateHUD() {
-            document.getElementById('hud-day').innerText = `D${this.gameState.day}`;
-            document.getElementById('hud-file-progress').innerText = `${this.packIndex + 1}/${this.gameState.queue.length || 5}`;
-            
-            let minutes = Math.floor(this.timer / 60);
-            let seconds = this.timer % 60;
-            document.getElementById('hud-timer').innerText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            document.getElementById('hud-wage').innerText = this.gameState.cash;
-            document.getElementById('hud-rep').innerText = this.gameState.rep;
-            document.getElementById('hud-citations').innerText = `${this.gameState.dayCitations}/${this.gameState.maxCitationsPerDay}`;
+            } catch(e) { showToast("Invalid save code string."); }
         }
     };
 
-    window.onload = () => {
+    window.onload = function() {
         initMQTT();
     };
 </script>
